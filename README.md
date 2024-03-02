@@ -15,11 +15,13 @@ The ultimate goal would be to create fan-made assets for the game using Blender,
 
 ### Dependencies
 
+* Mad Tracks Steam version
 * Blender 2.79b
 
 ### Installing
 
-* Paste the madtracks_io folder in Blender's add-ons folder (<blender_path>/scripts/addons)
+* Extract Mad Tracks' data.zip file in a folder and don't touch it (the add-on will use relative paths to find textures in the 'Graph' folder when importing a LDO file from the 'Gfx' folder for instance)
+* Paste the io_madtracks folder in Blender's add-ons folder (<blender_path>/scripts/addons)
 * Open Blender, then go to: File > User Preferences > Add-ons, and check "Import-Export: Mad Tracks"
 * A new tab in 3D view tools panel called "Mad Tracks" should appear, you're good to go!
 
