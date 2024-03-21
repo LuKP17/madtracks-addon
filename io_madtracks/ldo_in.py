@@ -16,7 +16,7 @@ Name:    ldo_in
 Purpose: Imports geometry files (.ldo)
 
 Description:
-Meshes used for cars, level instances, objects and track parts.
+Import any Mad Tracks 3D model.
 
 """
 
@@ -40,9 +40,10 @@ from .common import *
 
 def import_file(filepath, scene):
     """
-    Imports a .ldo file and links it to the scene as Blender objects.
+    Imports a .ldo file.
+    Creates and returns a Blender object with geometry data.
     """
-    # common.TEXTURES = {}
+    props = scene.madtracks
 
     with open(filepath, 'rb') as file:
         filename = os.path.basename(filepath)
@@ -52,28 +53,29 @@ def import_file(filepath, scene):
         if len(file.read(1)) != 0:
             dprint("WARNING: End of file %s wasn't reached!" % filepath)
 
-    print("Imported {} ({} atomics)".format(filename, ldo.atomic_count))
+    dprint("Imported {} ({} atomics)".format(filename, ldo.atomic_count))
 
+    meshes = []
     for atomic in ldo.atomics:
-        me = import_atomic(atomic, scene, filepath)
-
-        # if len(meshes) > 1:
-        #     # Fake user if there are multiple LoDs so they're kept when saving
-        #     me.use_fake_user = True
-
-        #     # Append a quality suffix to meshes
-        #     bname, number = me.name.rsplit(".", 1)
-        #     me.name = "{}|q{}".format(bname, meshes.index(prm))
-
-        # # Assigns the highest quality mesh to an object and links it to the scn
-        # if meshes.index(prm) == 0:
-        #     print("Creating Blender object for {}...".format(filename))
-        #     ob = bpy.data.objects.new(filename, me)
-        #     scene.objects.link(ob)
-        #     scene.objects.active = ob
-
-        print("Creating Blender object for {}...".format(filename))
-        ob = bpy.data.objects.new(filename, me)
+        # get new Blender mesh from the atomic data
+        meshes.append(import_atomic(atomic, scene, filepath))
+    
+    if props.separate_atomics:
+        # create one Blender object per mesh
+        for mesh in meshes:
+            dprint("Creating Blender object for {}...".format(filename))
+            ob = bpy.data.objects.new(filename, mesh)
+            scene.objects.link(ob)
+            scene.objects.active = ob
+    else:
+        # create one Blender object with all meshes merged
+        merged_mesh = bpy.data.meshes.new(filename)
+        bm = bmesh.new()
+        for mesh in meshes:
+            bm.from_mesh(mesh)
+        bm.to_mesh(merged_mesh)
+        dprint("Creating Blender object for {}...".format(filename))
+        ob = bpy.data.objects.new(filename, merged_mesh)
         scene.objects.link(ob)
         scene.objects.active = ob
 
@@ -82,12 +84,11 @@ def import_file(filepath, scene):
 
 def import_atomic(atomic, scene, filepath):
     """
-    Creates a mesh from an Atomic object and returns it.
-    All the meshes contained in the atomic will be merged into a single mesh.
+    Creates a Blender mesh from an Atomic object and returns it.
+    All the meshes contained in the atomic will be merged into a single Blender mesh.
     """
-    # props = scene.revolt
     filename = os.path.basename(filepath)
-    # Creates a new mesh and bmesh
+
     me = bpy.data.meshes.new(filename)
     bm = bmesh.new()
 
@@ -101,28 +102,27 @@ def import_atomic(atomic, scene, filepath):
     # texnum_layer = bm.faces.layers.int.new("Texture Number")
     # type_layer = bm.faces.layers.int.new("Type")
 
-    # Adds the atomic data to the bmesh
+    # add atomic data to bmesh
     poly_offset = 0
-    for mesh in atomic.meshes:
-        add_madmesh_to_bmesh(mesh, bm, filepath, scene, poly_offset)
-        poly_offset += mesh.vertex_count
+    for atomic_mesh in atomic.meshes:
+        add_madmesh_to_bmesh(atomic_mesh, bm, filepath, scene, poly_offset)
+        poly_offset += atomic_mesh.vertex_count
 
-    # Converts the bmesh back to a mesh and frees resources
-    # bm.normal_update()
     bm.to_mesh(me)
     bm.free()
 
     return me
 
 
-def add_madmesh_to_bmesh(mesh, bm, filepath, scene, poly_offset=0):
+def add_madmesh_to_bmesh(atomic_mesh, bm, filepath, scene, poly_offset=0):
     """
     Adds Atomic data to an existing bmesh. Returns the resulting bmesh.
     """
+    props = scene.madtracks
     uv_layer = bm.loops.layers.uv["UVMap"]
     tex_layer = bm.faces.layers.tex["UVMap"]
 
-    for vert in mesh.vertices:
+    for vert in atomic_mesh.vertices:
         position = to_blender_coord(vert.position.data)
         normal = to_blender_axis(vert.normal.data)
 
@@ -133,11 +133,8 @@ def add_madmesh_to_bmesh(mesh, bm, filepath, scene, poly_offset=0):
         # Ensures lookup table (potentially puts out an error otherwise)
         bm.verts.ensure_lookup_table()
 
-    for poly in mesh.polygons:
-        # is_quad = poly.type & FACE_QUAD
-        # num_loops = 4 if is_quad else 3
-
-        num_loops = 3
+    for poly in atomic_mesh.polygons:
+        num_loops = 3 # Mad tracks only uses tris
         indices = poly.vertex_indices
 
         verts = (bm.verts[indices[0] + poly_offset], bm.verts[indices[1] + poly_offset],
@@ -145,21 +142,7 @@ def add_madmesh_to_bmesh(mesh, bm, filepath, scene, poly_offset=0):
 
         uvs = []
         for i in indices:
-            uvs.append(mesh.vertices[i].uvcoords)
-
-        # if is_quad:
-        #     verts = (bm.verts[indices[3]], bm.verts[indices[2]],
-        #              bm.verts[indices[1]], bm.verts[indices[0]])
-        #     # Reversed list of UVs and colors
-        #     uvs = reverse_quad(poly.uv)
-        #     colors = reverse_quad(poly.colors)
-
-        # else:
-        #     verts = (bm.verts[indices[2]], bm.verts[indices[1]],
-        #              bm.verts[indices[0]])
-        #     # Reversed list of UVs and colors without the last element
-        #     uvs = reverse_quad(poly.uv, tri=True)
-        #     colors = reverse_quad(poly.colors, tri=True)
+            uvs.append(atomic_mesh.vertices[i].uvcoords)
 
         # Tries to create a face and yells at you when the face already exists
         try:
@@ -169,11 +152,10 @@ def add_madmesh_to_bmesh(mesh, bm, filepath, scene, poly_offset=0):
             continue  # Skips this face
 
         # Assigns the texture to the face
-        material = mesh.atomic.materials[poly.material_index]
+        material = atomic_mesh.atomic.materials[poly.material_index]
         if material.sflag_texture:
             texture = None
-            path, fname = filepath.rsplit(os.sep, 1)
-            texture_path = get_texture_path(path, material.tex_name, scene)
+            texture_path = props.madtracks_dir + TEXTURE_PATH + material.tex_name + ".dds"
             for image in bpy.data.images:
                 if image.filepath == texture_path:
                     texture = image

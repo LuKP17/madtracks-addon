@@ -45,8 +45,14 @@ class MadTracksIOToolPanel(bpy.types.Panel):
     bl_options = {"HIDE_HEADER"}
 
     def draw(self, context):
-        # # i/o buttons
-        # props = context.scene.revolt
+        # i/o buttons
+        props = context.scene.madtracks
+
+        self.layout.label("Mad Tracks Data Directory:")
+        box = self.layout.box()
+        box.prop(props, "madtracks_dir", text="")
+        if props.madtracks_dir == "":
+            box.label("No directory specified", icon="ERROR")
 
         row = self.layout.row(align=True)
         row.operator("import_scene.madtracks", text="Import", icon="IMPORT")

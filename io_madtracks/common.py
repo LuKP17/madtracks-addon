@@ -33,8 +33,11 @@ import os
 # from mathutils import Color, Matrix
 # from .carinfo import read_parameters
 
-# FIXME fine for my project folder setup for now
-TEXTURE_FILEPATH = "\\..\\..\\..\\Graph\\maps\\High\\"
+# Relative paths from the user's Mad Tracks data folder
+LDO_PATH = "\\Gfx\\models\\Geometry\\"
+TEXTURE_PATH = "\\Graph\\maps\\High\\"
+DESCRIPTOR_PATH = "\\Bin\\Descriptors\\"
+LEVEL_PATH = "\\Bin\\Levels\\"
 
 # Global dictionaries
 global ERRORS
@@ -226,6 +229,9 @@ Supported File Formats
 """
 FORMAT_UNK = -1
 FORMAT_LDO = 0
+FORMAT_INI = 2
+FORMAT_OBJ_INI = 3
+FORMAT_LVL_INI = 4
 # FORMAT_BMP = 0
 # FORMAT_CAR = 1
 # FORMAT_TA_CSV = 2
@@ -242,7 +248,10 @@ FORMAT_LDO = 0
 # FORMAT_W = 13
 
 FORMATS = {
-    FORMAT_LDO: "Geometry (.ldo)"
+    FORMAT_LDO: "Geometry (.ldo)",
+    FORMAT_INI: "Unsupported (.ini)",
+    FORMAT_OBJ_INI: "Object (.ini)",
+    FORMAT_LVL_INI: "Level (.ini)",
 #     FORMAT_BMP: "Bitmap (.bm*)",
 #     FORMAT_CAR: "Car Parameters (.txt)",
 #     FORMAT_TA_CSV: "Texture Animation Sheet (.ta.csv)",
@@ -296,20 +305,20 @@ def to_blender_coord(vec):
     return (-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE)
 
 
-# def to_blender_scale(num):
-#     return num * SCALE
+def to_blender_scale(num):
+    return num * SCALE
 
 
-# def to_revolt_coord(vec):
-#     return (vec[0] / SCALE, -vec[2] / SCALE, vec[1] / SCALE)
+def to_madtracks_axis(vec):
+    return (-vec[0], vec[2], vec[1])
 
 
-# def to_revolt_axis(vec):
-#     return (vec[0], -vec[2], vec[1])
+def to_madtracks_coord(vec):
+    return (-vec[0] / SCALE, vec[2] / SCALE, vec[1] / SCALE)
 
 
-# def to_revolt_scale(num):
-#     return num / SCALE
+def to_madtracks_scale(num):
+    return num / SCALE
 
 # def to_trans_matrix(matrix):
 #     return Matrix((
@@ -427,16 +436,16 @@ def to_blender_coord(vec):
 #     return None
 
 
-def get_edit_bmesh(obj):
-    try:
-        bm = dic[obj.name]
-        bm.faces.layers.int.get("Type")
-        return bm
-    except Exception as e:
-        dprint("Bmesh is gone, creating new one...")
-        del dic[obj.name]
-        bm = dic.setdefault(obj.name, bmesh.from_edit_mesh(obj.data))
-        return bm
+# def get_edit_bmesh(obj):
+#     try:
+#         bm = dic[obj.name]
+#         bm.faces.layers.int.get("Type")
+#         return bm
+#     except Exception as e:
+#         dprint("Bmesh is gone, creating new one...")
+#         del dic[obj.name]
+#         bm = dic.setdefault(obj.name, bmesh.from_edit_mesh(obj.data))
+#         return bm
 
 
 # def apply_trs(obj, bm, transform=False):
@@ -725,40 +734,6 @@ def enable_texture_mode():
 Non-Blender helper functions
 """
 
-
-def get_texture_path(filepath, tex_name, scene):
-    """ Gets the full texture path when given texture name. """
-    return filepath + TEXTURE_FILEPATH + tex_name + ".dds"
-
-#     path, fname = filepath.rsplit(os.sep, 1)
-#     props = scene.revolt
-
-#     # Checks if the loaded model is located in the custom folder
-#     folder = path.rsplit(os.sep, 1)[1]
-#     if folder == "custom":
-#         path = path.rsplit(os.sep, 1)[0]
-#         folder = path.rsplit(os.sep, 1)[1]
-
-#     if not os.path.isdir(path):
-#         return None
-
-#     # The file is part of a car
-#     if props.prm_check_parameters and "parameters.txt" in os.listdir(path):
-#         filepath = os.path.join(path, "parameters.txt")
-#         if not filepath in PARAMETERS:
-#             PARAMETERS[filepath] = read_parameters(filepath)
-#         tpage = PARAMETERS[filepath]["tpage"].split(os.sep)[-1]
-
-#         return os.path.join(path, tpage)
-
-#     # The file is part of a track
-#     elif is_track_folder(path): 
-#         tpage = int_to_texture(tex_num, folder.lower())
-#         return os.path.join(path, tpage)
-#     else:
-#         return os.path.join(path, int_to_texture(tex_num, "dummy"))
-
-
 # def is_track_folder(path):
 #     for f in os.listdir(path):
 #         if ".inf" in f:
@@ -780,5 +755,7 @@ def get_format(fstr):
 
     if ext == "ldo":
         return FORMAT_LDO
+    elif ext == "ini":
+        return FORMAT_INI
     else:
         return FORMAT_UNK

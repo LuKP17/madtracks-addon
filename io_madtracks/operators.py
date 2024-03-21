@@ -48,8 +48,13 @@ class ImportMad(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        # props = scene.revolt
+        props = scene.madtracks
+
         frmt = get_format(self.filepath)
+
+        if props.madtracks_dir == "":
+            msg_box("No data directory specified.")
+            return {'CANCELLED'}
 
         start_time = time.time()
 
@@ -59,10 +64,33 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_UNK:
             msg_box("Unsupported format.")
+
+        if frmt == FORMAT_INI:
+            # differentiate between .ini files based on filepath
+            if DESCRIPTOR_PATH.split("\\")[-2] in self.filepath:
+                frmt = FORMAT_OBJ_INI
+            elif LEVEL_PATH.split("\\")[-2] in self.filepath:
+                frmt = FORMAT_LVL_INI
         
-        elif frmt == FORMAT_LDO:
+        if frmt == FORMAT_LDO:
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
+
+            # Enables texture mode after import
+            # if props.enable_tex_mode:
+            enable_any_tex_mode(context)
+        
+        elif frmt == FORMAT_OBJ_INI:
+            from . import object_in
+            object_in.import_file(self.filepath, scene)
+
+            # Enables texture mode after import
+            # if props.enable_tex_mode:
+            enable_any_tex_mode(context)
+        
+        elif frmt == FORMAT_LVL_INI:
+            from . import level_in
+            level_in.import_file(self.filepath, scene)
 
             # Enables texture mode after import
             # if props.enable_tex_mode:
@@ -156,17 +184,27 @@ class ImportMad(bpy.types.Operator):
         return {"FINISHED"}
 
     def draw(self, context):
-        # props = context.scene.revolt
+        props = context.scene.madtracks
         layout = self.layout
         space = context.space_data
 
         # Gets the format from the file path
-        frmt = get_format(space.params.filename)
+        frmt = get_format(space.params.directory + space.params.filename)
 
         if frmt == -1 and not space.params.filename == "":
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
+            if frmt == FORMAT_INI:
+                # differentiate between .ini files based on filepath
+                if DESCRIPTOR_PATH.split("\\")[-2] in space.params.directory:
+                    frmt = FORMAT_OBJ_INI
+                elif LEVEL_PATH.split("\\")[-2] in space.params.directory:
+                    frmt = FORMAT_LVL_INI
             layout.label("Import {}:".format(FORMATS[frmt]))
+
+        if frmt == FORMAT_LDO:
+            box = layout.box()
+            box.prop(props, "separate_atomics")
 
         # if frmt in [FORMAT_W, FORMAT_PRM, FORMAT_NCP]:
             # box = layout.box()

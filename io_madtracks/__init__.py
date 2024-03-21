@@ -29,7 +29,30 @@
 #
 # - enabled Mad Tracks 3D view panel in object mode and import function
 #
-# - implemented .ldo import from prm_in, good enough for now
+# - implemented .ldo import, good enough for now
+#   MAD TRACKS ENGINE ISSUE:
+#   Only one UV coordinate is assigned per vertex,
+#   instead of assigning a list of UV coordinates per polygon.
+#   So the vertex needs to be duplicated if it's shared by 2 polygons mapped to
+#   different regions of the texture.
+#   => it doubles the vertex count for every model in the game
+#   => it makes Blender's "Lightmap Pack" impossible to use, since it considers that UV-mapping
+#   is assigned per polygon and gives vertices multiple UV coordinates.
+#   Meaning I need to find another solution for .ldl file export!
+#
+# - started implementing level .ini import
+#   MAD TRACKS FILE FORMAT ISSUE:
+#   Level .ini files do not seem to respect the file specification,
+#   as they contain duplicate sections and their order matter because of trackparts.
+#   => it makes Python's configparser and other .ini readers impossible to use, since they
+#   consider that sections are unique and their order is irrelevant.
+#   Meaning I need to write a dedicated level .ini reader!
+#
+##################################################################################
+#   CLEANER CODE! MORE SMALL FUNCTIONS! MORE DEBUG PRINTING! MORE COMMENTS!
+##################################################################################
+# - TODO point out in the installation part of the repo that the madtracks_dir variable needs to be set
+#   to be able to import/export files.
 ##############################################################################
 
 """
@@ -46,16 +69,16 @@ import imp
 
 from . import (
     common,
-    layers,
+#     layers,
     operators,
 #     texanim,
 #     tools,
 )
 
 from .props import (
-    props_mesh,
-#     props_obj,
-#     props_scene,
+#     props_mesh,
+    props_obj,
+    props_scene,
 )
 
 from .ui import (
@@ -65,7 +88,7 @@ from .ui import (
 #     instances,
 #     light,
 #     hull,
-#     object,
+    object,
 #     scene,
 #     vertex,
 #     texanim,
@@ -75,10 +98,10 @@ from .ui import (
 
 # # Reloads potentially changed modules on reload (F8 in Blender)
 imp.reload(common)
-imp.reload(layers)
-imp.reload(props_mesh)
-# imp.reload(props_obj)
-# imp.reload(props_scene)
+# imp.reload(layers)
+# imp.reload(props_mesh)
+imp.reload(props_obj)
+imp.reload(props_scene)
 imp.reload(operators)
 # imp.reload(texanim)
 # imp.reload(tools)
@@ -90,7 +113,7 @@ imp.reload(headers)
 # imp.reload(instances)
 # imp.reload(light)
 # imp.reload(hull)
-# imp.reload(object)
+imp.reload(object)
 # imp.reload(scene)
 # imp.reload(vertex)
 # imp.reload(texanim)
@@ -110,6 +133,10 @@ if "img_in" in locals():
     imp.reload(img_in)
 if "ldo_in" in locals():
     imp.reload(ldo_in)
+if "object_in" in locals():
+    imp.reload(object_in)
+if "level_in" in locals():
+    imp.reload(level_in)
 # if "prm_out" in locals():
 #     imp.reload(prm_out)
 # if "ncp_in" in locals():
@@ -134,9 +161,9 @@ if "ldo_in" in locals():
 
 # Makes common variables and classes directly accessible
 from .common import *
-from .props.props_mesh import *
-# from .props.props_obj import *
-# from .props.props_scene import *
+# from .props.props_mesh import *
+from .props.props_obj import *
+from .props.props_scene import *
 # from .texanim import *
 
 bl_info = {
@@ -179,15 +206,15 @@ def menu_func_import(self, context):
 def register():
     bpy.utils.register_module(__name__)
 
-    # bpy.types.Scene.revolt = bpy.props.PointerProperty(
-    #     type=RVSceneProperties
-    # )
-    # bpy.types.Object.revolt = bpy.props.PointerProperty(
-    #     type=RVObjectProperties
-    # )
-    bpy.types.Mesh.madtracks = bpy.props.PointerProperty(
-        type=MadMeshProperties
+    bpy.types.Scene.madtracks = bpy.props.PointerProperty(
+        type=MadSceneProperties
     )
+    bpy.types.Object.madtracks = bpy.props.PointerProperty(
+        type=MadObjectProperties
+    )
+    # bpy.types.Mesh.revolt = bpy.props.PointerProperty(
+    #     type=RVMeshProperties
+    # )
 
     bpy.types.INFO_MT_file_import.prepend(menu_func_import)
     # bpy.types.INFO_MT_file_export.prepend(menu_func_export)
@@ -200,9 +227,9 @@ def register():
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-    # del bpy.types.Scene.revolt
-    # del bpy.types.Object.revolt
-    del bpy.types.Mesh.madtracks
+    del bpy.types.Scene.madtracks
+    del bpy.types.Object.madtracks
+    # del bpy.types.Mesh.revolt
 
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     # bpy.types.INFO_MT_file_export.remove(menu_func_export)
