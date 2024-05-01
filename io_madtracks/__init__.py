@@ -82,10 +82,10 @@ from .props import (
 )
 
 from .ui import (
-#     menu_add,
+#   menu_add,
     headers,
 #     faceprops,
-#     instances,
+    trackparts,
 #     light,
 #     hull,
     object,
@@ -110,7 +110,7 @@ imp.reload(operators)
 # imp.reload(menu_add)
 imp.reload(headers)
 # imp.reload(faceprops)
-# imp.reload(instances)
+imp.reload(trackparts)
 # imp.reload(light)
 # imp.reload(hull)
 imp.reload(object)
@@ -137,6 +137,8 @@ if "object_in" in locals():
     imp.reload(object_in)
 if "level_in" in locals():
     imp.reload(level_in)
+if "trackpart_in" in locals():
+    imp.reload(trackpart_in)
 # if "prm_out" in locals():
 #     imp.reload(prm_out)
 # if "ncp_in" in locals():

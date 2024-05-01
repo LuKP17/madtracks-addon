@@ -36,7 +36,6 @@ from bpy.props import (
 )
 from ..common import *
 
-
 class MadObjectProperties(bpy.types.PropertyGroup):
     # Trackparts
     is_trackpart = BoolProperty(
@@ -45,14 +44,19 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         description = "Object is a trackpart"
     )
     num_sequence = IntProperty(
-        name="Sequence Number",
-        default=0,
-        description="Which trackpart sequence the trackpart belongs to. Starts at sequence 0"
+        name = "Sequence",
+        default = -1,
+        description = "Which trackpart sequence the trackpart belongs to. Valid values start at 0"
     )
     num_trackpart = IntProperty(
-        name="Trackpart Number",
-        default=0,
-        description="Where in the trackpart sequence the trackpart is. Start at trackpart 0"
+        name = "Trackpart Number",
+        default = -1,
+        description = "Where in the trackpart sequence the trackpart is. Valid values start at 0"
+    )
+    descriptor = StringProperty(
+        name = "Descriptor Name",
+        default = "",
+        description = "Filename of the trackpart's descriptor"
     )
 
     # # Debug Objects

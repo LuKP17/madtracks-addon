@@ -23,7 +23,7 @@ if "bpy" in locals():
     imp.reload(object_in)
     imp.reload(madstructs)
     imp.reload(madini)
-    # imp.reload(trackparts)
+    imp.reload(trackparts)
 
 import os
 import bpy
@@ -33,14 +33,14 @@ from . import ldo_in
 from . import object_in
 from . import madstructs
 from . import madini
-# from . import trackparts
+from . import trackparts
 
 from .common import *
 from .ldo_in import *
 from .object_in import *
 from .madstructs import *
 from .madini import *
-# from .trackparts import *
+from .trackparts import *
 
 # EASIER SOLUTION
 # - get the filled .ini file structure
@@ -74,9 +74,13 @@ def import_file(filepath, scene):
 
     with open(filepath, 'r') as file:
         filename = os.path.basename(filepath)
+        # disable separate atomics property
+        separate_atomics_save = props.separate_atomics
+        props.separate_atomics = False
         # read and store level .ini file
         ini = INI(file)
 
+        num_sequence = 0
         si = 0
         while si < len(ini.sections):
             # get current section and its type
@@ -84,19 +88,23 @@ def import_file(filepath, scene):
             ext = section.as_dict()['Filename'].split(".", 1)[1]
             # import section
             if ext == "ldo":
-                import_geometry_instance(section)
+                import_geometry_instance(section, scene)
             elif ext == "ini":
                 descriptor_filename = props.madtracks_dir + DESCRIPTOR_PATH + section.as_dict()['Filename']
                 # check object type (trackpart or not?)
                 with open(descriptor_filename, 'r') as descriptor:
                     ini_descriptor = INI(descriptor).as_dict()
                     if "ObjectType" in ini_descriptor['object'].keys() and (ini_descriptor['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
-                        si = import_trackpart_sequence(ini, si)
+                        si = import_trackpart_sequence(ini, si, num_sequence, scene)
+                        num_sequence += 1
                     else:
-                        import_object_instance(section)
+                        import_object_instance(section, scene)
             # go to next section
             si += 1
-    
+
+    # reinstate old separate atomics property
+    props.separate_atomics = separate_atomics_save
+
     print("Imported {}".format(filename))
 
             # # the filename parameter is guaranteed, import it and retrieve the Blender object(s)
@@ -178,33 +186,84 @@ def import_file(filepath, scene):
             #             anchorRot[2] = anchorRot[2] + trackparts[fname]['rot_offset'][2]
 
 
-def import_geometry_instance(section):
-    # DO STUFF HERE
-    pass
+def import_geometry_instance(section, scene):
+    props = scene.madtracks
+
+    # create Blender object
+    fname = section.as_dict()['Filename']
+    obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + fname.split("/", 1)[1], scene)
+
+    # edit location and rotation of Blender object
+    place_blender_object(section, obj)
+
+    return
 
 
-def import_object_instance(section):
-    # DO STUFF HERE
-    pass
+def import_object_instance(section, scene):
+    props = scene.madtracks
+
+    # create Blender object
+    fname = section.as_dict()['Filename']
+    obj = object_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + fname, scene)
+
+    # edit location and rotation of Blender object
+    place_blender_object(section, obj)
+
+    return obj
 
 
 # - manage trackparts Blender properties
 # - call functions in trackparts.py to do the anchor computation for us
-def import_trackpart_sequence(ini, si):
+def import_trackpart_sequence(ini, si, num_sequence, scene):
     """
     Returns the last section imported.
     """
-    num_sequence = -1
+    props = scene.madtracks
+    
+    num_trackpart = 0
     anchorPos = [0, 0, 0]
     anchorRot = [0, 0, 0]
-    # HERE import first trackpart that obviously has coordinates
+    if props.load_trackparts:
+        # TODO call trackparts.append_trackpart(ini.sections[si], num_sequence) instead?
+        obj = import_object_instance(ini.sections[si], scene)
+        obj.madtracks.num_sequence = num_sequence
+        obj.madtracks.num_trackpart = num_trackpart
+        num_trackpart += 1
     si += 1
     while si < len(ini.sections) and len(ini.sections[si].params) == 1:
-        # import current trackpart
+        if props.load_trackparts:
+            # TODO call trackparts.append_trackpart(ini.sections[si], num_sequence)?
+            # update num_trackpart
+            pass
         # go to next trackpart
         si += 1
     
     return si - 1
+
+
+def place_blender_object(section, obj):
+    """
+    Edits a Blender object location and rotation.
+    """
+    bpy.context.object.name = obj.name
+    bpy.context.object.rotation_mode = 'AXIS_ANGLE'
+
+    if len(section.params) == 4:
+        obj.location = to_blender_coord(section.as_dict()['Position'])
+        # compute rotation matrix from directions
+        rotation_matrix = rotation_matrix_from_directions(section.as_dict()['DirectionAT'], section.as_dict()['DirectionUp'])
+        # convert rotation matrix to axis-angle representation
+        axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
+        axis = to_blender_axis(axis)
+        obj.rotation_axis_angle[0] = angle
+        obj.rotation_axis_angle[1] = axis[0]
+        obj.rotation_axis_angle[2] = axis[1]
+        obj.rotation_axis_angle[3] = axis[2]
+    else:
+        # we never go there yet
+        pass
+
+    return
 
 
 # def import_geometry(filename, position, directionAT, directionUp, scene):

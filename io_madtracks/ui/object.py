@@ -29,14 +29,14 @@ class MadTracksObjectPanel(bpy.types.Panel):
 
         layout.label("Mad Tracks Properties")
 
-        # Trackpart properties
-        box = layout.box()
-        box.label("Trackpart Properties:")
-        box.prop(objprops, "is_trackpart")
-
-        if objprops.is_trackpart:
-            box.prop(context.object.madtracks, "num_sequence")
-            box.prop(context.object.madtracks, "num_trackpart")
+        # Debug properties
+        if DEBUG:
+            if objprops.is_trackpart:
+                box = layout.box()
+                box.label("Trackpart:")
+                box.prop(objprops, "num_sequence")
+                box.prop(objprops, "num_trackpart")
+                box.prop(objprops, "descriptor")
 
         # # NCP properties
         # box = layout.box()

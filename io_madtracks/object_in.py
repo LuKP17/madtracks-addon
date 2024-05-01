@@ -37,9 +37,6 @@ def import_file(filepath, scene):
     Returns a Blender object with geometry data and added Mad Tracks properties.
     """
     props = scene.madtracks
-    separate_atomics_save = props.separate_atomics
-    props.separate_atomics = False
-
     with open(filepath, 'r') as file:
         # read the .ini file
         ini = INI(file).as_dict()
@@ -54,7 +51,5 @@ def import_file(filepath, scene):
         # transfer properties from object to Blender object
         if "ObjectType" in ini['object'].keys() and (ini['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
             obj.madtracks.is_trackpart = True
-
-    props.separate_atomics = separate_atomics_save
 
     return obj

@@ -48,10 +48,32 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nNeeded for import/export"
     )
 
+    # LDO import
     separate_atomics = BoolProperty(
         name = "Separate Atomics",
         default = True,
         description = "Keep the geometry atomics in separate objects"
+    )
+
+    # Level import
+    load_trackparts = BoolProperty(
+        name = "Load Trackparts",
+        default = True,
+        description = "Load the trackparts contained in the level"
+    )
+
+    # Trackparts
+    # PROPERTIES CAN TAKE A "update" PARAMETERS WHICH IS THE FUNCTION CALLED WHEN THE VALUE CHANGES
+    # CAN BE USEFUL
+    trackpart_category = EnumProperty(
+        name = "Category",
+        description = "Select the trackpart category",
+        items = TRACKPART_CATEGORIES
+    )
+    trackpart_medium = EnumProperty(
+        name = "Medium",
+        description = "Select the trackpart",
+        items = TRACKPARTS_MEDIUM
     )
 
     # User interface and misc.

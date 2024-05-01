@@ -46,7 +46,7 @@ PARAMETERS = {}  # Glocal dict to hold parameters
 
 
 # If True, more debug messages will be printed
-DEBUG =             True
+DEBUG =             True # TODO disable for release version!
 
 SCALE =             1
 
@@ -142,6 +142,30 @@ DUMMY_TYPE_BONUS =  11
 #     NCP_OIL,
 #     NCP_NOCOLL
 # ]
+
+TRACKPART_CATEGORIES = (
+    # ("X", "Control", "Starts, checkpoints, finishes", ?),
+    # ("S", "Small", "Small trackparts", ?),
+    ("M", "Medium", "Medium trackparts", 0),
+    # ("W", "Wood", "Wood trackparts", ?),
+    # ("B", "Bobsleigh", "Bobsleigh trackparts", ?),
+    # ("C", "Croquet", "Croquet trackparts", ?),
+    # ("G", "Golf", "Golf trackparts", ?),
+    # ("V", "Vent", "Vent trackparts", ?),
+    # ("A", "Antartica", "Antartica trackparts", ?),
+)
+TRACKPARTS_MEDIUM = (
+    ("M_gris_amorce_05_in.ini", "Amorce 05", "Medium amorce", 0),
+    ("M_gris_amorce_15_in.ini", "Amorce 15", "Medium amorce", 1),
+    ("M_gris_amorce_30_in.ini", "Amorce 30", "Medium amorce", 2),
+    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 3),
+    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 4),
+    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 5),
+    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 6),
+    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 7),
+    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 8),
+    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 9),
+)
 
 # MATERIALS = (
 #     ("-1", "NONE", "No material. Faces with this material will not be exported.", "POTATO", -1),
@@ -298,11 +322,11 @@ Axes are saved differently and many indices are saved in a different order.
 """
 
 def to_blender_axis(vec):
-    return (-vec[0], vec[2], vec[1])
+    return [-vec[0], vec[2], vec[1]]
 
 
 def to_blender_coord(vec):
-    return (-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE)
+    return [-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE]
 
 
 def to_blender_scale(num):
@@ -310,11 +334,11 @@ def to_blender_scale(num):
 
 
 def to_madtracks_axis(vec):
-    return (-vec[0], vec[2], vec[1])
+    return [-vec[0], vec[2], vec[1]]
 
 
 def to_madtracks_coord(vec):
-    return (-vec[0] / SCALE, vec[2] / SCALE, vec[1] / SCALE)
+    return [-vec[0] / SCALE, vec[2] / SCALE, vec[1] / SCALE]
 
 
 def to_madtracks_scale(num):
