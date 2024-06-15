@@ -391,30 +391,13 @@ TRACKPARTS ---------------------------------------------------------------------
 # >> use Blender operators? How to compute the axis parameter?
 # bpy.ops.transform.rotate(value=0.528511, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
 # bpy.ops.transform.rotate(value=-0.782533, axis=(0, -0.504248, 0.863559), constraint_axis=(False, False, True), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-
-# - create get_index function that returns the trackpart of a sequence at the given index (last and second to last will be used for trackpart operators)
-# - implement remove operator
-# - create rotate_vector() utility function, used by update_anchor but also by export tools in the futire
-# - move everything at the right files (putting functions in trackpart_in didn't work for some reason)
-# - keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
 #
-
-def get_penultimate_trackpart(context, groupName):
-    """
-    Requires all trackparts of the sequence to be selected.
-    Returns the second to last trackpart of the sequence.
-    """
-    trackpart = None
-    i = 0
-    while not trackpart and i < len(bpy.data.objects):
-        ob = bpy.data.objects[i]
-        if groupName in ob.users_group[0].name and ob.madtracks.num_trackpart == len(context.selected_objects) - 2:
-            trackpart = ob
-        i += 1
-
-    print("Penultimate trackpart is:", trackpart)
-    return trackpart
-    
+# - implement remove operator
+# - new and append operators look remarkably similar...
+# - create rotate_vector() utility function, used by update_anchor but also by export tools in the futire
+# - fix slight inacurracies in trackpart offsets that add up and might be annoying if I want the road to land on a surface just right
+# - keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
+# - restricting rotation causes some issues when rotating a trackpart sequence, just reporting
 
 class ButtonNewTrackpartSequence(bpy.types.Operator):
     bl_idname = "trackpart_sequence.new"
@@ -455,7 +438,7 @@ class ButtonAppendTrackpartSequence(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         props = scene.madtracks
-        # get sequence group name and length while selected trackparts are selected
+        # get sequence group name and length while trackparts are selected
         sequence = context.selected_objects[0].users_group[0]
         num_trackpart = len(context.selected_objects)
         # get filepath of trackpart to import
@@ -476,9 +459,7 @@ class ButtonAppendTrackpartSequence(bpy.types.Operator):
         bpy.ops.object.select_grouped(type='GROUP')
         
         # move the trackpart at the end of the sequence
-        previous = get_penultimate_trackpart(context, sequence.name)
-        print("previous:", previous.name)
-        print("current:", trackpart.name)
+        previous = trackpart_in.get_trackpart_at(sequence.name, len(context.selected_objects) - 2)
         trackpart.location, trackpart.rotation_euler = trackpart_in.update_anchor(previous.madtracks.descriptor, previous.location, previous.rotation_euler)
         # Enables texture mode after import
         # if props.enable_tex_mode:

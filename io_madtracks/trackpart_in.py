@@ -26,7 +26,7 @@ from . import common
 from . import ldo_in
 from . import object_in
 from . import madstructs
-from . import madinix
+from . import madini
 
 from .common import *
 from .ldo_in import *
@@ -78,6 +78,20 @@ trackparts = {
         "rot_offset" : [0, 0, 0]
     },
 }
+
+def get_trackpart_at(groupName, number):
+    """
+    Returns the trackpart of the sequence at the given number.
+    """
+    trackpart = None
+    i = 0
+    while not trackpart and i < len(bpy.data.objects):
+        ob = bpy.data.objects[i]
+        if groupName in ob.users_group[0].name and ob.madtracks.num_trackpart == number:
+            trackpart = ob
+        i += 1
+    
+    return trackpart
 
 def update_anchor(descriptor, anchorPos, anchorRot):
     """
