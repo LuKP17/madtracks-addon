@@ -387,17 +387,17 @@ TRACKPARTS ---------------------------------------------------------------------
 ##########################
 # TODO
 #
-# - fix anchor calculations when making a turn while being banked (apply rotation offsets in the object's local frame)
+# - fix trackpart_in.update_anchor()
+# >> fix anchor calculations when making a turn while being banked (apply rotation offsets in the object's local frame)
 # >> use Blender operators? How to compute the axis parameter?
 # bpy.ops.transform.rotate(value=0.528511, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
 # bpy.ops.transform.rotate(value=-0.782533, axis=(0, -0.504248, 0.863559), constraint_axis=(False, False, True), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+# >> create rotate_vector() utility function, used by update_anchor but also by export tools in the future
 #
-# - implement remove operator
-# - new and append operators look remarkably similar...
-# - create rotate_vector() utility function, used by update_anchor but also by export tools in the futire
 # - fix slight inacurracies in trackpart offsets that add up and might be annoying if I want the road to land on a surface just right
 # - keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
 # - restricting rotation causes some issues when rotating a trackpart sequence, just reporting
+# - better code: New and Append operators look remarkably similar...
 
 class ButtonNewTrackpartSequence(bpy.types.Operator):
     bl_idname = "trackpart_sequence.new"
@@ -473,6 +473,15 @@ class ButtonRemoveTrackpartSequence(bpy.types.Operator):
     bl_description = "Remove the last trackpart of the active trackpart sequence"
 
     def execute(self, context):
+        # get sequence group name and length while trackparts are selected
+        sequence = context.selected_objects[0].users_group[0]
+        # get and remove the last trackpart of the sequence
+        last = trackpart_in.get_trackpart_at(sequence.name, len(context.selected_objects) - 1)
+        bpy.data.objects.remove(bpy.data.objects[last.name], do_unlink=True)
+
+        # Enables texture mode after import
+        # if props.enable_tex_mode:
+        enable_any_tex_mode(context)
         return {"FINISHED"}
 
 
