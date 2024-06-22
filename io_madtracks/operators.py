@@ -424,7 +424,7 @@ class ButtonAppendTrackpartSequence(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         props = scene.madtracks
-        # get sequence group name and length while trackparts are selected
+        # get sequence group and length while trackparts are selected
         sequence = context.selected_objects[0].users_group[0]
         num_trackpart = len(context.selected_objects)
         # get filepath of trackpart to import
@@ -459,11 +459,14 @@ class ButtonRemoveTrackpartSequence(bpy.types.Operator):
     bl_description = "Remove the last trackpart of the active trackpart sequence"
 
     def execute(self, context):
-        # get sequence group name and length while trackparts are selected
+        # get sequence group while trackparts are selected
         sequence = context.selected_objects[0].users_group[0]
         # get and remove the last trackpart of the sequence
         last = trackpart_in.get_trackpart_at(sequence.name, len(context.selected_objects) - 1)
         bpy.data.objects.remove(bpy.data.objects[last.name], do_unlink=True)
+        # if the sequence is now empty, delete the Blender group
+        if len(context.selected_objects) == 0:
+            bpy.data.groups.remove(bpy.data.groups[sequence.name])
 
         # Enables texture mode after import
         # if props.enable_tex_mode:
