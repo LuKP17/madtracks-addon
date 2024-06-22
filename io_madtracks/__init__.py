@@ -48,10 +48,27 @@
 #   consider that sections are unique and their order is irrelevant.
 #   Meaning I need to write a dedicated level .ini reader!
 #
+# - started implementing a trackpart editor
+#
 ##################################################################################
 #   CLEANER CODE! MORE SMALL FUNCTIONS! MORE DEBUG PRINTING! MORE COMMENTS!
 ##################################################################################
-# - TODO point out in the installation part of the repo that the madtracks_dir variable needs to be set
+# TODO
+#
+# - 
+#
+# - fix trackpart_in.update_anchor()
+# >> fix anchor calculations when making a turn while being banked (apply rotation offsets in the object's local frame)
+# >> use Blender operators? How to compute the axis parameter?
+# bpy.ops.transform.rotate(value=0.528511, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+# bpy.ops.transform.rotate(value=-0.782533, axis=(0, -0.504248, 0.863559), constraint_axis=(False, False, True), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+# >> create rotate_vector() utility function, used by update_anchor but also by export tools in the future
+#
+# - keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
+# - better code: New and Append operators look remarkably similar...
+# - when we remove the last and only trackpart of the sequence, delete the group as well, otherwise the next new sequence will have a huge number
+#
+# - point out in the installation part of the repo that the madtracks_dir variable needs to be set
 #   to be able to import/export files.
 ##############################################################################
 

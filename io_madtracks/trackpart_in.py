@@ -70,7 +70,7 @@ trackparts = {
         "rot_offset" : [-30, 0, 0]
     },
     "M_gris_rampe_30_down.ini" : {
-        "pos_offset" : [0, -10.9245, 40.3482],
+        "pos_offset" : [0, -10.7132, 40.4182],
         "rot_offset" : [30, 0, 0]
     },
     "M_none_checkpoint.ini" : {
