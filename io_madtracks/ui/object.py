@@ -31,12 +31,13 @@ class MadTracksObjectPanel(bpy.types.Panel):
 
         # Debug properties
         if DEBUG:
+            box = layout.box()
+            box.prop(objprops, "descriptor")
             if objprops.is_trackpart:
                 box = layout.box()
                 box.label("Trackpart:")
                 box.prop(objprops, "num_sequence")
                 box.prop(objprops, "num_trackpart")
-                box.prop(objprops, "descriptor")
 
         # # NCP properties
         # box = layout.box()

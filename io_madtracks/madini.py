@@ -62,7 +62,6 @@ class INI:
                 if values[0] == '"':
                     # string value
                     parameter.values = values[1:-1]
-                # FIXME convert string numbers to floats (float() doesn't seem to work of course)
                 elif "," in values:
                     # multiple numbers
                     values = values.split(",")

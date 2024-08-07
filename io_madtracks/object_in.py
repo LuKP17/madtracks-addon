@@ -49,6 +49,7 @@ def import_file(filepath, scene):
         obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldoFilename, scene)
         
         # transfer properties from object to Blender object
+        obj.madtracks.descriptor = filepath.split("\\")[-1]
         if "ObjectType" in ini['object'].keys() and (ini['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
             obj.madtracks.is_trackpart = True
 

@@ -23,7 +23,6 @@ if "bpy" in locals():
     imp.reload(object_in)
     imp.reload(madstructs)
     imp.reload(madini)
-    imp.reload(trackparts)
 
 import os
 import bpy
@@ -33,14 +32,12 @@ from . import ldo_in
 from . import object_in
 from . import madstructs
 from . import madini
-from . import trackparts
 
 from .common import *
 from .ldo_in import *
 from .object_in import *
 from .madstructs import *
 from .madini import *
-from .trackparts import *
 
 # EASIER SOLUTION
 # - get the filled .ini file structure

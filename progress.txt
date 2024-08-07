@@ -1,0 +1,67 @@
+MAD TRACKS LEVEL EDITOR PROGRESS
+================================
+
+GENERAL
+---------
+
+- defined new bpy type "MadMeshProperties" containing a material number
+   to assign to each face of a mesh
+
+- enabled Mad Tracks 3D view panel in object mode and import function
+
+
+IMPORT
+---------
+
+- implemented .ldo import, good enough for now
+	MAD TRACKS ENGINE ISSUE:
+	Only one UV coordinate is assigned per vertex,
+	instead of assigning a list of UV coordinates per polygon.
+	So the vertex needs to be duplicated if it's shared by 2 polygons mapped to
+	different regions of the texture.
+	=> it doubles the vertex count for every model in the game
+	=> it makes Blender's "Lightmap Pack" impossible to use, since it considers that UV-mapping
+	is assigned per polygon and gives vertices multiple UV coordinates.
+	Meaning I need to find another solution for .ldl file export!
+
+- started implementing level .ini import, without trackparts
+	ISSUES
+	Rotation of some objects are wrong (might be because of Gimbal lock).
+	MAD TRACKS FILE FORMAT ISSUE:
+	Level .ini files do not seem to respect the file specification,
+	as they contain duplicate sections and their order matter because of trackparts.
+	=> it makes Python's configparser and other .ini readers impossible to use, since they
+	consider that sections are unique and their order is irrelevant.
+	Meaning I had to write a dedicated level .ini reader!
+
+- started implementing a trackpart editor, in progress
+	There are two distinct aspects: track building and track visualization.
+	Having problems with visualization doesn't mean the track will have a problem in-game.
+	It's because of the way trackpart sequences are stored, with only the first trackpart having coordinates.
+	ISSUES
+	Rotation of banked trackparts are wrong in Blender, meaning the next trackparts will also look wrong. It'll be fine in-game though.
+
+
+TODO
+- simplify anchor computations in trackpart (so in trackpart.append_to_sequence()), start from the beginning of the sequence everytime
+>> needed at first because it gets rid of the "Invert" problem where the trackpart won't be positioned/rotated correctly
+>> rely on the trackpart dictionary offsets instead of the objects location/rotation
+>> rotate the trackpart to append by starting at the first trackpart and applying the rotation offset sequence, use local rotation -> object.rotation_euler.rotate_axis("Z", radians(90))
+>> can I do the same thing for translations? In the object's local frame -> bpy.ops.transform.translate(value=(0, 0, -10.7132), constraint_axis=(False, False, True), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+
+>> starting from the first trackpart might be slow for long trackpart sequences
+
+- keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
+
+- if really needed, handle inverted trackparts in the viewport
+>> this is not a problem for track building since my trackpart dictionary works per descriptor, so I already calculate the offsets by hand anyway.
+
+- point out in the installation part of the repo that the madtracks_dir variable needs to be set
+   to be able to import/export files.
+   
+   
+EXPORT
+---------
+
+Not started yet. Kind of anticipated with object properties when importing.
+I want to finish and refactor the level importer and trackpart editor beforehand.

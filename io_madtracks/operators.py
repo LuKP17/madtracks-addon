@@ -32,7 +32,7 @@ from .common import *
 # from .layers import *
 # from .texanim import *
 from . import object_in
-from . import trackpart_in
+from . import trackpart
 
 """
 IMPORT AND EXPORT -------------------------------------------------------------
@@ -392,24 +392,7 @@ class ButtonNewTrackpartSequence(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        props = scene.madtracks
-        # get filepath of trackpart to import
-        if props.trackpart_category == "M":
-            descriptor = props.trackpart_medium
-            filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
-        trackpart = object_in.import_file(filepath, scene)
-        # set trackpart properties
-        trackpart.madtracks.num_trackpart = 0
-        trackpart.madtracks.descriptor = descriptor
-        # restrict rotation
-        trackpart.lock_rotation[0] = True
-        trackpart.lock_rotation[1] = True
-        trackpart.lock_rotation[2] = False
-        # create a new trackpart sequence
-        sequence = bpy.data.groups.new("Sequence")
-        bpy.ops.object.group_link(group=sequence.name)
-        # select group to make the sequence "active"
-        bpy.ops.object.select_grouped(type='GROUP')
+        trackpart.append_to_new_sequence(scene)
         # Enables texture mode after import
         # if props.enable_tex_mode:
         enable_any_tex_mode(context)
@@ -423,30 +406,8 @@ class ButtonAppendTrackpartSequence(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        props = scene.madtracks
-        # get sequence group and length while trackparts are selected
         sequence = context.selected_objects[0].users_group[0]
-        num_trackpart = len(context.selected_objects)
-        # get filepath of trackpart to import
-        if props.trackpart_category == "M":
-            descriptor = props.trackpart_medium
-            filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
-        trackpart = object_in.import_file(filepath, scene)
-        # set trackpart properties
-        trackpart.madtracks.num_trackpart = num_trackpart
-        trackpart.madtracks.descriptor = descriptor
-        # restrict rotation
-        trackpart.lock_rotation[0] = True
-        trackpart.lock_rotation[1] = True
-        trackpart.lock_rotation[2] = False
-        # add to active trackpart sequence
-        bpy.ops.object.group_link(group=sequence.name)
-        # select group to make the sequence "active"
-        bpy.ops.object.select_grouped(type='GROUP')
-        
-        # move the trackpart at the end of the sequence
-        previous = trackpart_in.get_trackpart_at(sequence.name, len(context.selected_objects) - 2)
-        trackpart.location, trackpart.rotation_euler = trackpart_in.update_anchor(previous.madtracks.descriptor, previous.location, previous.rotation_euler)
+        trackpart.append_to_sequence(scene, sequence.name, len(context.selected_objects))
         # Enables texture mode after import
         # if props.enable_tex_mode:
         enable_any_tex_mode(context)
@@ -462,7 +423,7 @@ class ButtonRemoveTrackpartSequence(bpy.types.Operator):
         # get sequence group while trackparts are selected
         sequence = context.selected_objects[0].users_group[0]
         # get and remove the last trackpart of the sequence
-        last = trackpart_in.get_trackpart_at(sequence.name, len(context.selected_objects) - 1)
+        last = trackpart.get_trackpart(sequence.name, len(context.selected_objects) - 1)
         bpy.data.objects.remove(bpy.data.objects[last.name], do_unlink=True)
         # if the sequence is now empty, delete the Blender group
         if len(context.selected_objects) == 0:
@@ -519,7 +480,7 @@ class ButtonRemoveTrackpartSequence(bpy.types.Operator):
 #         return{"FINISHED"}
 
 # """
-# VERTEX COLROS -----------------------------------------------------------------
+# VERTEX COLORS -----------------------------------------------------------------
 # """
 
 # class ButtonColorFromActive(bpy.types.Operator):
