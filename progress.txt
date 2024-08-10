@@ -43,18 +43,9 @@ IMPORT
 
 
 TODO
-- simplify anchor computations in trackpart (so in trackpart.append_to_sequence()), start from the beginning of the sequence everytime
->> needed at first because it gets rid of the "Invert" problem where the trackpart won't be positioned/rotated correctly
->> rely on the trackpart dictionary offsets instead of the objects location/rotation
->> rotate the trackpart to append by starting at the first trackpart and applying the rotation offset sequence, use local rotation -> object.rotation_euler.rotate_axis("Z", radians(90))
->> can I do the same thing for translations? In the object's local frame -> bpy.ops.transform.translate(value=(0, 0, -10.7132), constraint_axis=(False, False, True), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-
->> starting from the first trackpart might be slow for long trackpart sequences
 
 - keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
-
-- if really needed, handle inverted trackparts in the viewport
->> this is not a problem for track building since my trackpart dictionary works per descriptor, so I already calculate the offsets by hand anyway.
+>> try to support all the trackparts for Gravity Zero and import the level
 
 - point out in the installation part of the repo that the madtracks_dir variable needs to be set
    to be able to import/export files.

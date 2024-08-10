@@ -52,5 +52,7 @@ def import_file(filepath, scene):
         obj.madtracks.descriptor = filepath.split("\\")[-1]
         if "ObjectType" in ini['object'].keys() and (ini['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
             obj.madtracks.is_trackpart = True
+            if "Invert" in ini['object'].keys():
+                obj.madtracks.invert = ini['object']['Invert']
 
     return obj

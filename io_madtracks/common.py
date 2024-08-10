@@ -157,14 +157,15 @@ TRACKPART_CATEGORIES = (
 TRACKPARTS_MEDIUM = (
     ("M_gris_amorce_05_in.ini", "Amorce 05", "Medium amorce", 0),
     ("M_gris_amorce_15_in.ini", "Amorce 15", "Medium amorce", 1),
-    ("M_gris_amorce_30_in.ini", "Amorce 30", "Medium amorce", 2),
-    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 3),
-    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 4),
-    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 5),
-    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 6),
-    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 7),
-    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 8),
-    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 9),
+    ("M_gris_amorce_30_in.ini", "Amorce 30 In", "Medium amorce in", 2),
+    ("M_gris_amorce_30_out.ini", "Amorce 30 Out", "Medium amorce out", 3),
+    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 4),
+    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 5),
+    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 6),
+    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 7),
+    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 8),
+    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 9),
+    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 10),
 )
 
 # MATERIALS = (

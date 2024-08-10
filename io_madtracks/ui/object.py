@@ -38,6 +38,7 @@ class MadTracksObjectPanel(bpy.types.Panel):
                 box.label("Trackpart:")
                 box.prop(objprops, "num_sequence")
                 box.prop(objprops, "num_trackpart")
+                box.prop(objprops, "invert")
 
         # # NCP properties
         # box = layout.box()

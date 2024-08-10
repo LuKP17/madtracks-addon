@@ -58,6 +58,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = -1,
         description = "Where in the trackpart sequence the trackpart is. Valid values start at 0"
     )
+    invert = BoolProperty(
+        name = "Invert",
+        default = False,
+        description = "If the trackpart is inverted"
+    )
 
     # # Debug Objects
     # is_bcube = BoolProperty(

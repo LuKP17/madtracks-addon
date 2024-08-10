@@ -50,6 +50,12 @@ trackparts = {
         "pos_offset" : [0, 0, 30],
         "rot_offset" : [0, 0, 0]
     },
+    "M_gris_amorce_30_out.ini" : {
+        "pos_offset" : [0, 0, 30],
+        "rot_offset" : [0, 0, 0],
+        "pos_invert" : [0, 0, 30],
+        "rot_invert" : [0, 180, 0]
+    },
     "M_gris_rail_15.ini" : {
         "pos_offset" : [0, 0, 15],
         "rot_offset" : [0, 0, 0]
@@ -80,12 +86,14 @@ trackparts = {
     },
 }
 
-def append_to_new_sequence(scene):
+def append_to_new_sequence(scene, descriptor=None):
     props = scene.madtracks
     # get filepath of trackpart to import
-    if props.trackpart_category == "M":
-        descriptor = props.trackpart_medium
-        filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
+    if descriptor == None:
+        # use the active descriptor set in the trackpart editor
+        if props.trackpart_category == "M":
+            descriptor = props.trackpart_medium
+    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties
     trackpart.madtracks.num_trackpart = 0
@@ -99,15 +107,16 @@ def append_to_new_sequence(scene):
     # select group to make the sequence "active"
     bpy.ops.object.select_grouped(type='GROUP')
 
-    return sequence.name
+    return trackpart
 
-def append_to_sequence(scene, groupName, groupSize):
+def append_to_sequence(scene, groupName, groupSize, descriptor=None):
     props = scene.madtracks
     # get filepath of trackpart to import
-    if props.trackpart_category == "M":
-        #descriptor = props.trackpart_medium
-        #filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
-        filepath = props.madtracks_dir + DESCRIPTOR_PATH + props.trackpart_medium
+    if descriptor == None:
+        # use the active descriptor set in the trackpart editor
+        if props.trackpart_category == "M":
+            descriptor = props.trackpart_medium
+    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties
     trackpart.madtracks.num_trackpart = groupSize
@@ -125,24 +134,14 @@ def append_to_sequence(scene, groupName, groupSize):
     first = get_trackpart(groupName, 0)
     trackpart.location = first.location
     trackpart.rotation_euler = first.rotation_euler
-    pos_vec = to_blender_axis(trackparts[first.madtracks.descriptor]['pos_offset'])
-    bpy.ops.transform.translate(value=(pos_vec[0], pos_vec[1], pos_vec[2]), constraint_axis=(pos_vec[0]!=0, pos_vec[1]!=0, pos_vec[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    rot_vec = to_blender_axis(trackparts[first.madtracks.descriptor]['rot_offset'])
-    trackpart.rotation_euler.rotate_axis("X", radians(rot_vec[0]))
-    trackpart.rotation_euler.rotate_axis("Y", radians(rot_vec[1]))
-    trackpart.rotation_euler.rotate_axis("Z", radians(rot_vec[2]))
-    for i in range(1, groupSize):
+    for i in range(0, groupSize):
         next = get_trackpart(groupName, i)
-        pos_vec = to_blender_axis(trackparts[next.madtracks.descriptor]['pos_offset'])
-        bpy.ops.transform.translate(value=(pos_vec[0], pos_vec[1], pos_vec[2]), constraint_axis=(pos_vec[0]!=0, pos_vec[1]!=0, pos_vec[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-        rot_vec = to_blender_axis(trackparts[next.madtracks.descriptor]['rot_offset'])
-        trackpart.rotation_euler.rotate_axis("X", radians(rot_vec[0]))
-        trackpart.rotation_euler.rotate_axis("Y", radians(rot_vec[1]))
-        trackpart.rotation_euler.rotate_axis("Z", radians(rot_vec[2]))
-
-    # select group to make the sequence "active" again
-    bpy.ops.object.select_grouped(type='GROUP')
-        
+        pos_offset = to_blender_axis(trackparts[next.madtracks.descriptor]['pos_offset'])
+        bpy.ops.transform.translate(value=(pos_offset[0], pos_offset[1], pos_offset[2]), constraint_axis=(pos_offset[0]!=0, pos_offset[1]!=0, pos_offset[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+        rot_offset = to_blender_axis(trackparts[next.madtracks.descriptor]['rot_offset'])
+        trackpart.rotation_euler.rotate_axis("X", radians(rot_offset[0]))
+        trackpart.rotation_euler.rotate_axis("Y", radians(rot_offset[1]))
+        trackpart.rotation_euler.rotate_axis("Z", radians(rot_offset[2]))
 
     # "Invert" descriptor flag for trackparts:
     # In the case of amorce_out, the model is rotated by 180°, not mirrored
@@ -157,11 +156,19 @@ def append_to_sequence(scene, groupName, groupSize):
     # My trackparts dictionary works per descriptor, so if I already hardcode the anchor offsets,
     # I just apply the inversion by hand.
     # The challenge is to invert the trackpart in the viewport.
-    # I NEED THAT because of the way I get the anchor (rotation of the second to last trackpart).
-    # Or I change the way I get the anchor: work from the first trackpart and move it to the end of the sequence using the dictionary offsets.
     # It can be ignored and it will still work at export though (maybe color the inverted trackparts in the viewport to say "Hey it's not this way in reality").
-    # As a simple solution I can maybe add "position_invert" and "rotation_invert" attributes to update in the viewport.
-    # Does it depend on the current anchor though?
+
+    # As a simple solution I added "position_invert" and "rotation_invert" attributes to update in the viewport.
+    if trackpart.madtracks.invert:
+        pos_invert = to_blender_axis(trackparts[trackpart.madtracks.descriptor]['pos_invert'])
+        bpy.ops.transform.translate(value=(pos_invert[0], pos_invert[1], pos_invert[2]), constraint_axis=(pos_invert[0]!=0, pos_invert[1]!=0, pos_invert[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+        rot_invert = to_blender_axis(trackparts[trackpart.madtracks.descriptor]['rot_invert'])
+        trackpart.rotation_euler.rotate_axis("X", radians(rot_invert[0]))
+        trackpart.rotation_euler.rotate_axis("Y", radians(rot_invert[1]))
+        trackpart.rotation_euler.rotate_axis("Z", radians(rot_invert[2]))
+
+    # select group to make the sequence "active" again
+    bpy.ops.object.select_grouped(type='GROUP')
 
 def get_trackpart(groupName, number):
     """
@@ -171,42 +178,8 @@ def get_trackpart(groupName, number):
     i = 0
     while not trackpart and i < len(bpy.data.objects):
         ob = bpy.data.objects[i]
-        if ob.users_group[0].name == groupName and ob.madtracks.num_trackpart == number:
+        if ob.madtracks.is_trackpart and ob.users_group[0].name == groupName and ob.madtracks.num_trackpart == number:
             trackpart = ob
         i += 1
     
     return trackpart
-
-# def update_anchor(descriptor, anchorPos, anchorRot):
-#     """
-#     Given a trackpart descriptor name and an anchor,
-#     return the updated anchor corresponding to the end of the trackpart.
-#     """
-#     # rotate pos_offset vector by trackpart's rotation
-#     pos_vec = to_blender_axis(trackparts[descriptor]["pos_offset"])
-#     rotation_x = np.array([[1, 0, 0],
-#                            [0, np.cos(anchorRot[0]), -np.sin(anchorRot[0])],
-#                            [0, np.sin(anchorRot[0]), np.cos(anchorRot[0])]])
-
-#     rotation_y = np.array([[np.cos(anchorRot[1]), 0, np.sin(anchorRot[1])],
-#                            [0, 1, 0],
-#                            [-np.sin(anchorRot[1]), 0, np.cos(anchorRot[1])]])
-
-#     rotation_z = np.array([[np.cos(anchorRot[2]), -np.sin(anchorRot[2]), 0],
-#                            [np.sin(anchorRot[2]), np.cos(anchorRot[2]), 0],
-#                            [0, 0, 1]])
-#     pos_vec = np.dot(rotation_x, pos_vec)
-#     pos_vec = np.dot(rotation_y, pos_vec)
-#     pos_vec = np.dot(rotation_z, pos_vec)
-    
-#     # update anchorPos
-#     anchorPos = np.add(anchorPos, pos_vec)
-
-#     # update anchorRot
-#     rot_vec = to_blender_axis(trackparts[descriptor]["rot_offset"])
-#     rot_vec[0] = rot_vec[0]/180*np.pi
-#     rot_vec[1] = rot_vec[1]/180*np.pi
-#     rot_vec[2] = rot_vec[2]/180*np.pi
-#     anchorRot = np.add(anchorRot, rot_vec)
-    
-#     return anchorPos, anchorRot

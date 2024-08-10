@@ -11,8 +11,8 @@ Name:    level_in
 Purpose: Imports level .ini files.
 
 Description:
-These files contain geometry instances (.ldo files) from Gfx\models\Geometry
-and objects instances (.ini descriptors) from Bin\Descriptors, making a level.
+Level files contain geometry instances (.ldo files) from Gfx\models\Geometry
+and objects instances (.ini descriptors) from Bin\Descriptors.
 
 """
 
@@ -32,12 +32,14 @@ from . import ldo_in
 from . import object_in
 from . import madstructs
 from . import madini
+from . import trackpart
 
 from .common import *
 from .ldo_in import *
 from .object_in import *
 from .madstructs import *
 from .madini import *
+from .trackpart import *
 
 # EASIER SOLUTION
 # - get the filled .ini file structure
@@ -92,7 +94,7 @@ def import_file(filepath, scene):
                 with open(descriptor_filename, 'r') as descriptor:
                     ini_descriptor = INI(descriptor).as_dict()
                     if "ObjectType" in ini_descriptor['object'].keys() and (ini_descriptor['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
-                        si = import_trackpart_sequence(ini, si, num_sequence, scene)
+                        si = import_trackpart_sequence(ini, si, scene)
                         num_sequence += 1
                     else:
                         import_object_instance(section, scene)
@@ -210,28 +212,23 @@ def import_object_instance(section, scene):
 
 
 # - manage trackparts Blender properties
-# - call functions in trackparts.py to do the anchor computation for us
-def import_trackpart_sequence(ini, si, num_sequence, scene):
+# - reuse trackpart editor Blender operators
+def import_trackpart_sequence(ini, si, scene):
     """
     Returns the last section imported.
     """
     props = scene.madtracks
-    
-    num_trackpart = 0
-    anchorPos = [0, 0, 0]
-    anchorRot = [0, 0, 0]
     if props.load_trackparts:
-        # TODO call trackparts.append_trackpart(ini.sections[si], num_sequence) instead?
-        obj = import_object_instance(ini.sections[si], scene)
-        obj.madtracks.num_sequence = num_sequence
-        obj.madtracks.num_trackpart = num_trackpart
-        num_trackpart += 1
+        # create new trackpart sequence
+        ob = trackpart.append_to_new_sequence(scene, ini.sections[si].as_dict()['Filename'])
+        # place the first trackpart of the sequence with its INI coordinates
+        place_blender_object(ini.sections[si], ob)
     si += 1
     while si < len(ini.sections) and len(ini.sections[si].params) == 1:
         if props.load_trackparts:
-            # TODO call trackparts.append_trackpart(ini.sections[si], num_sequence)?
-            # update num_trackpart
-            pass
+            # append to active trackpart sequence
+            sequence = bpy.context.selected_objects[0].users_group[0]
+            trackpart.append_to_sequence(scene, sequence.name, len(bpy.context.selected_objects), ini.sections[si].as_dict()['Filename'])
         # go to next trackpart
         si += 1
     
