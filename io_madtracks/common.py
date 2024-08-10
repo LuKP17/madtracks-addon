@@ -145,27 +145,46 @@ DUMMY_TYPE_BONUS =  11
 
 TRACKPART_CATEGORIES = (
     # ("X", "Control", "Starts, checkpoints, finishes", ?),
-    # ("S", "Small", "Small trackparts", ?),
-    ("M", "Medium", "Medium trackparts", 0),
+    ("S", "Small", "Small trackparts", 0),
+    ("M", "Medium", "Medium trackparts", 1),
     # ("W", "Wood", "Wood trackparts", ?),
     # ("B", "Bobsleigh", "Bobsleigh trackparts", ?),
     # ("C", "Croquet", "Croquet trackparts", ?),
-    # ("G", "Golf", "Golf trackparts", ?),
+    ("G", "Golf", "Golf trackparts", 2),
     # ("V", "Vent", "Vent trackparts", ?),
     # ("A", "Antartica", "Antartica trackparts", ?),
 )
+TRACKPARTS_SMALL = (
+    ("S_bleu_amorce_15_in.ini", "Amorce 15 In", "Small amorce in", 0),
+    ("S_bleu_amorce_15_out.ini", "Amorce 15 Out", "Small amorce out", 1),
+    ("S_neon_rail_50.ini", "Straight Neon 50", "Small neon straight", 2),
+    ("S_neon_virage_45_left.ini", "Left 45", "Small left turn", 3),
+    ("S_neon_virage_45_right.ini", "Right 45", "Small right turn", 4),
+    ("S_raye_rampe_30_up.ini", "Up 30", "Small up ramp", 5),
+    ("S_raye_rampe_30_down.ini", "Down 30", "Small down ramp", 6),
+    ("S_gris_to_M_50.ini", "S to M 50", "Small to medium transition", 7),
+    ("S_raye_looping.ini", "Looping", "Small looping", 8),
+)
 TRACKPARTS_MEDIUM = (
-    ("M_gris_amorce_05_in.ini", "Amorce 05", "Medium amorce", 0),
-    ("M_gris_amorce_15_in.ini", "Amorce 15", "Medium amorce", 1),
-    ("M_gris_amorce_30_in.ini", "Amorce 30 In", "Medium amorce in", 2),
-    ("M_gris_amorce_30_out.ini", "Amorce 30 Out", "Medium amorce out", 3),
-    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 4),
-    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 5),
-    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 6),
-    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 7),
-    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 8),
-    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 9),
-    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 10),
+    ("M_gris_amorce_05_in.ini", "Amorce 05 In", "Medium amorce in", 0),
+    ("M_gris_amorce_15_in.ini", "Amorce 15 In", "Medium amorce in", 1),
+    ("M_gris_amorce_15_out.ini", "Amorce 15 Out", "Medium amorce out", 2),
+    ("M_gris_amorce_30_in.ini", "Amorce 30 In", "Medium amorce in", 3),
+    ("M_gris_amorce_30_out.ini", "Amorce 30 Out", "Medium amorce out", 4),
+    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 5),
+    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 6),
+    ("M_neon_rail_50.ini", "Straight Neon 50", "Medium neon straight", 7),
+    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 8),
+    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 9),
+    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 10),
+    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 11),
+    ("M_none_start.ini", "Start", "Medium start", 12),
+    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 13),
+    ("M_gris_to_S_50.ini", "M to S 50", "Medium to small transition", 14),
+)
+TRACKPARTS_GOLF = (
+    ("G_none_checkpoint.ini", "Checkpoint", "Golf checkpoint", 0),
+    ("G_none_finish.ini", "Finish", "Golf finish", 1),
 )
 
 # MATERIALS = (

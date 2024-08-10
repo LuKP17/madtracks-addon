@@ -50,7 +50,7 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
             row.prop(props, "trackpart_small", text="")
         elif props.trackpart_category == "M":
             row.prop(props, "trackpart_medium", text="")
-        else:
+        elif props.trackpart_category == "G":
             row.prop(props, "trackpart_golf", text="")
 
         layout.label("Active Sequence:")

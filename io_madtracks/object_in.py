@@ -50,7 +50,7 @@ def import_file(filepath, scene):
         
         # transfer properties from object to Blender object
         obj.madtracks.descriptor = filepath.split("\\")[-1]
-        if "ObjectType" in ini['object'].keys() and (ini['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
+        if "ObjectType" in ini['object'].keys() and (ini['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish", "looping"]):
             obj.madtracks.is_trackpart = True
             if "Invert" in ini['object'].keys():
                 obj.madtracks.invert = ini['object']['Invert']

@@ -70,10 +70,20 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Select the trackpart category",
         items = TRACKPART_CATEGORIES
     )
+    trackpart_small = EnumProperty(
+        name = "Small",
+        description = "Select the trackpart",
+        items = TRACKPARTS_SMALL
+    )
     trackpart_medium = EnumProperty(
         name = "Medium",
         description = "Select the trackpart",
         items = TRACKPARTS_MEDIUM
+    )
+    trackpart_golf = EnumProperty(
+        name = "Golf",
+        description = "Select the trackpart",
+        items = TRACKPARTS_GOLF
     )
 
     # User interface and misc.

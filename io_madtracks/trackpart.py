@@ -50,6 +50,12 @@ trackparts = {
         "pos_offset" : [0, 0, 30],
         "rot_offset" : [0, 0, 0]
     },
+    "M_gris_amorce_15_out.ini" : {
+        "pos_offset" : [0, 0, 15],
+        "rot_offset" : [0, 0, 0],
+        "pos_invert" : [0, 0, 15],
+        "rot_invert" : [0, 180, 0]
+    },
     "M_gris_amorce_30_out.ini" : {
         "pos_offset" : [0, 0, 30],
         "rot_offset" : [0, 0, 0],
@@ -61,6 +67,10 @@ trackparts = {
         "rot_offset" : [0, 0, 0]
     },
     "M_gris_rail_50.ini" : {
+        "pos_offset" : [0, 0, 50],
+        "rot_offset" : [0, 0, 0]
+    },
+    "M_neon_rail_50.ini" : {
         "pos_offset" : [0, 0, 50],
         "rot_offset" : [0, 0, 0]
     },
@@ -80,7 +90,65 @@ trackparts = {
         "pos_offset" : [0, -10.7132, 40.4182],
         "rot_offset" : [30, 0, 0]
     },
+    "M_none_start.ini" : {
+        "pos_offset" : [0, 0, 0],
+        "rot_offset" : [0, 0, 0]
+    },
     "M_none_checkpoint.ini" : {
+        "pos_offset" : [0, 0, 0],
+        "rot_offset" : [0, 0, 0]
+    },
+    "M_gris_to_S_50.ini" : {
+        "pos_offset" : [0, 0, 50],
+        "rot_offset" : [0, 0, 0],
+        "pos_invert" : [0, 0, 50],
+        "rot_invert" : [0, 180, 0]
+    },
+    "S_bleu_amorce_15_in.ini" : {
+        "pos_offset" : [0, 0, 15],
+        "rot_offset" : [0, 0, 0]
+    },
+    "S_bleu_amorce_15_out.ini" : {
+        "pos_offset" : [0, 0, 15],
+        "rot_offset" : [0, 0, 0],
+        "pos_invert" : [0, 0, 15],
+        "rot_invert" : [0, 180, 0]
+    },
+    "S_neon_rail_50.ini" : {
+        "pos_offset" : [0, 0, 50],
+        "rot_offset" : [0, 0, 0]
+    },
+    "S_neon_virage_45_left.ini" : {
+        "pos_offset" : [8.7924, 0, 21.2076],
+        "rot_offset" : [0, 45, 0]
+    },
+    "S_neon_virage_45_right.ini" : {
+        "pos_offset" : [-8.7924, 0, 21.2076],
+        "rot_offset" : [0, -45, 0],
+        "pos_invert" : [-8.7924, 0, 21.2076],
+        "rot_invert" : [0, 135, 0]
+    },
+    "S_raye_rampe_30_up.ini" : {
+        "pos_offset" : [0, 10.1114, 37.3328],
+        "rot_offset" : [-30, 0, 0]
+    },
+    "S_raye_rampe_30_down.ini" : {
+        "pos_offset" : [0, -10.342, 37.2943],
+        "rot_offset" : [30, 0, 0]
+    },
+    "S_gris_to_M_50.ini" : {
+        "pos_offset" : [0, 0, 50],
+        "rot_offset" : [0, 0, 0]
+    },
+    "S_raye_looping.ini" : {
+        "pos_offset" : [29.6271, 0.229707, 4.7106],
+        "rot_offset" : [0, 0, 0]
+    },
+    "G_none_checkpoint.ini" : {
+        "pos_offset" : [0, 0, 0],
+        "rot_offset" : [0, 0, 0]
+    },
+    "G_none_finish.ini" : {
         "pos_offset" : [0, 0, 0],
         "rot_offset" : [0, 0, 0]
     },
@@ -91,8 +159,12 @@ def append_to_new_sequence(scene, descriptor=None):
     # get filepath of trackpart to import
     if descriptor == None:
         # use the active descriptor set in the trackpart editor
-        if props.trackpart_category == "M":
+        if props.trackpart_category == "S":
+            descriptor = props.trackpart_small
+        elif props.trackpart_category == "M":
             descriptor = props.trackpart_medium
+        elif props.trackpart_category == "G":
+            descriptor = props.trackpart_golf
     filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties
@@ -114,8 +186,12 @@ def append_to_sequence(scene, groupName, groupSize, descriptor=None):
     # get filepath of trackpart to import
     if descriptor == None:
         # use the active descriptor set in the trackpart editor
-        if props.trackpart_category == "M":
+        if props.trackpart_category == "S":
+            descriptor = props.trackpart_small
+        elif props.trackpart_category == "M":
             descriptor = props.trackpart_medium
+        elif props.trackpart_category == "G":
+            descriptor = props.trackpart_golf
     filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties

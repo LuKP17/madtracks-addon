@@ -257,6 +257,9 @@ def place_blender_object(section, obj):
         # we never go there yet
         pass
 
+    # this is important for how I handle trackparts in general
+    bpy.context.object.rotation_mode = 'XYZ'
+
     return
 
 

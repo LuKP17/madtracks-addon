@@ -44,7 +44,13 @@ IMPORT
 
 TODO
 
-- keep populating trackparts dictionary, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
+- appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
+
+- are inverted trackparts also rotated properly when imported on their own?
+
+- add an option to set trackpart sequence numbers and also use it when importing a level
+
+- keep populating trackparts dictionary and editor trackparts, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
 >> try to support all the trackparts for Gravity Zero and import the level
 
 - point out in the installation part of the repo that the madtracks_dir variable needs to be set
