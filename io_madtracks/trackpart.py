@@ -254,7 +254,8 @@ def get_trackpart(groupName, number):
     i = 0
     while not trackpart and i < len(bpy.data.objects):
         ob = bpy.data.objects[i]
-        if ob.madtracks.is_trackpart and ob.users_group[0].name == groupName and ob.madtracks.num_trackpart == number:
+        # since we loop through all objects, handle non-trackparts or trackparts imported without using the editor
+        if ob.madtracks.is_trackpart and len(ob.users_group) > 0 and ob.users_group[0].name == groupName and ob.madtracks.num_trackpart == number:
             trackpart = ob
         i += 1
     
