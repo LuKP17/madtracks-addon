@@ -94,7 +94,7 @@ def import_file(filepath, scene):
                 with open(descriptor_filename, 'r') as descriptor:
                     ini_descriptor = INI(descriptor).as_dict()
                     if "ObjectType" in ini_descriptor['object'].keys() and (ini_descriptor['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
-                        si = import_trackpart_sequence(ini, si, scene)
+                        si = import_trackpart_sequence(ini, si, scene, num_sequence)
                         num_sequence += 1
                     else:
                         import_object_instance(section, scene)
@@ -213,7 +213,7 @@ def import_object_instance(section, scene):
 
 # - manage trackparts Blender properties
 # - reuse trackpart editor Blender operators
-def import_trackpart_sequence(ini, si, scene):
+def import_trackpart_sequence(ini, si, scene, num_sequence):
     """
     Returns the last section imported.
     """
@@ -231,6 +231,13 @@ def import_trackpart_sequence(ini, si, scene):
             trackpart.append_to_sequence(scene, sequence.name, len(bpy.context.selected_objects), ini.sections[si].as_dict()['Filename'])
         # go to next trackpart
         si += 1
+    if props.load_trackparts:
+        # set sequence ID
+        sequence = bpy.context.selected_objects[0].users_group[0]
+        trackpart.set_sequence_ID(scene, sequence.name, len(bpy.context.selected_objects), num_sequence)
+
+    # unselect objects
+    bpy.ops.object.select_all(action='TOGGLE')
     
     return si - 1
 

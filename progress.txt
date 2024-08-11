@@ -44,11 +44,10 @@ IMPORT
 
 TODO
 
-- appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
+- big optimization: appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
+- another optimization: since I loop through all objects in the scene to search for trackparts of the same sequence, import trackparts only first to not loop through the entire world mesh
 
 - are inverted trackparts also rotated properly when imported on their own?
-
-- add an option to set trackpart sequence numbers and also use it when importing a level
 
 - keep populating trackparts dictionary and editor trackparts, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
 >> try to support all the trackparts for Gravity Zero and import the level
@@ -60,5 +59,8 @@ TODO
 EXPORT
 ---------
 
-Not started yet. Kind of anticipated with object properties when importing.
-I want to finish and refactor the level importer and trackpart editor beforehand.
+TODO
+
+- level export
+>> for trackparts sequences, sometime its faster to leave gaps in the sequence numbering to avoid resetting the ID for every sequence if we add another in the middle (after importing a level it happens often),
+so handle that when exporting

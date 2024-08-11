@@ -51,11 +51,13 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     num_sequence = IntProperty(
         name = "Sequence",
         default = -1,
+        min = -1,
         description = "Which trackpart sequence the trackpart belongs to. Valid values start at 0"
     )
     num_trackpart = IntProperty(
         name = "Number",
         default = -1,
+        min = -1,
         description = "Where in the trackpart sequence the trackpart is. Valid values start at 0"
     )
     invert = BoolProperty(

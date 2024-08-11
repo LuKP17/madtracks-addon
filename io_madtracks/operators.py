@@ -435,6 +435,21 @@ class ButtonRemoveTrackpartSequence(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class ButtonSetSequenceID(bpy.types.Operator):
+    bl_idname = "trackpart_sequence.setid"
+    bl_label = "Set ID"
+    bl_description = "Set the sequence ID for all trackparts in the active sequence"
+
+    def execute(self, context):
+        scene = context.scene
+        # get sequence group while trackparts are selected
+        sequence = context.selected_objects[0].users_group[0]
+        # set sequence_number attribute of all trackparts of the sequence
+        trackpart.set_sequence_ID(scene, sequence.name, len(context.selected_objects))
+
+        return {"FINISHED"}
+
+
 # class ButtonReExport(bpy.types.Operator):
 #     bl_idname = "export_scene.revolt_redo"
 #     bl_label = "Re-Export"

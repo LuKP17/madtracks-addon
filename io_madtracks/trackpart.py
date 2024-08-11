@@ -242,9 +242,21 @@ def append_to_sequence(scene, groupName, groupSize, descriptor=None):
         trackpart.rotation_euler.rotate_axis("X", radians(rot_invert[0]))
         trackpart.rotation_euler.rotate_axis("Y", radians(rot_invert[1]))
         trackpart.rotation_euler.rotate_axis("Z", radians(rot_invert[2]))
+    
+    # give the trackpart the same sequence number as the first trackpart of the sequence
+    trackpart.madtracks.num_sequence = first.madtracks.num_sequence
 
     # select group to make the sequence "active" again
     bpy.ops.object.select_grouped(type='GROUP')
+
+def set_sequence_ID(scene, groupName, groupSize, ID=None):
+    props = scene.madtracks
+    if ID == None:
+        # use sequence ID set in the trackpart editor
+        ID = props.sequence_ID
+    for i in range(0, groupSize):
+        next = get_trackpart(groupName, i)
+        next.madtracks.num_sequence = ID
 
 def get_trackpart(groupName, number):
     """

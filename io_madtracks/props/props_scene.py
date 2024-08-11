@@ -85,6 +85,12 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Select the trackpart",
         items = TRACKPARTS_GOLF
     )
+    sequence_ID = IntProperty(
+        name = "Sequence ID",
+        default = -1,
+        min = -1,
+        description = "ID for a trackpart sequence. Valid values start at 0"
+    )
 
     # User interface and misc.
     # face_edit_mode = EnumProperty(

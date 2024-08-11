@@ -60,3 +60,6 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
         row.operator("trackpart_sequence.remove")
         row = layout.row()
         row.operator("trackpart_sequence.new")
+        row = layout.row()
+        row.prop(props, "sequence_ID", text="ID")
+        row.operator("trackpart_sequence.setid")
