@@ -23,6 +23,7 @@ if "bpy" in locals():
     imp.reload(object_in)
     imp.reload(madstructs)
     imp.reload(madini)
+    imp.reload(trackpart)
 
 import os
 import bpy

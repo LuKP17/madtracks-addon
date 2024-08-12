@@ -180,7 +180,8 @@ TRACKPARTS_MEDIUM = (
     ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 11),
     ("M_none_start.ini", "Start", "Medium start", 12),
     ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 13),
-    ("M_gris_to_S_50.ini", "M to S 50", "Medium to small transition", 14),
+    ("M_none_finish_50.ini", "Finish", "Medium finish", 14),
+    ("M_gris_to_S_50.ini", "M to S 50", "Medium to small transition", 15),
 )
 TRACKPARTS_GOLF = (
     ("G_none_checkpoint.ini", "Checkpoint", "Golf checkpoint", 0),
