@@ -33,8 +33,11 @@ import os
 # from mathutils import Color, Matrix
 # from .carinfo import read_parameters
 
-# FIXME fine for my project folder setup for now
-TEXTURE_FILEPATH = "\\..\\..\\..\\Graph\\maps\\High\\"
+# Relative paths from the user's Mad Tracks data folder
+LDO_PATH = "\\Gfx\\models\\Geometry\\"
+TEXTURE_PATH = "\\Graph\\maps\\High\\"
+DESCRIPTOR_PATH = "\\Bin\\Descriptors\\"
+LEVEL_PATH = "\\Bin\\Levels\\"
 
 # Global dictionaries
 global ERRORS
@@ -43,7 +46,7 @@ PARAMETERS = {}  # Glocal dict to hold parameters
 
 
 # If True, more debug messages will be printed
-DEBUG =             True
+DEBUG =             True # TODO disable for release version!
 
 SCALE =             1
 
@@ -140,6 +143,50 @@ DUMMY_TYPE_BONUS =  11
 #     NCP_NOCOLL
 # ]
 
+TRACKPART_CATEGORIES = (
+    # ("X", "Control", "Starts, checkpoints, finishes", ?),
+    ("S", "Small", "Small trackparts", 0),
+    ("M", "Medium", "Medium trackparts", 1),
+    # ("W", "Wood", "Wood trackparts", ?),
+    # ("B", "Bobsleigh", "Bobsleigh trackparts", ?),
+    # ("C", "Croquet", "Croquet trackparts", ?),
+    ("G", "Golf", "Golf trackparts", 2),
+    # ("V", "Vent", "Vent trackparts", ?),
+    # ("A", "Antartica", "Antartica trackparts", ?),
+)
+TRACKPARTS_SMALL = (
+    ("S_bleu_amorce_15_in.ini", "Amorce 15 In", "Small amorce in", 0),
+    ("S_bleu_amorce_15_out.ini", "Amorce 15 Out", "Small amorce out", 1),
+    ("S_neon_rail_50.ini", "Straight Neon 50", "Small neon straight", 2),
+    ("S_neon_virage_45_left.ini", "Left 45", "Small left turn", 3),
+    ("S_neon_virage_45_right.ini", "Right 45", "Small right turn", 4),
+    ("S_raye_rampe_30_up.ini", "Up 30", "Small up ramp", 5),
+    ("S_raye_rampe_30_down.ini", "Down 30", "Small down ramp", 6),
+    ("S_gris_to_M_50.ini", "S to M 50", "Small to medium transition", 7),
+    ("S_raye_looping.ini", "Looping", "Small looping", 8),
+)
+TRACKPARTS_MEDIUM = (
+    ("M_gris_amorce_05_in.ini", "Amorce 05 In", "Medium amorce in", 0),
+    ("M_gris_amorce_15_in.ini", "Amorce 15 In", "Medium amorce in", 1),
+    ("M_gris_amorce_15_out.ini", "Amorce 15 Out", "Medium amorce out", 2),
+    ("M_gris_amorce_30_in.ini", "Amorce 30 In", "Medium amorce in", 3),
+    ("M_gris_amorce_30_out.ini", "Amorce 30 Out", "Medium amorce out", 4),
+    ("M_gris_rail_15.ini", "Straight 15", "Medium straight", 5),
+    ("M_gris_rail_50.ini", "Straight 50", "Medium straight", 6),
+    ("M_neon_rail_50.ini", "Straight Neon 50", "Medium neon straight", 7),
+    ("M_gris_virage_45_left.ini", "Left 45", "Medium left turn", 8),
+    ("M_gris_virage_45_right.ini", "Right 45", "Medium right turn", 9),
+    ("M_gris_rampe_30_up.ini", "Up 30", "Medium up ramp", 10),
+    ("M_gris_rampe_30_down.ini", "Down 30", "Medium down ramp", 11),
+    ("M_none_start.ini", "Start", "Medium start", 12),
+    ("M_none_checkpoint.ini", "Checkpoint", "Medium checkpoint", 13),
+    ("M_gris_to_S_50.ini", "M to S 50", "Medium to small transition", 14),
+)
+TRACKPARTS_GOLF = (
+    ("G_none_checkpoint.ini", "Checkpoint", "Golf checkpoint", 0),
+    ("G_none_finish.ini", "Finish", "Golf finish", 1),
+)
+
 # MATERIALS = (
 #     ("-1", "NONE", "No material. Faces with this material will not be exported.", "POTATO", -1),
 #     ("0", "DEFAULT",            "Default material", "POTATO", 0),
@@ -226,6 +273,9 @@ Supported File Formats
 """
 FORMAT_UNK = -1
 FORMAT_LDO = 0
+FORMAT_INI = 2
+FORMAT_OBJ_INI = 3
+FORMAT_LVL_INI = 4
 # FORMAT_BMP = 0
 # FORMAT_CAR = 1
 # FORMAT_TA_CSV = 2
@@ -242,7 +292,10 @@ FORMAT_LDO = 0
 # FORMAT_W = 13
 
 FORMATS = {
-    FORMAT_LDO: "Geometry (.ldo)"
+    FORMAT_LDO: "Geometry (.ldo)",
+    FORMAT_INI: "Unsupported (.ini)",
+    FORMAT_OBJ_INI: "Object (.ini)",
+    FORMAT_LVL_INI: "Level (.ini)",
 #     FORMAT_BMP: "Bitmap (.bm*)",
 #     FORMAT_CAR: "Car Parameters (.txt)",
 #     FORMAT_TA_CSV: "Texture Animation Sheet (.ta.csv)",
@@ -289,27 +342,27 @@ Axes are saved differently and many indices are saved in a different order.
 """
 
 def to_blender_axis(vec):
-    return (-vec[0], vec[2], vec[1])
+    return [-vec[0], vec[2], vec[1]]
 
 
 def to_blender_coord(vec):
-    return (-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE)
+    return [-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE]
 
 
-# def to_blender_scale(num):
-#     return num * SCALE
+def to_blender_scale(num):
+    return num * SCALE
 
 
-# def to_revolt_coord(vec):
-#     return (vec[0] / SCALE, -vec[2] / SCALE, vec[1] / SCALE)
+def to_madtracks_axis(vec):
+    return [-vec[0], vec[2], vec[1]]
 
 
-# def to_revolt_axis(vec):
-#     return (vec[0], -vec[2], vec[1])
+def to_madtracks_coord(vec):
+    return [-vec[0] / SCALE, vec[2] / SCALE, vec[1] / SCALE]
 
 
-# def to_revolt_scale(num):
-#     return num / SCALE
+def to_madtracks_scale(num):
+    return num / SCALE
 
 # def to_trans_matrix(matrix):
 #     return Matrix((
@@ -427,16 +480,16 @@ def to_blender_coord(vec):
 #     return None
 
 
-def get_edit_bmesh(obj):
-    try:
-        bm = dic[obj.name]
-        bm.faces.layers.int.get("Type")
-        return bm
-    except Exception as e:
-        dprint("Bmesh is gone, creating new one...")
-        del dic[obj.name]
-        bm = dic.setdefault(obj.name, bmesh.from_edit_mesh(obj.data))
-        return bm
+# def get_edit_bmesh(obj):
+#     try:
+#         bm = dic[obj.name]
+#         bm.faces.layers.int.get("Type")
+#         return bm
+#     except Exception as e:
+#         dprint("Bmesh is gone, creating new one...")
+#         del dic[obj.name]
+#         bm = dic.setdefault(obj.name, bmesh.from_edit_mesh(obj.data))
+#         return bm
 
 
 # def apply_trs(obj, bm, transform=False):
@@ -725,40 +778,6 @@ def enable_texture_mode():
 Non-Blender helper functions
 """
 
-
-def get_texture_path(filepath, tex_name, scene):
-    """ Gets the full texture path when given texture name. """
-    return filepath + TEXTURE_FILEPATH + tex_name + ".dds"
-
-#     path, fname = filepath.rsplit(os.sep, 1)
-#     props = scene.revolt
-
-#     # Checks if the loaded model is located in the custom folder
-#     folder = path.rsplit(os.sep, 1)[1]
-#     if folder == "custom":
-#         path = path.rsplit(os.sep, 1)[0]
-#         folder = path.rsplit(os.sep, 1)[1]
-
-#     if not os.path.isdir(path):
-#         return None
-
-#     # The file is part of a car
-#     if props.prm_check_parameters and "parameters.txt" in os.listdir(path):
-#         filepath = os.path.join(path, "parameters.txt")
-#         if not filepath in PARAMETERS:
-#             PARAMETERS[filepath] = read_parameters(filepath)
-#         tpage = PARAMETERS[filepath]["tpage"].split(os.sep)[-1]
-
-#         return os.path.join(path, tpage)
-
-#     # The file is part of a track
-#     elif is_track_folder(path): 
-#         tpage = int_to_texture(tex_num, folder.lower())
-#         return os.path.join(path, tpage)
-#     else:
-#         return os.path.join(path, int_to_texture(tex_num, "dummy"))
-
-
 # def is_track_folder(path):
 #     for f in os.listdir(path):
 #         if ".inf" in f:
@@ -780,5 +799,7 @@ def get_format(fstr):
 
     if ext == "ldo":
         return FORMAT_LDO
+    elif ext == "ini":
+        return FORMAT_INI
     else:
         return FORMAT_UNK

@@ -31,6 +31,8 @@ import time
 from .common import *
 # from .layers import *
 # from .texanim import *
+from . import object_in
+from . import trackpart
 
 """
 IMPORT AND EXPORT -------------------------------------------------------------
@@ -48,8 +50,13 @@ class ImportMad(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        # props = scene.revolt
+        props = scene.madtracks
+
         frmt = get_format(self.filepath)
+
+        if props.madtracks_dir == "":
+            msg_box("No data directory specified.")
+            return {'CANCELLED'}
 
         start_time = time.time()
 
@@ -59,10 +66,32 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_UNK:
             msg_box("Unsupported format.")
+
+        if frmt == FORMAT_INI:
+            # differentiate between .ini files based on filepath
+            if DESCRIPTOR_PATH.split("\\")[-2] in self.filepath:
+                frmt = FORMAT_OBJ_INI
+            elif LEVEL_PATH.split("\\")[-2] in self.filepath:
+                frmt = FORMAT_LVL_INI
         
-        elif frmt == FORMAT_LDO:
+        if frmt == FORMAT_LDO:
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
+
+            # Enables texture mode after import
+            # if props.enable_tex_mode:
+            enable_any_tex_mode(context)
+        
+        elif frmt == FORMAT_OBJ_INI:
+            object_in.import_file(self.filepath, scene)
+
+            # Enables texture mode after import
+            # if props.enable_tex_mode:
+            enable_any_tex_mode(context)
+        
+        elif frmt == FORMAT_LVL_INI:
+            from . import level_in
+            level_in.import_file(self.filepath, scene)
 
             # Enables texture mode after import
             # if props.enable_tex_mode:
@@ -156,17 +185,31 @@ class ImportMad(bpy.types.Operator):
         return {"FINISHED"}
 
     def draw(self, context):
-        # props = context.scene.revolt
+        props = context.scene.madtracks
         layout = self.layout
         space = context.space_data
 
         # Gets the format from the file path
-        frmt = get_format(space.params.filename)
+        frmt = get_format(space.params.directory + space.params.filename)
 
         if frmt == -1 and not space.params.filename == "":
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
+            if frmt == FORMAT_INI:
+                # differentiate between .ini files based on filepath
+                if DESCRIPTOR_PATH.split("\\")[-2] in space.params.directory:
+                    frmt = FORMAT_OBJ_INI
+                elif LEVEL_PATH.split("\\")[-2] in space.params.directory:
+                    frmt = FORMAT_LVL_INI
             layout.label("Import {}:".format(FORMATS[frmt]))
+
+        if frmt == FORMAT_LDO:
+            box = layout.box()
+            box.prop(props, "separate_atomics")
+        
+        if frmt == FORMAT_LVL_INI:
+            box = layout.box()
+            box.prop(props, "load_trackparts")
 
         # if frmt in [FORMAT_W, FORMAT_PRM, FORMAT_NCP]:
             # box = layout.box()
@@ -338,9 +381,74 @@ class ImportMad(bpy.types.Operator):
 #     return {"FINISHED"}
 
 
-# """
-# BUTTONS ------------------------------------------------------------------------
-# """
+"""
+TRACKPARTS ------------------------------------------------------------------------
+"""
+
+class ButtonNewTrackpartSequence(bpy.types.Operator):
+    bl_idname = "trackpart_sequence.new"
+    bl_label = "New"
+    bl_description = "Append the active trackpart to a new trackpart sequence"
+
+    def execute(self, context):
+        scene = context.scene
+        trackpart.append_to_new_sequence(scene)
+        # Enables texture mode after import
+        # if props.enable_tex_mode:
+        enable_any_tex_mode(context)
+        return {"FINISHED"}
+
+
+class ButtonAppendTrackpartSequence(bpy.types.Operator):
+    bl_idname = "trackpart_sequence.append"
+    bl_label = "Append"
+    bl_description = "Append the active trackpart to the active trackpart sequence"
+
+    def execute(self, context):
+        scene = context.scene
+        sequence = context.selected_objects[0].users_group[0]
+        trackpart.append_to_sequence(scene, sequence.name, len(context.selected_objects))
+        # Enables texture mode after import
+        # if props.enable_tex_mode:
+        enable_any_tex_mode(context)
+        return {"FINISHED"}
+
+
+class ButtonRemoveTrackpartSequence(bpy.types.Operator):
+    bl_idname = "trackpart_sequence.remove"
+    bl_label = "Remove Last"
+    bl_description = "Remove the last trackpart of the active trackpart sequence"
+
+    def execute(self, context):
+        # get sequence group while trackparts are selected
+        sequence = context.selected_objects[0].users_group[0]
+        # get and remove the last trackpart of the sequence
+        last = trackpart.get_trackpart(sequence.name, len(context.selected_objects) - 1)
+        bpy.data.objects.remove(bpy.data.objects[last.name], do_unlink=True)
+        # if the sequence is now empty, delete the Blender group
+        if len(context.selected_objects) == 0:
+            bpy.data.groups.remove(bpy.data.groups[sequence.name])
+
+        # Enables texture mode after import
+        # if props.enable_tex_mode:
+        enable_any_tex_mode(context)
+        return {"FINISHED"}
+
+
+class ButtonSetSequenceID(bpy.types.Operator):
+    bl_idname = "trackpart_sequence.setid"
+    bl_label = "Set ID"
+    bl_description = "Set the sequence ID for all trackparts in the active sequence"
+
+    def execute(self, context):
+        scene = context.scene
+        # get sequence group while trackparts are selected
+        sequence = context.selected_objects[0].users_group[0]
+        # set sequence_number attribute of all trackparts of the sequence
+        trackpart.set_sequence_ID(scene, sequence.name, len(context.selected_objects))
+
+        return {"FINISHED"}
+
 
 # class ButtonReExport(bpy.types.Operator):
 #     bl_idname = "export_scene.revolt_redo"
@@ -387,7 +495,7 @@ class ImportMad(bpy.types.Operator):
 #         return{"FINISHED"}
 
 # """
-# VERTEX COLROS -----------------------------------------------------------------
+# VERTEX COLORS -----------------------------------------------------------------
 # """
 
 # class ButtonColorFromActive(bpy.types.Operator):

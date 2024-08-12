@@ -13,18 +13,13 @@
 
 """
 Name:    madstructs
-Purpose: Reading and writing Mad Tracks files
-
-Description:
-This is a module for reading and writing Mad Tracks files.
+Purpose: Reading and writing Mad Tracks binary files
 
 Supported Formats:
 - .ldo (Geometry)
 
 Missing Formats:
 - .ldl (Lightmap)
-- .ini (Level instances)
-- .gra (AI nodes)
 
 /!\ DISCLAIMER
 
@@ -124,7 +119,7 @@ class LDO:
 
     def as_dict(self):
         dic = {"atomic_count": self.atomic_count,
-               "atomics": self.atomics
+               "atomics": self.atomics,
         }
         return dic
 

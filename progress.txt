@@ -1,0 +1,66 @@
+MAD TRACKS LEVEL EDITOR PROGRESS
+================================
+
+GENERAL
+---------
+
+- defined new bpy type "MadMeshProperties" containing a material number
+   to assign to each face of a mesh
+
+- enabled Mad Tracks 3D view panel in object mode and import function
+
+
+IMPORT
+---------
+
+- implemented .ldo import, good enough for now
+	MAD TRACKS ENGINE ISSUE:
+	Only one UV coordinate is assigned per vertex,
+	instead of assigning a list of UV coordinates per polygon.
+	So the vertex needs to be duplicated if it's shared by 2 polygons mapped to
+	different regions of the texture.
+	=> it doubles the vertex count for every model in the game
+	=> it makes Blender's "Lightmap Pack" impossible to use, since it considers that UV-mapping
+	is assigned per polygon and gives vertices multiple UV coordinates.
+	Meaning I need to find another solution for .ldl file export!
+
+- started implementing level .ini import, without trackparts
+	ISSUES
+	Rotation of some objects are wrong (might be because of Gimbal lock).
+	MAD TRACKS FILE FORMAT ISSUE:
+	Level .ini files do not seem to respect the file specification,
+	as they contain duplicate sections and their order matter because of trackparts.
+	=> it makes Python's configparser and other .ini readers impossible to use, since they
+	consider that sections are unique and their order is irrelevant.
+	Meaning I had to write a dedicated level .ini reader!
+
+- started implementing a trackpart editor, in progress
+	There are two distinct aspects: track building and track visualization.
+	Having problems with visualization doesn't mean the track will have a problem in-game.
+	It's because of the way trackpart sequences are stored, with only the first trackpart having coordinates.
+	ISSUES
+	Rotation of banked trackparts are wrong in Blender, meaning the next trackparts will also look wrong. It'll be fine in-game though.
+
+
+TODO
+
+- big optimization: appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
+- another optimization: since I loop through all objects in the scene to search for trackparts of the same sequence, import trackparts only first to not loop through the entire world mesh
+
+- are inverted trackparts also rotated properly when imported on their own?
+
+- keep populating trackparts dictionary and editor trackparts, offsets are known by selecting the endpoint vertex and looking at the object's LOCAL location
+>> try to support all the trackparts for Gravity Zero and import the level
+
+- point out in the installation part of the repo that the madtracks_dir variable needs to be set
+   to be able to import/export files.
+   
+   
+EXPORT
+---------
+
+TODO
+
+- level export
+>> for trackparts sequences, sometime its faster to leave gaps in the sequence numbering to avoid resetting the ID for every sequence if we add another in the middle (after importing a level it happens often),
+so handle that when exporting

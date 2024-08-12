@@ -21,16 +21,6 @@
 # Author: Lucas Pottier
 #-----------------------------------------------------------------------------
 
-##############################################################################
-# CURRENT STATE OF THE PROJECT
-#
-# - defined new bpy type "MadMeshProperties" containing a material number
-#   to assign to each face of a mesh
-#
-# - enabled Mad Tracks 3D view panel in object mode and import function
-#
-# - implemented .ldo import from prm_in, good enough for now
-##############################################################################
 
 """
 Name:    init
@@ -46,26 +36,26 @@ import imp
 
 from . import (
     common,
-    layers,
+#     layers,
     operators,
 #     texanim,
 #     tools,
 )
 
 from .props import (
-    props_mesh,
-#     props_obj,
-#     props_scene,
+#     props_mesh,
+    props_obj,
+    props_scene,
 )
 
 from .ui import (
-#     menu_add,
+#   menu_add,
     headers,
 #     faceprops,
-#     instances,
+    trackparts,
 #     light,
 #     hull,
-#     object,
+    object,
 #     scene,
 #     vertex,
 #     texanim,
@@ -75,10 +65,10 @@ from .ui import (
 
 # # Reloads potentially changed modules on reload (F8 in Blender)
 imp.reload(common)
-imp.reload(layers)
-imp.reload(props_mesh)
-# imp.reload(props_obj)
-# imp.reload(props_scene)
+# imp.reload(layers)
+# imp.reload(props_mesh)
+imp.reload(props_obj)
+imp.reload(props_scene)
 imp.reload(operators)
 # imp.reload(texanim)
 # imp.reload(tools)
@@ -87,10 +77,10 @@ imp.reload(operators)
 # imp.reload(menu_add)
 imp.reload(headers)
 # imp.reload(faceprops)
-# imp.reload(instances)
+imp.reload(trackparts)
 # imp.reload(light)
 # imp.reload(hull)
-# imp.reload(object)
+imp.reload(object)
 # imp.reload(scene)
 # imp.reload(vertex)
 # imp.reload(texanim)
@@ -110,6 +100,12 @@ if "img_in" in locals():
     imp.reload(img_in)
 if "ldo_in" in locals():
     imp.reload(ldo_in)
+if "object_in" in locals():
+    imp.reload(object_in)
+if "level_in" in locals():
+    imp.reload(level_in)
+if "trackpart" in locals():
+    imp.reload(trackpart)
 # if "prm_out" in locals():
 #     imp.reload(prm_out)
 # if "ncp_in" in locals():
@@ -134,9 +130,9 @@ if "ldo_in" in locals():
 
 # Makes common variables and classes directly accessible
 from .common import *
-from .props.props_mesh import *
-# from .props.props_obj import *
-# from .props.props_scene import *
+# from .props.props_mesh import *
+from .props.props_obj import *
+from .props.props_scene import *
 # from .texanim import *
 
 bl_info = {
@@ -179,15 +175,15 @@ def menu_func_import(self, context):
 def register():
     bpy.utils.register_module(__name__)
 
-    # bpy.types.Scene.revolt = bpy.props.PointerProperty(
-    #     type=RVSceneProperties
-    # )
-    # bpy.types.Object.revolt = bpy.props.PointerProperty(
-    #     type=RVObjectProperties
-    # )
-    bpy.types.Mesh.madtracks = bpy.props.PointerProperty(
-        type=MadMeshProperties
+    bpy.types.Scene.madtracks = bpy.props.PointerProperty(
+        type=MadSceneProperties
     )
+    bpy.types.Object.madtracks = bpy.props.PointerProperty(
+        type=MadObjectProperties
+    )
+    # bpy.types.Mesh.revolt = bpy.props.PointerProperty(
+    #     type=RVMeshProperties
+    # )
 
     bpy.types.INFO_MT_file_import.prepend(menu_func_import)
     # bpy.types.INFO_MT_file_export.prepend(menu_func_export)
@@ -200,9 +196,9 @@ def register():
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-    # del bpy.types.Scene.revolt
-    # del bpy.types.Object.revolt
-    del bpy.types.Mesh.madtracks
+    del bpy.types.Scene.madtracks
+    del bpy.types.Object.madtracks
+    # del bpy.types.Mesh.revolt
 
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     # bpy.types.INFO_MT_file_export.remove(menu_func_export)
