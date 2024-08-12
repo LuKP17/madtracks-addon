@@ -104,6 +104,8 @@ if "object_in" in locals():
     imp.reload(object_in)
 if "level_in" in locals():
     imp.reload(level_in)
+if "level_out" in locals():
+    imp.reload(level_out)
 if "trackpart" in locals():
     imp.reload(trackpart)
 # if "prm_out" in locals():
@@ -167,9 +169,9 @@ def menu_func_import(self, context):
     self.layout.operator("import_scene.madtracks", text="Mad Tracks")
 
 
-# def menu_func_export(self, context):
-#     """Export function for the user interface."""
-#     self.layout.operator("export_scene.revolt", text="Re-Volt")
+def menu_func_export(self, context):
+    """Export function for the user interface."""
+    self.layout.operator("export_scene.madtracks", text="Mad Tracks")
 
 
 def register():
@@ -186,7 +188,7 @@ def register():
     # )
 
     bpy.types.INFO_MT_file_import.prepend(menu_func_import)
-    # bpy.types.INFO_MT_file_export.prepend(menu_func_export)
+    bpy.types.INFO_MT_file_export.prepend(menu_func_export)
     # bpy.types.INFO_MT_add.append(menu_add.menu_func_add)
 
     # bpy.app.handlers.scene_update_pre.append(edit_object_change_handler)
@@ -201,7 +203,7 @@ def unregister():
     # del bpy.types.Mesh.revolt
 
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    # bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.INFO_MT_file_export.remove(menu_func_export)
     # bpy.types.INFO_MT_add.remove(menu_add.menu_func_add)
 
 if __name__ == "__main__":

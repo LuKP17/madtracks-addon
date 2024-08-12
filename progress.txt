@@ -44,6 +44,8 @@ IMPORT
 
 TODO
 
+- push a commit in the main branch as "import levels and trackpart editor"
+
 - big optimization: appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
 - another optimization: since I loop through all objects in the scene to search for trackparts of the same sequence, import trackparts only first to not loop through the entire world mesh
 

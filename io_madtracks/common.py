@@ -803,3 +803,7 @@ def get_format(fstr):
         return FORMAT_INI
     else:
         return FORMAT_UNK
+
+
+def float_format(value):
+    return '{:f}'.format(value)

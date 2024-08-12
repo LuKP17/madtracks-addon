@@ -233,152 +233,156 @@ class ImportMad(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
-# class ExportRV(bpy.types.Operator):
-#     bl_idname = "export_scene.revolt"
-#     bl_label = "Export Re-Volt Files"
-#     bl_description = "Export Re-Volt game files"
+class ExportMad(bpy.types.Operator):
+    bl_idname = "export_scene.madtracks"
+    bl_label = "Export Mad Tracks Files"
+    bl_description = "Export Mad Tracks game files"
 
-#     filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
 
-#     def execute(self, context):
-#         return exec_export(self.filepath, context)
+    def execute(self, context):
+        scene = context.scene
+        props = context.scene.madtracks
 
-#     def invoke(self, context, event):
-#         context.window_manager.fileselect_add(self)
-#         return {"RUNNING_MODAL"}
+        start_time = time.time()
+        context.window.cursor_set("WAIT")
 
-#     def draw(self, context):
-#         props = context.scene.revolt
-#         layout = self.layout
-#         space = context.space_data
+        if self.filepath == "":
+            msg_box("File not specified.", "ERROR")
+            return {"FINISHED"}
 
-#         # Gets the format from the file path
-#         frmt = get_format(space.params.filename)
+        # Gets the format from the file path
+        frmt = get_format(self.filepath)
 
-#         if frmt == -1 and not space.params.filename == "":
-#             layout.label("Format not supported", icon="ERROR")
-#         elif frmt != -1:
-#             layout.label("Export {}:".format(FORMATS[frmt]))
+        if frmt == FORMAT_UNK:
+            msg_box("Not supported for export.", "INFO")
+            return {"FINISHED"}
+        else:
+            # Turns off undo for better performance
+            use_global_undo = bpy.context.user_preferences.edit.use_global_undo
+            bpy.context.user_preferences.edit.use_global_undo = False
 
-#         # NCP settings
-#         if frmt == FORMAT_NCP:
-#             box = layout.box()
-#             box.prop(props, "ncp_export_selected")
-#             box.prop(props, "ncp_export_collgrid")
-#             box.prop(props, "ncp_collgrid_size")
+            if bpy.ops.object.mode_set.poll():
+                bpy.ops.object.mode_set(mode="OBJECT")
+
+            # Saves filepath for re-exporting the same file
+            # props.last_exported_filepath = self.filepath
+
+            if frmt == FORMAT_INI:
+                # for now don't differentiate between .ini files
+                frmt = FORMAT_LVL_INI
+
+            if frmt == FORMAT_LVL_INI:
+                from . import level_out
+                level_out.export_file(self.filepath, scene)
+
+            # if frmt == FORMAT_PRM:
+            #     # Checks if a file can be exported
+            #     if not tools.check_for_export(scene.objects.active):
+            #         return {"FINISHED"}
+
+            #     from . import prm_out
+            #     prm_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_FIN:
+            #     from . import fin_out
+            #     print("Exporting to .fin...")
+            #     fin_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_NCP:
+            #     from . import ncp_out
+            #     print("Exporting to .ncp...")
+            #     ncp_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_HUL:   
+            #     from . import hul_out
+            #     print("Exporting to .hul...")
+            #     hul_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_W:
+            #     from . import w_out
+            #     print("Exporting to .w...")
+            #     w_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_RIM:
+            #     from . import rim_out
+            #     print("Exporting to .rim...")
+            #     rim_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_TA_CSV:
+            #     from . import ta_csv_out
+            #     print("Exporting texture animation sheet...")
+            #     ta_csv_out.export_file(self.filepath, scene)
+
+            # elif frmt == FORMAT_TAZ:
+            #     from . import taz_out
+            #     taz_out.export_file(self.filepath, scene)
+            
+            else:
+                msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
+
+            # Re-enables undo
+            bpy.context.user_preferences.edit.use_global_undo = use_global_undo
+
+        context.window.cursor_set("DEFAULT")
+
+        # Gets any encountered errors
+        errors = get_errors()
+
+        # Defines the icon depending on the errors
+        if errors == "Successfully completed.":
+            ico = "FILE_TICK"
+        else:
+            ico = "ERROR"
+
+        # Displays a message box with the import results
+        end_time = time.time() - start_time
+        msg_box(
+            "Export to {} done in {:.3f} seconds.\n{}".format(
+                FORMATS[frmt], end_time, errors),
+            icon=ico
+        )
+
+        return {"FINISHED"}
+
+    def draw(self, context):
+        props = context.scene.madtracks
+        layout = self.layout
+        space = context.space_data
+
+        # Gets the format from the file path
+        frmt = get_format(space.params.filename)
+
+        if frmt == -1 and not space.params.filename == "":
+            layout.label("Format not supported", icon="ERROR")
+        elif frmt != -1:
+            layout.label("Export {}:".format(FORMATS[frmt]))
+
+        # # NCP settings
+        # if frmt == FORMAT_NCP:
+        #     box = layout.box()
+        #     box.prop(props, "ncp_export_selected")
+        #     box.prop(props, "ncp_export_collgrid")
+        #     box.prop(props, "ncp_collgrid_size")
 
 
-#         # Texture mesh settings
-#         if frmt in [FORMAT_PRM, FORMAT_W]:
-#             box = layout.box()
-#             box.prop(props, "use_tex_num")
+        # # Texture mesh settings
+        # if frmt in [FORMAT_PRM, FORMAT_W]:
+        #     box = layout.box()
+        #     box.prop(props, "use_tex_num")
 
-#         # Mesh settings
-#         if frmt in [FORMAT_PRM, FORMAT_W]:
-#             box = layout.box()
-#             box.prop(props, "apply_scale")
-#             box.prop(props, "apply_rotation")
-#         if frmt in [FORMAT_NCP, FORMAT_PRM, FORMAT_W]:
-#             box = layout.box()
-#             box.prop(props, "triangulate_ngons")
-
-
-# def exec_export(filepath, context):
-#     scene = context.scene
-#     props = context.scene.revolt
-
-#     start_time = time.time()
-#     context.window.cursor_set("WAIT")
-
-#     if filepath == "":
-#         msg_box("File not specified.", "ERROR")
-#         return {"FINISHED"}
-
-#     # Gets the format from the file path
-#     frmt = get_format(filepath)
-
-#     if frmt == FORMAT_UNK:
-#         msg_box("Not supported for export.", "INFO")
-#         return {"FINISHED"}
-#     else:
-#         # Turns off undo for better performance
-#         use_global_undo = bpy.context.user_preferences.edit.use_global_undo
-#         bpy.context.user_preferences.edit.use_global_undo = False
-
-#         if bpy.ops.object.mode_set.poll():
-#             bpy.ops.object.mode_set(mode="OBJECT")
-
-#         # Saves filepath for re-exporting the same file
-#         props.last_exported_filepath = filepath
-
-#         if frmt == FORMAT_PRM:
-#             # Checks if a file can be exported
-#             if not tools.check_for_export(scene.objects.active):
-#                 return {"FINISHED"}
-
-#             from . import prm_out
-#             prm_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_FIN:
-#             from . import fin_out
-#             print("Exporting to .fin...")
-#             fin_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_NCP:
-#             from . import ncp_out
-#             print("Exporting to .ncp...")
-#             ncp_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_HUL:   
-#             from . import hul_out
-#             print("Exporting to .hul...")
-#             hul_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_W:
-#             from . import w_out
-#             print("Exporting to .w...")
-#             w_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_RIM:
-#             from . import rim_out
-#             print("Exporting to .rim...")
-#             rim_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_TA_CSV:
-#             from . import ta_csv_out
-#             print("Exporting texture animation sheet...")
-#             ta_csv_out.export_file(filepath, scene)
-
-#         elif frmt == FORMAT_TAZ:
-#             from . import taz_out
-#             taz_out.export_file(filepath, scene)
-        
-#         else:
-#             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
-
-#         # Re-enables undo
-#         bpy.context.user_preferences.edit.use_global_undo = use_global_undo
-
-#     context.window.cursor_set("DEFAULT")
-
-#     # Gets any encountered errors
-#     errors = get_errors()
-
-#     # Defines the icon depending on the errors
-#     if errors == "Successfully completed.":
-#         ico = "FILE_TICK"
-#     else:
-#         ico = "ERROR"
-
-#     # Displays a message box with the import results
-#     end_time = time.time() - start_time
-#     msg_box(
-#         "Export to {} done in {:.3f} seconds.\n{}".format(
-#             FORMATS[frmt], end_time, errors),
-#         icon=ico
-#     )
-
-#     return {"FINISHED"}
+        # # Mesh settings
+        # if frmt in [FORMAT_PRM, FORMAT_W]:
+        #     box = layout.box()
+        #     box.prop(props, "apply_scale")
+        #     box.prop(props, "apply_rotation")
+        # if frmt in [FORMAT_NCP, FORMAT_PRM, FORMAT_W]:
+        #     box = layout.box()
+        #     box.prop(props, "triangulate_ngons")
+    
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
 
 
 """
