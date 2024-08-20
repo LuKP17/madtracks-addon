@@ -98,6 +98,10 @@ trackparts = {
         "pos_offset" : [0, 0, 0],
         "rot_offset" : [0, 0, 0]
     },
+    "M_none_finish_50.ini" : {
+        "pos_offset" : [0, 0, 0],
+        "rot_offset" : [0, 0, 0]
+    },
     "M_gris_to_S_50.ini" : {
         "pos_offset" : [0, 0, 50],
         "rot_offset" : [0, 0, 0],
@@ -272,3 +276,16 @@ def get_trackpart(groupName, number):
         i += 1
     
     return trackpart
+
+def get_all_trackparts():
+    """
+    Returns a list of all the trackpart sequences in order.
+    Each element of the list is a list that contains [name, num_sequence, num_trackpart].
+    """
+    sequences = []
+    for obj in bpy.data.objects:
+        if obj.madtracks.is_trackpart:
+            sequences.append([obj.name, obj.madtracks.num_sequence, obj.madtracks.num_trackpart])
+    sequences.sort(key=lambda sequences: (sequences[1], sequences[2]))
+    
+    return sequences

@@ -37,14 +37,12 @@ class MadTracksIOToolPanel(bpy.types.Panel):
     Tool panel in the left sidebar of the viewport for performing
     various operations
     """
-    bl_label = "Import"
+    bl_label = "Import/Export"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_category = "Mad Tracks"
-    
-    def draw_header(self, context):
-        self.layout.label("", icon="IMPORT")
+    bl_options = {"HIDE_HEADER"}
 
     def draw(self, context):
         # i/o buttons
@@ -58,5 +56,5 @@ class MadTracksIOToolPanel(bpy.types.Panel):
 
         row = self.layout.row(align=True)
         row.operator("import_scene.madtracks", text="Import", icon="IMPORT")
-        # row.operator("export_scene.revolt", text="Export", icon="EXPORT")
+        row.operator("export_scene.madtracks", text="Export", icon="EXPORT")
         # row.operator("export_scene.revolt_redo", text="", icon="FILE_REFRESH")
