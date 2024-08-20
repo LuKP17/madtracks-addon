@@ -11,8 +11,8 @@ Name:    level_in
 Purpose: Imports level .ini files.
 
 Description:
-Level files contain geometry instances (.ldo files) from Gfx\models\Geometry
-and objects instances (.ini descriptors) from Bin\Descriptors.
+Level files contain Geometry instances (.ldo files) from Gfx\models\Geometry
+and Object instances (.ini descriptors) from Bin\Descriptors.
 
 """
 
@@ -42,34 +42,28 @@ from .madstructs import *
 from .madini import *
 from .trackpart import *
 
-# EASIER SOLUTION
-# - get the filled .ini file structure
-# - import_file() can go through the .ini once to import .ldo sections and all .ini sections
-# - if the returned object after has "is_trackpart" set to True, add its name to a list with the current section treated
-# - call an auxiliary function import_trackparts() that takes the (obj_name, ini_section) list
-#   and edits Blender's trackpart objects properties (the list will be in orer so doable)
 
-# OTHER SOLUTION (allows to easily disable trackparts import)
-# - get the filled .ini file structure
-# - import_file() can go through the .ini once to import .ldo sections and .ini sections that are not trackparts
-#   (we know if an object is a trackpart by using the is_trackpart() function in object_in.py, but each descriptor will be read twice...)
-# - call an auxiliary function import_trackparts() to import .ini sections that are trackparts
-# BUT THIS SOLUTION IS NOT VERY CLEAN AND GOING THROUGH THE SECTIONS A SECOND TIME ISN'T NECESSARY
-
-# BETTER SOLUTION (maintainable code, great logic splitting, small performance impact)
-# - get the filled .ini file structure
-# - while loop through sections with index "si"
-# - if the section is .ldo, call import_geometry_instance() with the current section
-# - if the section is .ini, read the descriptor to see if it is a trackpart (will lead to an additional read of the descriptor, but if that's the cost for a manageable code then I'll take it)
-#       - if not a trackpart, call import_object_instance() with the current section
-#       - if a trackpart, call import_trackpart_sequence() with the ini structure and "si" as it will take care of multiple sections
-# note: import_geometry_instance() and import_object_instance() will share some code, make auxiliary functions
-
-# THIS SKELETON RUNS, IMPLEMENT BIT BY BIT USING DEBUG MESSAGES AND TEST FILES PLEASE!
 def import_file(filepath, scene):
     """
-    Imports a level.
+    Imports a level as Blender objects by reading the level .ini file.
     """
+# TODO Handle that when I'll start supporting more levels at import
+#
+# for s in descriptor.sections:
+#   for p in s.params:
+#       if p.name == "Filename":
+#           ldoFound = True
+#           filename = p.values.split("/", 1)[1]
+#           # Keep searching for descriptors .ldo filenames that do not exist
+#           # Maybe the "_High" suffix needs to be searched when importing an .ldo file?
+#           if filename == "ANT_Out_Sea.ldo":
+#               filename = "ANT_Out_Sea_High.ldo"
+#           elif filename == "GER_Eau.ldo":
+#               filename = "GER_Eau_High.ldo"
+#           elif filename == "ANT_Eau.ldo":
+#               filename = "ANT_Eau_High.ldo"
+#           dprint("%s will be imported" % filename)
+
     props = scene.madtracks
 
     with open(filepath, 'r') as file:
@@ -107,86 +101,11 @@ def import_file(filepath, scene):
 
     print("Imported {}".format(filename))
 
-            # # the filename parameter is guaranteed, import it and retrieve the Blender object(s)
-            # fname = section.as_dict()['Filename']
-            # ext = fname.split(".", 1)[1]
-            # if ext == "ldo":
-            #     obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + fname.split("/", 1)[1], scene)
-            # elif ext == "ini":
-            #     obj = object_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + fname, scene)
-                
-            # # edit location and rotation of Blender objects
-            # if obj.madtracks.is_trackpart == False:
-            #     # object is not a trackpart, use section parameters
-            #     bpy.context.object.name = obj.name
-            #     bpy.context.object.rotation_mode = 'AXIS_ANGLE'
-            #     obj.location = to_blender_coord(section.as_dict()['Position'])
-            #     # compute rotation matrix from directions
-            #     rotation_matrix = rotation_matrix_from_directions(section.as_dict()['DirectionAT'], section.as_dict()['DirectionUp'])
-            #     # convert rotation matrix to axis-angle representation
-            #     axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
-            #     axis = to_blender_axis(axis)
-            #     obj.rotation_axis_angle[0] = angle
-            #     obj.rotation_axis_angle[1] = axis[0]
-            #     obj.rotation_axis_angle[2] = axis[1]
-            #     obj.rotation_axis_angle[3] = axis[2]
-            # else:
-            #     # object is a trackpart
-            #     if "Position" in section.as_dict().keys():
-            #         # beginning of a new trackpart sequence
-            #         num_sequence += 1
-            #         num_trackpart = 0
-            #         # FIXME DUPLICATED CODE use section parameters
-            #         bpy.context.object.name = obj.name
-            #         bpy.context.object.rotation_mode = 'AXIS_ANGLE'
-            #         position = section.as_dict()['Position']
-            #         obj.location = to_blender_coord(position)
-            #         # compute rotation matrix from directions
-            #         rotation_matrix = rotation_matrix_from_directions(section.as_dict()['DirectionAT'], section.as_dict()['DirectionUp'])
-            #         # convert rotation matrix to axis-angle representation
-            #         axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
-            #         axis = to_blender_axis(axis)
-            #         obj.rotation_axis_angle[0] = angle
-            #         obj.rotation_axis_angle[1] = axis[0]
-            #         obj.rotation_axis_angle[2] = axis[1]
-            #         obj.rotation_axis_angle[3] = axis[2]
-            #         # assign object properties
-            #         obj.madtracks.num_sequence = num_sequence
-            #         obj.madtracks.num_trackpart = num_trackpart
-            #         # set next trackpart anchors
-            #         if fname in trackparts.keys():
-            #             anchorPos[0] = position[0] + trackparts[fname]['pos_offset'][0]
-            #             anchorPos[1] = position[1] + trackparts[fname]['pos_offset'][1]
-            #             anchorPos[2] = position[2] + trackparts[fname]['pos_offset'][2]
-            #             # HACK to avoid converting from axis-angle to euler in code
-            #             rotation_euler = to_madtracks_axis(obj.rotation_euler)
-            #             anchorRot[0] = rotation_euler[0] + trackparts[fname]['rot_offset'][0]
-            #             anchorRot[1] = rotation_euler[1] + trackparts[fname]['rot_offset'][1]
-            #             anchorRot[2] = rotation_euler[2] + trackparts[fname]['rot_offset'][2]
-            #     else:
-            #         # next trackpart in the current sequence
-            #         num_trackpart += 1
-            #         # FIXME DUPLICATED CODE use trackpart anchors
-            #         bpy.context.object.name = obj.name
-            #         bpy.context.object.rotation_mode = 'XYZ'
-            #         obj.location = to_blender_coord(anchorPos)
-            #         obj.rotation_euler = to_blender_axis(anchorRot)
-            #         # assign object properties
-            #         obj.madtracks.num_sequence = num_sequence
-            #         obj.madtracks.num_trackpart = num_trackpart
-            #         # set next trackpart anchors
-            #         if fname in trackparts.keys():
-            #             anchorPos[0] = anchorPos[0] + trackparts[fname]['pos_offset'][0]
-            #             anchorPos[1] = anchorPos[1] + trackparts[fname]['pos_offset'][1]
-            #             anchorPos[2] = anchorPos[2] + trackparts[fname]['pos_offset'][2]
-            #             # HACK to avoid converting from axis-angle to euler in code
-            #             rotation_euler = to_madtracks_axis(obj.rotation_euler)
-            #             anchorRot[0] = anchorRot[0] + trackparts[fname]['rot_offset'][0]
-            #             anchorRot[1] = anchorRot[1] + trackparts[fname]['rot_offset'][1]
-            #             anchorRot[2] = anchorRot[2] + trackparts[fname]['rot_offset'][2]
-
 
 def import_geometry_instance(section, scene):
+    """
+    Imports a Geometry instance by reading a level .ini section.
+    """
     props = scene.madtracks
 
     # create Blender object
@@ -200,6 +119,9 @@ def import_geometry_instance(section, scene):
 
 
 def import_object_instance(section, scene):
+    """
+    Imports an Object instance by reading a level .ini section.
+    """
     props = scene.madtracks
 
     # create Blender object
@@ -212,27 +134,26 @@ def import_object_instance(section, scene):
     return obj
 
 
-# - manage trackparts Blender properties
-# - reuse trackpart editor Blender operators
 def import_trackpart_sequence(ini, si, scene, num_sequence):
     """
-    Returns the last section imported.
+    Imports a sequence of trackparts by reading consecutive level .ini sections starting at index "si".
+    Returns the index of the last level .ini section read and imported, which is the end of the sequence of trackparts.
     """
     props = scene.madtracks
-    if props.load_trackparts:
+    if props.import_trackparts:
         # create new trackpart sequence
         ob = trackpart.append_to_new_sequence(scene, ini.sections[si].as_dict()['Filename'])
         # place the first trackpart of the sequence with its INI coordinates
         place_blender_object(ini.sections[si], ob)
     si += 1
     while si < len(ini.sections) and len(ini.sections[si].params) == 1:
-        if props.load_trackparts:
+        if props.import_trackparts:
             # append to active trackpart sequence
             sequence = bpy.context.selected_objects[0].users_group[0]
             trackpart.append_to_sequence(scene, sequence.name, len(bpy.context.selected_objects), ini.sections[si].as_dict()['Filename'])
         # go to next trackpart
         si += 1
-    if props.load_trackparts:
+    if props.import_trackparts:
         # set sequence ID
         sequence = bpy.context.selected_objects[0].users_group[0]
         trackpart.set_sequence_ID(scene, sequence.name, len(bpy.context.selected_objects), num_sequence)
@@ -245,7 +166,7 @@ def import_trackpart_sequence(ini, si, scene, num_sequence):
 
 def place_blender_object(section, obj):
     """
-    Edits a Blender object location and rotation.
+    Edits a Blender object's location and rotation by reading a level .ini section's parameters.
     """
     bpy.context.object.name = obj.name
     bpy.context.object.rotation_mode = 'AXIS_ANGLE'
@@ -262,8 +183,7 @@ def place_blender_object(section, obj):
         obj.rotation_axis_angle[2] = axis[1]
         obj.rotation_axis_angle[3] = axis[2]
     else:
-        # we never go there yet
-        pass
+        print("Object imported from level .ini file section doesn't have the usual number of parameters, skipping...")
 
     # this is important for how I handle trackparts in general
     bpy.context.object.rotation_mode = 'XYZ'
@@ -271,170 +191,9 @@ def place_blender_object(section, obj):
     return
 
 
-# def import_geometry(filename, position, directionAT, directionUp, scene):
-#     """
-#     Imports a piece of geometry in Blender at the desired position and rotation
-#     to visualize a level instance or object.
-#     """
-#     props = scene.madtracks
-
-#     # import using the LDO file
-#     objs = ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene)
-
-#     # FIXME Below is an attempt of a huge optimization (multiple seconds for a level import).
-#     # The goal is to avoid reading a .ldo file multiple times, by copying the Blender object.
-#     # But the mesh is still shared with the original object,
-#     # and we can't identify all the atomics of a .ldo file yet.
-
-#     # ob = None
-#     # # check if geometry was already imported
-#     # for object in bpy.data.objects:
-#     #     if object.name == filename:
-#     #         # duplicate the existing object
-#     #         ob = object.copy()
-#     #         scene.objects.link(ob)
-#     #         scene.objects.active = ob
-#     #         break
-#     # if not ob:
-#     #     # import using the LDO file
-#     #     ob = ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene)
-    
-#     # if the model has multiple atomics, import all of them
-#     for ob in objs:
-#         bpy.context.object.name = ob.name
-#         bpy.context.object.rotation_mode = 'AXIS_ANGLE'
-#         # set object's position and rotation
-#         ob.location = to_blender_coord(position)
-#         # compute rotation matrix from directions
-#         rotation_matrix = rotation_matrix_from_directions(directionAT, directionUp)
-#         # convert rotation matrix to axis-angle representation
-#         axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
-#         axis = to_blender_axis(axis)
-#         ob.rotation_axis_angle[0] = angle
-#         ob.rotation_axis_angle[1] = axis[0]
-#         ob.rotation_axis_angle[2] = axis[1]
-#         ob.rotation_axis_angle[3] = axis[2]
-
-#     return objs
-
-
-# def import_section(section, scene, cur_pos=None, cur_rot=None):
-#     """
-#     Imports a section as a Blender object
-#     """
-#     props = scene.madtracks
-    
-#     # get section extension
-#     isInstance = False
-#     isObject = False
-#     isTrackpart = False
-#     ext = section.name.rsplit(".", 1)[1]
-#     if (ext == "ldo"):
-#         isInstance = True
-#     elif (ext == "ini"):
-#         if (len(section.params) > 1):
-#             isObject = True
-#         else:
-#             isTrackpart = True
-#     else:
-#         print("Unknown section extension \"%s\"" % ext)
-
-#     # Loop thru all parameters
-#     position = None
-#     directionAT = None
-#     directionUp = None
-#     filename = None
-#     for p in section.params:
-#         if p.name == "Position":
-#             position = p.values
-#         elif p.name == "DirectionAT":
-#             directionAT = p.values
-#         elif p.name == "DirectionUp":
-#             directionUp = p.values
-#         elif p.name == "Filename":
-#             filename = p.values
-#             if isInstance:
-#                 filename = filename.split("/", 1)[1] # strip useless "geometry/"
-#         else:
-#             print("Unknown parameter \"%s\"" % p.name)
-
-#     # Retrieve associated .ldo filename
-#     if isInstance:
-#         dprint("%s will be imported" % filename)
-#     else:
-#         ldoFound = False
-#         fini = open(props.madtracks_dir + DESCRIPTOR_PATH + filename, "r")
-#         descriptor = INI(fini)
-#         fini.close()
-#         # TODO implement INI.as_dict() to avoid searching for a parameter in loops
-#         for s in descriptor.sections:
-#             for p in s.params:
-#                 if p.name == "Filename":
-#                     ldoFound = True
-#                     filename = p.values.split("/", 1)[1]
-#                     # TODO keep searching for descriptors .ldo filenames that do not exist
-#                     # Maybe the "_High" suffix needs to be searched when importing an .ldo file?
-#                     if filename == "ANT_Out_Sea.ldo":
-#                         filename = "ANT_Out_Sea_High.ldo"
-#                     elif filename == "GER_Eau.ldo":
-#                         filename = "GER_Eau_High.ldo"
-#                     elif filename == "ANT_Eau.ldo":
-#                         filename = "ANT_Eau_High.ldo"
-#                     dprint("%s will be imported" % filename)
-#         if not ldoFound:
-#             filename = "node.ldo"
-#             dprint("%s will be imported" % filename)
-    
-#     dprint("At position: ", position)
-#     dprint("At directionAT: ", directionAT)
-#     dprint("At directionUp: ", directionUp)
-#     dprint()
-
-#     # Create Blender object
-#     ob = None
-#     # check if instance was already imported
-#     for object in bpy.data.objects:
-#         if object.name == filename:
-#             # duplicate the existing instance
-#             # FIXME the mesh is still shared with the original instance
-#             ob = object.copy()
-#             scene.objects.link(ob)
-#             scene.objects.active = ob
-#             break
-#     if not ob:
-#         # import using the LDO file
-#         ob = ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene)
-    
-#     bpy.context.object.name = ob.name
-#     bpy.context.object.rotation_mode = 'AXIS_ANGLE'
-#     # set object's position and rotation
-#     # TODO rotation computation is wrong, an object with:
-#     # directionAT = 0.000000,-0.035014,-0.999387
-#     # directionUp = 0.000000,0.999387,-0.035014
-#     # should have a close to 0 angle, but it has 178 degrees
-#     if position:
-#         ob.location = to_blender_coord(Vector(data=(float(position[0]), float(position[1]), float(position[2]))))
-#     if directionAT and directionUp:
-#         # Compute rotation matrix from directions
-#         directionAT = np.array(Vector(data=(float(directionAT[0]), float(directionAT[1]), float(directionAT[2]))))
-#         directionUp = np.array(Vector(data=(float(directionUp[0]), float(directionUp[1]), float(directionUp[2]))))
-#         rotation_matrix = rotation_matrix_from_directions(directionAT, directionUp)
-#         # Convert rotation matrix to axis-angle representation
-#         axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
-#         axis = to_blender_axis(axis)
-#         ob.rotation_axis_angle[0] = angle
-#         ob.rotation_axis_angle[1] = axis[0]
-#         ob.rotation_axis_angle[2] = axis[1]
-#         ob.rotation_axis_angle[3] = axis[2]
-#     if isTrackpart and cur_pos and cur_rot:
-#         ob.location = to_blender_coord(cur_pos)
-#         ob.rotation_euler = to_blender_axis(cur_rot)
-    
-#     return ob
-
-
 """
 ChatGPT code to compute Blender objects rotation from the directionAT and directionUp parameters.
+FIXME The rotation obtained sometimes isn't the one we want, maybe because of Gimbal lock.
 """
 
 import numpy as np
@@ -496,64 +255,3 @@ def axis_angle_from_rotation_matrix(rotation_matrix):
         axis = axis / np.linalg.norm(axis)
 
     return axis, angle
-
-
-
-"""    
-    bpy.context.object.name = ob.name
-    bpy.context.object.rotation_mode = 'QUATERINON'
-    # set object's position and rotation
-    # TODO rotation computation is wrong, an object with:
-    # directionAT = 0.000000,-0.035014,-0.999387
-    # directionUp = 0.000000,0.999387,-0.035014
-    if position:
-        ob.location = to_blender_axis(Vector(data=(float(position[0]), float(position[1]), float(position[2]))))
-    if directionAT and directionUp:
-        # Compute rotation matrix from directions
-        directionAT = np.array(Vector(data=(float(directionAT[0]), float(directionAT[1]), float(directionAT[2]))))
-        directionUp = np.array(Vector(data=(float(directionUp[0]), float(directionUp[1]), float(directionUp[2]))))
-        quaternion = direction_to_quaternion(directionAT, directionUp)
-        ob.rotation_quaternion[0] = quaternion[0]
-        ob.rotation_quaternion[1] = -quaternion[1]
-        ob.rotation_quaternion[2] = quaternion[3]
-        ob.rotation_quaternion[3] = quaternion[2]
-
-
-ChatGPT code to compute Blender objects rotation from the directionAT and directionUp parameters.
-
-import numpy as np
-
-def direction_to_quaternion(directionAT, directionUp):
-    # Initial direction vector
-    initial_vector = np.array([0, 0, 1])
-
-    # Check if directionAT is parallel to initial_vector
-    if np.allclose(directionAT, initial_vector):
-        # Rotation around the X-axis, no need to compute axis
-        axis = np.array([0, 0, 1])
-        angle = np.arccos(np.dot(initial_vector, directionAT))
-
-        # Compute the rotation quaternion
-        quaternion_rotation = axis_angle_to_quaternion(axis, angle)
-    else:
-        # Compute the rotation matrix to align initial_vector with directionAT
-        dot_product = np.dot(initial_vector, directionAT)
-        angle = np.arccos(dot_product / (np.linalg.norm(initial_vector) * np.linalg.norm(directionAT)))
-        axis = np.cross(initial_vector, directionAT)
-        axis = axis / np.linalg.norm(axis)
-
-        # Compute the rotation quaternion
-        quaternion_rotation = axis_angle_to_quaternion(axis, angle)
-
-    return quaternion_rotation
-
-def axis_angle_to_quaternion(axis, angle):
-    # Convert axis-angle representation to quaternion
-    axis = axis / np.linalg.norm(axis)
-    half_angle = angle / 2
-    w = np.cos(half_angle)
-    xyz = axis * np.sin(half_angle)
-    quaternion = np.array([w, xyz[0], xyz[1], xyz[2]])
-
-    return quaternion
-"""

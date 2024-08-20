@@ -209,7 +209,7 @@ class ImportMad(bpy.types.Operator):
         
         if frmt == FORMAT_LVL_INI:
             box = layout.box()
-            box.prop(props, "load_trackparts")
+            box.prop(props, "import_trackparts")
 
         # if frmt in [FORMAT_W, FORMAT_PRM, FORMAT_NCP]:
             # box = layout.box()
@@ -386,7 +386,7 @@ class ExportMad(bpy.types.Operator):
 
 
 """
-TRACKPARTS ------------------------------------------------------------------------
+TRACKPART EDITOR ------------------------------------------------------------------------
 """
 
 class ButtonNewTrackpartSequence(bpy.types.Operator):

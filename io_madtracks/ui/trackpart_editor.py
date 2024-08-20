@@ -11,20 +11,14 @@
 # Author: Lucas Pottier
 #-----------------------------------------------------------------------------
 
-"""
-Name:    trackparts
-Purpose: Trackpart position and rotation.
-
-Description:
-TODO Explain why its needed. Used for level import and export.
-Also used for level editing to greatly improve the experience.
-
-"""
-
 import bpy
 from ..common import *
 
 class MadTracksTrackpartsPanel(bpy.types.Panel):
+    """
+    Tool panel in the left sidebar of the viewport for editing
+    trackpart sequences in a level.
+    """
     bl_label = "Trackparts"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -61,5 +55,5 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
         row = layout.row()
         row.operator("trackpart_sequence.new")
         row = layout.row()
-        row.prop(props, "sequence_ID", text="ID")
         row.operator("trackpart_sequence.setid")
+        row.prop(props, "sequence_ID", text="ID")

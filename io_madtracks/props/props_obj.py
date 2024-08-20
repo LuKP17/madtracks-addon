@@ -13,7 +13,7 @@
 
 """
 Name:    props_obj
-Purpose: Provides the object data class for Mad Tracks meshes
+Purpose: Provides the object data class for Mad Tracks meshes.
 
 Description:
 Objects in Mad Tracks can be of different types or used for debugging only.
@@ -37,16 +37,18 @@ from bpy.props import (
 from ..common import *
 
 class MadObjectProperties(bpy.types.PropertyGroup):
+    # Common
     descriptor = StringProperty(
         name = "Descriptor",
         default = "None",
         description = "Filename of the object's descriptor"
     )
+
     # Trackparts
     is_trackpart = BoolProperty(
         name = "Is Trackpart",
         default = False,
-        description = "Object is a trackpart"
+        description = "Is the object a trackpart"
     )
     num_sequence = IntProperty(
         name = "Sequence",
@@ -63,7 +65,7 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     invert = BoolProperty(
         name = "Invert",
         default = False,
-        description = "If the trackpart is inverted"
+        description = "Is the trackpart inverted"
     )
 
     # # Debug Objects

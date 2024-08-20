@@ -27,7 +27,7 @@ The following data structures have been reconstructed from scratch,
 by analyzing binary files in a hex editor, with the help of debug messages
 thrown by the game when messing around with byte values.
 
-Files can be successfully read and written with the current understanding
+Files can be successfully read or written with the current understanding
 of Mad Tracks's file formats, but some classes names or attributes can be wrong.
 Especially since some values appeared in only one data file and required guesswork.
 Feel free to suggest clarifications for unknown attributes.
@@ -41,9 +41,8 @@ from .common import *
 class LDO:
     """
     Reads a .ldo file and stores all sub-structures.
-    A .ldo file contains one or multiple atomics (models) that make up an object.
-    Usage: Objects of this class can be created to read and store .ldo files.
     If an opened file is supplied, it immediately starts reading from it.
+    A .ldo file contains one or multiple atomics (models) that make up a 3D object.
     """
     def __init__(self, file=None):
         self.atomic_count = 0           # amount of Atomic objects

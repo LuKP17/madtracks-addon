@@ -13,7 +13,7 @@
 
 """
 Name:    props_scene
-Purpose: Provides the scene data class for Mad Tracks meshes
+Purpose: Provides the scene data class for Mad Tracks meshes.
 
 Description:
 The scene properties are misused for storing settings as well as 
@@ -42,27 +42,28 @@ from ..common import *
 
 
 class MadSceneProperties(bpy.types.PropertyGroup):
+    # Settings
     madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
         default = "",
         description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nNeeded for import/export"
     )
 
-    # LDO import
+    # LDO
     separate_atomics = BoolProperty(
         name = "Separate Atomics",
         default = True,
-        description = "Keep the geometry atomics in separate objects"
+        description = "Keep the Geometry atomics in separate objects"
     )
 
-    # Level import
-    load_trackparts = BoolProperty(
-        name = "Load Trackparts",
+    # Level
+    import_trackparts = BoolProperty(
+        name = "Import Trackparts",
         default = True,
-        description = "Load the trackparts contained in the level"
+        description = "Import the trackparts contained in the level"
     )
 
-    # Trackparts
+    # Trackpart editor
     # PROPERTIES CAN TAKE A "update" PARAMETERS WHICH IS THE FUNCTION CALLED WHEN THE VALUE CHANGES
     # CAN BE USEFUL
     trackpart_category = EnumProperty(

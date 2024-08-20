@@ -44,6 +44,8 @@ IMPORT
 
 TODO
 
+- remove Z-rotation restriction since I sometimes want to rotate on X and Y even for simple sequences
+
 - big optimization: appending trackparts is really slow when importing levels, because we always work our way from the first trackpart instead of the second to last one
 - another optimization: since I loop through all objects in the scene to search for trackparts of the same sequence, import trackparts only first to not loop through the entire world mesh
 
@@ -53,6 +55,8 @@ TODO
 
 - point out in the installation part of the repo that the madtracks_dir variable needs to be set
    to be able to import/export files.
+   
+- when importing geometry with multiple atomics, parent all objects to a Empty? Re-Volt Add-on has a .w import option that does that.
    
    
 EXPORT

@@ -15,9 +15,6 @@
 Name:    img_in
 Purpose: Imports image files.
 
-Description:
-
-
 """
 
 import bpy

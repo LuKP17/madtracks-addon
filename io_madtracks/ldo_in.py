@@ -13,10 +13,12 @@
 
 """
 Name:    ldo_in
-Purpose: Imports geometry files (.ldo)
+Purpose: Imports Geometry files (.ldo)
 
 Description:
-Import any Mad Tracks 3D model.
+Import Geometry contained in .ldo files as Blender objects.
+I call them "Geometry" since .ldo files are located in the folder of the same name,
+but these files also contain materials and more non-geometry related stuff.
 
 """
 
@@ -41,7 +43,7 @@ from .common import *
 def import_file(filepath, scene):
     """
     Imports a .ldo file.
-    Creates and returns a Blender object with geometry data.
+    Creates and returns a Blender object with Geometry data.
     """
     props = scene.madtracks
 

@@ -37,6 +37,11 @@ from .madini import *
 from math import radians
 import numpy as np
 
+# Dictionary containing offsets for each trackpart.
+# Serves to visualize the trackpart sequences in Blender with high accuracy compared to how they'll look in-game.
+# I couldn't find them in the game files, so I assume they were hardcoded and I recomputed them by hand here.
+# Two additional values "pos_invert" and "rot_invert" are used for trackparts marked as inverted in their descriptor,
+# meaning the end point of the trackpart is used instead of the start point when using appending them in a sequence.
 trackparts = {
     "M_gris_amorce_05_in.ini" : {
         "pos_offset" : [0, 0, 5],
@@ -159,6 +164,13 @@ trackparts = {
 }
 
 def append_to_new_sequence(scene, descriptor=None):
+    """
+    Creates a new trackpart sequence in the Blender scene from a first trackpart.
+    The trackpart used is described in the descriptor if one is provided.
+    Otherwise it will use the trackpart set in the trackpart editor.
+
+    Returns the Blender data of the trackpart created.
+    """
     props = scene.madtracks
     # get filepath of trackpart to import
     if descriptor == None:
@@ -185,7 +197,15 @@ def append_to_new_sequence(scene, descriptor=None):
 
     return trackpart
 
+
 def append_to_sequence(scene, groupName, groupSize, descriptor=None):
+    """
+    Appends a trackpart to an existing trackpart sequence in the Blender scene.
+    The trackpart used is described in the descriptor if one is provided.
+    Otherwise it will use the trackpart set in the trackpart editor.
+    *groupName* is the name of the trackpart sequence, which is a Blender group.
+    *groupSize* is the number of trackparts in the sequence before appending.
+    """
     props = scene.madtracks
     # get filepath of trackpart to import
     if descriptor == None:
@@ -236,7 +256,6 @@ def append_to_sequence(scene, groupName, groupSize, descriptor=None):
     # My trackparts dictionary works per descriptor, so if I already hardcode the anchor offsets,
     # I just apply the inversion by hand.
     # The challenge is to invert the trackpart in the viewport.
-    # It can be ignored and it will still work at export though (maybe color the inverted trackparts in the viewport to say "Hey it's not this way in reality").
 
     # As a simple solution I added "position_invert" and "rotation_invert" attributes to update in the viewport.
     if trackpart.madtracks.invert:
@@ -253,18 +272,24 @@ def append_to_sequence(scene, groupName, groupSize, descriptor=None):
     # select group to make the sequence "active" again
     bpy.ops.object.select_grouped(type='GROUP')
 
+
 def set_sequence_ID(scene, groupName, groupSize, ID=None):
+    """
+    Sets the sequence number property of every trackpart in a sequence.
+    The sequence number is either *ID* if provided, or the sequence ID set in the trackpart editor otherwise.
+    *groupName* and *groupSize* are the name and number of trackparts of the sequence.
+    """
     props = scene.madtracks
     if ID == None:
-        # use sequence ID set in the trackpart editor
         ID = props.sequence_ID
     for i in range(0, groupSize):
         next = get_trackpart(groupName, i)
         next.madtracks.num_sequence = ID
 
+
 def get_trackpart(groupName, number):
     """
-    Returns the trackpart of the sequence at the given number.
+    Returns the trackpart of a given sequence at a given number.
     """
     trackpart = None
     i = 0
@@ -277,10 +302,11 @@ def get_trackpart(groupName, number):
     
     return trackpart
 
+
 def get_all_trackparts():
     """
     Returns a list of all the trackpart sequences in order.
-    Each element of the list is a list that contains [name, num_sequence, num_trackpart].
+    Each element of the list is itself a list containing [name, num_sequence, num_trackpart].
     """
     sequences = []
     for obj in bpy.data.objects:

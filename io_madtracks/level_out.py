@@ -11,7 +11,9 @@ Name:    level_out
 Purpose: Exports level .ini files.
 
 Description:
-Exports level files.
+Level files contain Geometry instances (.ldo files) from Gfx\models\Geometry
+and Object instances (.ini descriptors) from Bin\Descriptors.
+This module reads all Blender objects in a scene to export them as instances in a level file.
 
 """
 
@@ -32,6 +34,9 @@ from .trackpart import *
 
 
 def export_file(filepath, scene):
+    """
+    Exports a Blender scene's objects in a level file.
+    """
     props = scene.madtracks
 
     with open(filepath, 'w') as fini:
@@ -52,6 +57,11 @@ def export_file(filepath, scene):
 
 
 def export_object(fini, obj):
+    """
+    Writes a Blender object as a level instance in the level file.
+    Handles trackpart sequences, which are Object instances without position/rotation parameters,
+    since they are automatically computed by Mad Tracks' engine.
+    """
     if obj.madtracks.descriptor != "None":
         name = obj.madtracks.descriptor
     else:
@@ -66,6 +76,11 @@ def export_object(fini, obj):
         fini.write("DirectionUp = " + float_format(-direction_vectors[1][0]) + "," + float_format(direction_vectors[1][2]) + "," + float_format(direction_vectors[1][1]) + "\n")
     fini.write("Filename = \"" + name + "\"\n\n")
 
+
+"""
+ChatGPT code to compute directionAT and directionUp parameters from a Blender object's rotation.
+
+"""
 
 def euler_to_direction(euler_angles):
     # Extract Euler angles

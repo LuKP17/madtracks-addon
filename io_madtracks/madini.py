@@ -11,10 +11,10 @@ Name:    madini
 Purpose: Reading and writing Mad Tracks .ini files
 
 Description:
-Files used for Mad Tracks levels and object descriptors.
+.ini files are used for Mad Tracks levels and object descriptors.
 The game uses its own .ini dialect. For instance, level .ini files
 are made up of duplicate sections and their order matters for trackpart placement.
-This dedicated .ini parser supports this dialect.
+This dedicated .ini parser was written to support this dialect.
 
 """
 

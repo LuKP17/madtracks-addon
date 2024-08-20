@@ -15,6 +15,9 @@ import bpy
 from ..common import *
 
 class MadTracksObjectPanel(bpy.types.Panel):
+    """
+    Panel in the Object Properties tab to view object properties.
+    """
     bl_label = "Mad Tracks Object Properties"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"

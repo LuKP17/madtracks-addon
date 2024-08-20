@@ -51,10 +51,8 @@ from .props import (
 from .ui import (
 #   menu_add,
     headers,
+    trackpart_editor,
 #     faceprops,
-    trackparts,
-#     light,
-#     hull,
     object,
 #     scene,
 #     vertex,
@@ -77,7 +75,7 @@ imp.reload(operators)
 # imp.reload(menu_add)
 imp.reload(headers)
 # imp.reload(faceprops)
-imp.reload(trackparts)
+imp.reload(trackpart_editor)
 # imp.reload(light)
 # imp.reload(hull)
 imp.reload(object)

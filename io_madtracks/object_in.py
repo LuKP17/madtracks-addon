@@ -8,10 +8,11 @@
 
 """
 Name:    object_in
-Purpose: Imports objects (.ini descriptors)
+Purpose: Imports Objects (.ini descriptors)
 
 Description:
-Objects include geometry with added properties, lights, cameras, pickups, game zones...
+Objects include geometry with a different collision mesh, lights, cameras, pickups, game zones...
+They are defined in .ini descriptors.
 
 """
 
