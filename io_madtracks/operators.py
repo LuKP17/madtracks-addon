@@ -64,17 +64,18 @@ class ImportMad(bpy.types.Operator):
 
         dprint("Importing {}".format(self.filepath))
 
-        if frmt == FORMAT_UNK:
-            msg_box("Unsupported format.")
-
         if frmt == FORMAT_INI:
             # differentiate between .ini files based on filepath
             if DESCRIPTOR_PATH.split("\\")[-2] in self.filepath:
                 frmt = FORMAT_OBJ_INI
             elif LEVEL_PATH.split("\\")[-2] in self.filepath:
                 frmt = FORMAT_LVL_INI
+
+        if frmt == FORMAT_UNK:
+            msg_box("Unknown format.")
+            return {'CANCELLED'}
         
-        if frmt == FORMAT_LDO:
+        elif frmt == FORMAT_LDO:
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
 
@@ -83,7 +84,9 @@ class ImportMad(bpy.types.Operator):
             enable_any_tex_mode(context)
         
         elif frmt == FORMAT_OBJ_INI:
-            object_in.import_file(self.filepath, scene)
+            if object_in.import_file(self.filepath, scene) == None:
+                msg_box("Unsupported type of Object.")
+                return {'CANCELLED'}
 
             # Enables texture mode after import
             # if props.enable_tex_mode:
@@ -161,6 +164,7 @@ class ImportMad(bpy.types.Operator):
         
         else:
             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
+            return {'CANCELLED'}
 
         end_time = time.time() - start_time
 

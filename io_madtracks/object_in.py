@@ -42,11 +42,26 @@ def import_file(filepath, scene):
         # read the .ini file
         ini = INI(file).as_dict()
 
-        # import the .ldo found or "node.ldo" and retrieve the Blender object
+        # import the .ldo found or node.ldo if the object doesn't have geometry attached to it
         if "Filename" in ini['object'].keys():
-            ldoFilename = ini['object']['Filename'].split("/", 1)[1] # strip useless "geometry/"
+            if ".ldo" in ini['object']['Filename']:
+                ldoFilename = ini['object']['Filename'].split("/", 1)[1] # strip useless "geometry/"
+                # handle .ldo filenames that differ between the descriptor parameter and the actual filename
+                # Keep searching for descriptors .ldo filenames that do not exist
+                # Maybe the "_High" suffix needs to be searched when importing an .ldo file?
+                if ldoFilename == "ANT_Out_Sea.ldo":
+                    ldoFilename = "ANT_Out_Sea_High.ldo"
+                elif ldoFilename == "GER_Eau.ldo":
+                    ldoFilename = "GER_Eau_High.ldo"
+                elif ldoFilename == "ANT_Eau.ldo":
+                    ldoFilename = "ANT_Eau_High.ldo"
+            else:
+                # the filename isn't a .ldo file
+                ldoFilename = "node.ldo"
         else:
+            # no filename in descriptor
             ldoFilename = "node.ldo"
+        
         obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldoFilename, scene)
         
         # transfer properties from object to Blender object
