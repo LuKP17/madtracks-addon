@@ -25,10 +25,6 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_category = "Mad Tracks"
 
-    # @classmethod
-    # def poll(self, context):
-    #     return context.object and len(context.selected_objects) >= 1 and context.object.type == "MESH"
-
     def draw_header(self, context):
         self.layout.label("", icon="OUTLINER_OB_SURFACE")
 

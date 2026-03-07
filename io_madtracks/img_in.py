@@ -20,7 +20,7 @@ Purpose: Imports image files.
 import bpy
 import os
 
-def load_image(filepath):
+def import_file(filepath):
     path, fname = filepath.rsplit(os.sep, 1)
     if os.path.exists(filepath):
         image = bpy.data.images.load(filepath)
@@ -39,6 +39,3 @@ def load_image(filepath):
         image = bpy.data.images.get(fname)
 
     return image
-
-def import_file(filepath):
-    return load_image(filepath)

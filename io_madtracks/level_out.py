@@ -17,7 +17,6 @@ This module reads all Blender objects in a scene to export them as instances in 
 
 """
 
-
 if "bpy" in locals():
     import imp
     imp.reload(common)

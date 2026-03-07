@@ -31,7 +31,7 @@ if "bpy" in locals():
 import os
 import bpy
 import bmesh
-# from mathutils import Color, Vector
+
 from . import common
 from . import madstructs
 from . import img_in
@@ -92,17 +92,10 @@ def import_atomic(atomic, scene, filepath):
     filename = os.path.basename(filepath)
 
     me = bpy.data.meshes.new(filename)
-    bm = bmesh.new()
 
-    # props = bpy.context.scene.revolt
+    bm = bmesh.new()
     bm.loops.layers.uv.new("UVMap")
     bm.faces.layers.tex.new("UVMap")
-    # vc_layer = bm.loops.layers.color.new("Col")
-    # env_layer = bm.loops.layers.color.new("Env")
-    # env_alpha_layer = bm.faces.layers.float.new("EnvAlpha")
-    # va_layer = bm.loops.layers.color.new("Alpha")
-    # texnum_layer = bm.faces.layers.int.new("Texture Number")
-    # type_layer = bm.faces.layers.int.new("Type")
 
     # add atomic data to bmesh
     poly_offset = 0
@@ -165,37 +158,9 @@ def add_madmesh_to_bmesh(atomic_mesh, bm, filepath, scene, poly_offset=0):
                 texture = img_in.import_file(texture_path)
             face[tex_layer].image = texture
 
-        # # Assigns the face properties (bit field, one int per face)
-        # face[type_layer] = poly.type
-        # face[texnum_layer] = poly.texture
-
-        # # Assigns env alpha to face. Colors are on a vcol layer
-        # if envlist and (poly.type & FACE_ENV):
-        #     env_col_alpha = envlist[props.envidx].alpha
-        #     face[env_alpha_layer] = float(env_col_alpha) / 255
-
         # Assigns the UV mapping, colors and alpha
         for l in range(num_loops):
-            # Converts the colors to float (req. by Blender)
-            # alpha = 1-(float(colors[l].alpha) / 255)
-            # color = [float(c) / 255 for c in colors[l].color]
-            # if envlist and (poly.type & FACE_ENV):
-            #     env_col = [float(c) / 255 for c in envlist[props.envidx].color]
-            #     face.loops[l][env_layer][0] = env_col[0]
-            #     face.loops[l][env_layer][1] = env_col[1]
-            #     face.loops[l][env_layer][2] = env_col[2]
-
             face.loops[l][uv_layer].uv = (uvs[l].u, 1 - uvs[l].v)
-
-            # face.loops[l][vc_layer][0] = color[0]
-            # face.loops[l][vc_layer][1] = color[1]
-            # face.loops[l][vc_layer][2] = color[2]
-
-            # face.loops[l][va_layer][0] = alpha
-            # face.loops[l][va_layer][1] = alpha
-            # face.loops[l][va_layer][2] = alpha
 
         # Enables smooth shading for that face
         face.smooth = True
-        # if envlist and (poly.type & FACE_ENV):
-        #     props.envidx += 1

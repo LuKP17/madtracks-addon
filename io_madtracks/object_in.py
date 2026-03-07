@@ -22,7 +22,6 @@ if "bpy" in locals():
     imp.reload(madini)
     imp.reload(ldo_in)
 
-# from mathutils import Color, Vector
 from . import common
 from . import madini
 from . import ldo_in
@@ -48,11 +47,13 @@ def import_file(filepath, scene):
                 ldoFilename = ini['object']['Filename'].split("/", 1)[1] # strip useless "geometry/"
                 # handle .ldo filenames that differ between the descriptor parameter and the actual filename
                 # Keep searching for descriptors .ldo filenames that do not exist
-                # Maybe the "_High" suffix needs to be searched when importing an .ldo file?
+                # Maybe the "_High" suffix needs to be automatically searched by the .ldo importer?
                 if ldoFilename == "ANT_Out_Sea.ldo":
                     ldoFilename = "ANT_Out_Sea_High.ldo"
                 elif ldoFilename == "GER_Eau.ldo":
                     ldoFilename = "GER_Eau_High.ldo"
+                elif ldoFilename == "GER_Eau_Puit.ldo":
+                    ldoFilename = "GER_Eau_Puit_High.ldo"
                 elif ldoFilename == "ANT_Eau.ldo":
                     ldoFilename = "ANT_Eau_High.ldo"
             else:

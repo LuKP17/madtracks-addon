@@ -28,6 +28,7 @@ if "bpy" in locals():
 import os
 import bpy
 import bmesh
+
 from . import common
 from . import ldo_in
 from . import object_in
@@ -47,23 +48,6 @@ def import_file(filepath, scene):
     """
     Imports a level as Blender objects by reading the level .ini file.
     """
-# TODO Handle that when I'll start supporting more levels at import
-#
-# for s in descriptor.sections:
-#   for p in s.params:
-#       if p.name == "Filename":
-#           ldoFound = True
-#           filename = p.values.split("/", 1)[1]
-#           # Keep searching for descriptors .ldo filenames that do not exist
-#           # Maybe the "_High" suffix needs to be searched when importing an .ldo file?
-#           if filename == "ANT_Out_Sea.ldo":
-#               filename = "ANT_Out_Sea_High.ldo"
-#           elif filename == "GER_Eau.ldo":
-#               filename = "GER_Eau_High.ldo"
-#           elif filename == "ANT_Eau.ldo":
-#               filename = "ANT_Eau_High.ldo"
-#           dprint("%s will be imported" % filename)
-
     props = scene.madtracks
 
     with open(filepath, 'r') as file:
