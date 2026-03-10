@@ -34,7 +34,6 @@ LEVEL_PATH = "\\Bin\\Levels\\"
 # Global dictionaries
 global ERRORS
 ERRORS = {}  # Dictionary that holds error messages
-PARAMETERS = {}  # Glocal dict to hold parameters
 
 # If True, more debug messages will be printed
 # TODO disable for release version
@@ -59,7 +58,7 @@ FORMAT_OBJ_INI = 3
 FORMAT_LVL_INI = 4
 
 FORMATS = {
-    FORMAT_LDO: "Geometry (.ldo)",
+    FORMAT_LDO: "LDO (.ldo)",
     FORMAT_INI: "Unsupported (.ini)",
     FORMAT_OBJ_INI: "Object (.ini)",
     FORMAT_LVL_INI: "Level (.ini)",

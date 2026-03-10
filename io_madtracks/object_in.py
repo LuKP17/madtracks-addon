@@ -63,7 +63,7 @@ def import_file(filepath, scene):
             # no filename in descriptor
             ldoFilename = "node.ldo"
         
-        obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldoFilename, scene)
+        obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoFilename, scene)
         
         # transfer properties from object to Blender object
         obj.madtracks.descriptor = filepath.split("\\")[-1]

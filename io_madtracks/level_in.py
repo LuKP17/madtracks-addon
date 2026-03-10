@@ -53,8 +53,8 @@ def import_file(filepath, scene):
     with open(filepath, 'r') as file:
         filename = os.path.basename(filepath)
         # disable separate atomics property
-        separate_atomics_save = props.separate_atomics
-        props.separate_atomics = False
+        separate_atomics_save = props.ldo_separate_atomics
+        props.ldo_separate_atomics = False
         # read and store level .ini file
         ini = INI(file)
 
@@ -68,7 +68,7 @@ def import_file(filepath, scene):
             if ext == "ldo":
                 import_geometry_instance(section, scene)
             elif ext == "ini":
-                descriptor_filename = props.madtracks_dir + DESCRIPTOR_PATH + section.as_dict()['Filename']
+                descriptor_filename = props.settings_madtracks_dir + DESCRIPTOR_PATH + section.as_dict()['Filename']
                 # check object type (trackpart or not?)
                 with open(descriptor_filename, 'r') as descriptor:
                     ini_descriptor = INI(descriptor).as_dict()
@@ -81,7 +81,7 @@ def import_file(filepath, scene):
             si += 1
 
     # reinstate old separate atomics property
-    props.separate_atomics = separate_atomics_save
+    props.ldo_separate_atomics = separate_atomics_save
 
     print("Imported {}".format(filename))
 
@@ -94,7 +94,7 @@ def import_geometry_instance(section, scene):
 
     # create Blender object
     fname = section.as_dict()['Filename']
-    obj = ldo_in.import_file(props.madtracks_dir + LDO_PATH + fname.split("/", 1)[1], scene)
+    obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + fname.split("/", 1)[1], scene)
 
     # edit location and rotation of Blender object
     place_blender_object(section, obj)
@@ -110,7 +110,7 @@ def import_object_instance(section, scene):
 
     # create Blender object
     fname = section.as_dict()['Filename']
-    obj = object_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + fname, scene)
+    obj = object_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + fname, scene)
 
     # edit location and rotation of Blender object
     place_blender_object(section, obj)
@@ -124,20 +124,20 @@ def import_trackpart_sequence(ini, si, scene, num_sequence):
     Returns the index of the last level .ini section read and imported, which is the end of the sequence of trackparts.
     """
     props = scene.madtracks
-    if props.import_trackparts:
+    if props.level_import_trackparts:
         # create new trackpart sequence
         ob = trackpart.append_to_new_sequence(scene, ini.sections[si].as_dict()['Filename'])
         # place the first trackpart of the sequence with its INI coordinates
         place_blender_object(ini.sections[si], ob)
     si += 1
     while si < len(ini.sections) and len(ini.sections[si].params) == 1:
-        if props.import_trackparts:
+        if props.level_import_trackparts:
             # append to active trackpart sequence
             sequence = bpy.context.selected_objects[0].users_group[0]
             trackpart.append_to_sequence(scene, sequence.name, len(bpy.context.selected_objects), ini.sections[si].as_dict()['Filename'])
         # go to next trackpart
         si += 1
-    if props.import_trackparts:
+    if props.level_import_trackparts:
         # set sequence ID
         sequence = bpy.context.selected_objects[0].users_group[0]
         trackpart.set_sequence_ID(scene, sequence.name, len(bpy.context.selected_objects), num_sequence)

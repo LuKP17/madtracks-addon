@@ -15,13 +15,7 @@
 Name:    madstructs
 Purpose: Reading and writing Mad Tracks binary files
 
-Supported Formats:
-- .ldo (Geometry)
-
-Missing Formats:
-- .ldl (Lightmap)
-
-/!\ DISCLAIMER
+See docs/ for file formats specifications.
 
 The following data structures have been reconstructed from scratch,
 by analyzing binary files in a hex editor, with the help of debug messages
@@ -29,8 +23,7 @@ thrown by the game when messing around with byte values.
 
 Files can be successfully read or written with the current understanding
 of Mad Tracks's file formats, but some classes names or attributes can be wrong.
-Especially since some values appeared in only one data file and required guesswork.
-Feel free to suggest clarifications for unknown attributes.
+Especially since some values appeared in only one data file and required guess work.
 """
 
 import os
@@ -38,11 +31,44 @@ import struct
 from math import ceil, sqrt
 from .common import *
 
-MAT_RGBA =          1
-MAT_FLOAT3 =        4
-MAT_TEXTURE =       8
-MAT_BRIGHTNESS =    64
-MAT_REFLECTION =    128
+class LDO:
+    """
+    Handles .ldo files and contains all sub-structures.
+    """
+    def __init__(self):
+        self.atomic_cnt = 0
+        
+        self.atomics = []
+
+    def read(self, file, debug=False):
+        # Header
+        file.seek(4, 1) # skip versions
+        self.atomic_cnt = struct.unpack("<h", file.read(2))[0]
+        
+        # Use a function to keep the actual processing clear and maintain it easier.
+        # Call it before reading the next parts to have debug prints in the right order.
+        if debug:
+            self.dbg_print()
+
+        # Atomics
+        for _ in range(self.atomic_cnt):
+            atomic = Atomic()
+            atomic.read(file, debug)
+            self.atomics.append(atomic)
+
+    def __repr__(self):
+        return "LDO"
+
+    def as_dict(self):
+        dic = {"atomic_cnt": self.atomic_cnt,
+               "atomics": self.atomics,
+        }
+        return dic
+    
+    def dbg_print(self):
+        print("==================== LDO DEBUG INFO ====================")
+        print("atomic_cnt: {}\n".format(self.atomic_cnt))
+
 
 DUMMY_TYPE_MASK =   15
 DUMMY_TYPE_WORLD =  5
@@ -53,91 +79,51 @@ DUMMY_TYPE_BONUS =  11
 DUMMY_FLOAT3 =      64
 DUMMY_FLOAT12 =     128
 
-class LDO:
-    """
-    Reads a .ldo file and stores all sub-structures.
-    If an opened file is supplied, it immediately starts reading from it.
-    A .ldo file contains one or multiple atomics (models) that make up a 3D object.
-    """
-    def __init__(self, file=None):
-        self.atomic_count = 0           # amount of Atomic objects
-        self.atomics = []               # sequence of Atomic structures
-
-        # Immediately starts reading if an opened file is supplied
-        if file:
-            self.read(file)
-
-    def read(self, file):
-        # Reads the HEADER
-        file.seek(4, 1) # skip version bytes
-        self.atomic_count = struct.unpack("<h", file.read(2))[0]
-
-        # Reads the atomics
-        for atomic in range(self.atomic_count):
-            self.atomics.append(Atomic(file))
-
-    def __repr__(self):
-        return "LDO"
-
-    def as_dict(self):
-        dic = {"atomic_count": self.atomic_count,
-               "atomics": self.atomics,
-        }
-        return dic
-
-
 class Atomic:
     """
-    Reads the Atomics found in .ldo files from an opened file.
-    The name "Atomic" was inferred from some debug messages.
-    It represents a model made of meshes and materials.
+    Reads an atomic contained in a .ldo file.
     """
-    def __init__(self, file=None):
-        self.is_empty = False    # if the atomic is empty
+    def __init__(self):
+        self.mesh_cnt = 0
+        self.material_cnt = 0
+        self.is_empty = False
 
-        self.mesh_count = 0      # amount of Mesh objects
-        self.mat_count = 0       # amount of Material objects
-
-        self.meshes = []         # sequence of Mesh structures
-        self.materials = []      # sequence of Material structures
-
-        self.name = "UNNAMED"    # used for files with multiple atomics
-
-        # FIXME the atomic dummies are missing on purpose.
-        # Read the data and add the attributes here once a use for them is found.
-
-        if file:
-            self.read(file)
+        self.meshes = []
+        self.materials = []
+        self.name = "UNKNOWN"  # used for LDO with multiple atomics
 
     def __repr__(self):
         return "Atomic"
 
-    def read(self, file):
-        # Reads the ATOMIC HEADER
-        self.mesh_count = struct.unpack("<h", file.read(2))[0]
-        self.mat_count = struct.unpack("<h", file.read(2))[0]
-
+    def read(self, file, debug=False):
+        # Atomic header
+        self.mesh_cnt = struct.unpack("<h", file.read(2))[0]
+        self.material_cnt = struct.unpack("<h", file.read(2))[0]
         data = file.read(1)[0]
         if (data == 0x01):
             self.is_empty = True
             return
+        file.seek(1, 1)  # skip ~anim
+        file.seek(16, 1)  # skip ~visibility
         
-        file.seek(1, 1) # skip suspected isAtomicAnimated boolean
-        file.seek(16, 1) # skip visibility floats
+        if debug:
+            self.dbg_print()
 
-        # Reads all materials
-        for i in range(self.mat_count):
-            self.materials.append(Material(file))
+        # Materials
+        for _ in range(self.material_cnt):
+            material = Material()
+            material.read(file, debug)
+            self.materials.append(material)
         
-        # Reads all meshes
-        for i in range(self.mesh_count):
+        # Meshes
+        for _ in range(self.mesh_cnt):
             self.meshes.append(Mesh(file, self))
         
-        # Skips all dummies
-        file.seek(10, 1) # skip usual 10 bytes
+        # Skip dummies
+        file.seek(10, 1)  # skip usual 10 bytes
         name_len = file.read(1)[0]
         dummy_count = file.read(1)[0]
-        file.seek(8, 1) # skip usual 8 bytes
+        file.seek(8, 1)  # skip usual 8 bytes
         self.name = struct.unpack("<%ds" % name_len, file.read(name_len))[0].decode("utf-8")
         for i in range(dummy_count):
             dummy_flags = struct.unpack("<h", file.read(2))[0]
@@ -147,107 +133,120 @@ class Atomic:
             dflag_floats12 = bool(dummy_flags & DUMMY_FLOAT12)
 
             if (dflag_floats3):
-                file.seek(12, 1) # skip 3 floats
+                file.seek(12, 1)  # skip 3 floats
             if (dflag_floats12):
-                file.seek(48, 1) # skip 12 floats
+                file.seek(48, 1)  # skip 12 floats
 
-            file.seek(4, 1) # skip dummy index
-            file.seek(4, 1) # skip usual 4 bytes
+            file.seek(4, 1)  # skip dummy index
+            file.seek(4, 1)  # skip usual 4 bytes
 
             # retrieve dummy type
             dummy_type = dummy_flags & DUMMY_TYPE_MASK
 
             if (dummy_type == DUMMY_TYPE_WORLD):
-                file.seek(5, 1) # skip "world"
+                file.seek(5, 1)  # skip "world"
             elif (dummy_type == DUMMY_TYPE_NUM):
-                file.seek(6, 1) # skip "Dummy#"
+                file.seek(6, 1)  # skip "Dummy#"
             elif (dummy_type == DUMMY_TYPE_OUT):
-                file.seek(9, 1) # skip "DUMMY_OUT"
+                file.seek(9, 1)  # skip "DUMMY_OUT"
             elif (dummy_type == DUMMY_TYPE_ROOF):
-                file.seek(10, 1) # skip "DUMMY ROOF"
+                file.seek(10, 1)  # skip "DUMMY ROOF"
             elif (dummy_type == DUMMY_TYPE_BONUS):
-                file.seek(11, 1) # skip "DUMMY BONUS"
+                file.seek(11, 1)  # skip "DUMMY BONUS"
 
     def as_dict(self):
-        dic = { "is_empty": self.is_empty,
-                "mesh_count": self.mesh_count,
-                "mat_count": self.mat_count,
+        dic = { "mesh_cnt": self.mesh_cnt,
+                "material_cnt": self.material_cnt,
+                "is_empty": self.is_empty,
                 "meshes": self.meshes,
                 "materials": self.materials,
                 "name": self.name
         }
         return dic
+    
+    def dbg_print(self):
+        print("------------------ ATOMIC DEBUG INFO -------------------")
+        print("mesh_cnt: {}  material_cnt: {}   is_empty: {}\n".format(self.mesh_cnt, self.material_cnt, self.is_empty))
 
+
+MAT_FLAG_RGBA =          1
+MAT_FLAG_UNKNOWN =       4
+MAT_FLAG_DIFFUSE =       8
+MAT_FLAG_BRIGHTNESS =    64
+MAT_FLAG_ENVMAP =        128
 
 class Material:
     """
-    Reads the Materials found in .ldo files from an opened file.
+    Reads a material contained in a .ldo file.
     """
-    def __init__(self, file=None):
-        self.name = ""                  # name of the material
+    def __init__(self):
+        self.name_len = 0
+        self.name = ""
+        self.flags = 0
+        self.shader_tech = 0
+        self.RGBA = ()
+        self.diffuse_name_len = 0
+        self.diffuse_name = ""
+        self.brightness = 0.
+        self.envmap_name_len = 0
+        self.envmap_name = ""
 
-        # shader flags
-        self.sflag_RGBA = False         # RGBA color channels, from 0 to 255
+    def __repr__(self):
+        return "Material"
 
-        self.sflag_float3 = False       # FIXME 3 unknown floats
+    def read(self, file, debug=False):
+        # Material
+        self.name_len = file.read(1)[0]
+        self.name = struct.unpack("<%ds" % self.name_len, file.read(self.name_len))[0].decode("utf-8")
+        file.seek(1, 1)  # skip null termination
+        self.flags = struct.unpack("<h", file.read(2))[0]
+        self.shader_tech = struct.unpack("<h", file.read(2))[0]
+        if (bool(self.flags & MAT_FLAG_RGBA)):
+            self.RGBA += (file.read(1)[0], file.read(1)[0], file.read(1)[0], file.read(1)[0],)
+        if (bool(self.flags & MAT_FLAG_UNKNOWN)):
+            file.seek(4, 1)  # skip unknown data
+        if (bool(self.flags & MAT_FLAG_DIFFUSE)):
+            self.diffuse_name_len = file.read(1)[0]
+            self.diffuse_name = struct.unpack("<%ds" % self.diffuse_name_len, file.read(self.diffuse_name_len))[0].decode("utf-8")
+            file.seek(1, 1)  # skip null termination
+        if (bool(self.flags & MAT_FLAG_BRIGHTNESS)):
+            self.brightness = struct.unpack("<f", file.read(4))[0]
+        if (bool(self.flags & MAT_FLAG_ENVMAP)):
+            file.seek(4, 1)  # skip unknown data
+            self.envmap_name_len = file.read(1)[0]
+            self.envmap_name = struct.unpack("<%ds" % self.envmap_name_len, file.read(self.envmap_name_len))[0].decode("utf-8")
+            file.seek(1, 1)  # skip null termination
 
-        self.sflag_texture = False      # uses a texture
-        self.tex_name = ""              # name of the texture
-
-        self.sflag_brightness = False   # material "brightness", from -1 to 1
-
-        self.sflag_reflection = False   # uses a reflection texture
-        self.refltex_name = ""          # name of the reflection texture
-
-        if file:
-            self.read(file)
-    
-    def read(self, file):
-        # Reads the MATERIAL
-        name_len = file.read(1)[0]
-        self.name = struct.unpack("<%ds" % name_len, file.read(name_len))[0].decode("utf-8")
-        file.seek(1, 1) # skip string termination
-
-        shader_flags = struct.unpack("<h", file.read(2))[0]
-        file.seek(2, 1) # skip shader technique
-
-        # retrieve shader flags (there are 16 flags, but the rest of them doesn't affect file reading)
-        self.sflag_RGBA = bool(shader_flags & MAT_RGBA)
-        self.sflag_float3 = bool(shader_flags & MAT_FLOAT3)
-        self.sflag_texture = bool(shader_flags & MAT_TEXTURE)
-        self.sflag_brightness = bool(shader_flags & MAT_BRIGHTNESS)
-        self.sflag_reflection = bool(shader_flags & MAT_REFLECTION)
-
-        if (self.sflag_RGBA):
-            file.seek(4, 1) # skip RGBA color channels
-
-        if (self.sflag_float3):
-            file.seek(4, 1) # FIXME skip 3 unknown floats
-
-        if (self.sflag_texture):
-            tex_name_len = file.read(1)[0]
-            self.tex_name = struct.unpack("<%ds" % tex_name_len, file.read(tex_name_len))[0].decode("utf-8")
-            file.seek(1, 1) # skip string termination
-
-        if (self.sflag_brightness):
-            file.seek(4, 1) # skip brightness
-
-        if (self.sflag_reflection):
-            file.seek(4, 1) # FIXME skip unknown byte
-            refltex_name_len = file.read(1)[0]
-            self.refltex_name = struct.unpack("<%ds" % refltex_name_len, file.read(refltex_name_len))[0].decode("utf-8")
-            file.seek(1, 1) # skip string termination
+        if debug:
+            self.dbg_print()
     
     def as_dict(self):
-        dic = { "name": self.name,
-                "sflag_RGBA": self.sflag_RGBA,
-                "sflag_float3": self.sflag_float3,
-                "tex_name": self.tex_name,
-                "sflag_brightness": self.sflag_brightness,
-                "sflag_reflection": self.sflag_reflection,
-                "refltex_name": self.refltex_name
+        dic = { "name_len": self.name_len,
+                "name": self.name,
+                "flags": self.flags,
+                "shader_tech": self.shader_tech,
+                "RGBA": self.RGBA,
+                "diffuse_name_len": self.diffuse_name_len,
+                "diffuse_name": self.diffuse_name,
+                "brightness": self.brightness,
+                "envmap_name_len": self.envmap_name_len,
+                "envmap_name": self.envmap_name
         }
         return dic
+
+    def dbg_print(self):
+        print("----------------- MATERIAL DEBUG INFO ------------------")
+        print("name: {}  shader_tech: {}".format(self.name, self.shader_tech))
+        if (bool(self.flags & MAT_FLAG_RGBA)):
+            red, green, blue, alpha = self.RGBA
+            print("red: {}   green: {}   blue: {}   alpha: {}".format(red, green, blue, alpha))
+        if (bool(self.flags & MAT_FLAG_DIFFUSE)):
+            print("diffuse_name: {}".format(self.diffuse_name))
+        if (bool(self.flags & MAT_FLAG_BRIGHTNESS)):
+            print("brightness: {}".format(self.brightness))
+        if (bool(self.flags & MAT_FLAG_ENVMAP)):
+            print("envmap_name: {}".format(self.envmap_name))
+        print()
 
 
 class Mesh:
@@ -373,6 +372,44 @@ class Vertex:
         return dic
 
 
+class UV:
+    """
+    Reads UV-map structure and stores it
+    """
+    def __init__(self, file=None, uv=None):
+        if uv:
+            self.u, self.v = uv
+        else:
+            self.u = 1.0
+            self.v = 0.0
+
+        if file:
+            self.read(file)
+
+    def __repr__(self):
+        return str(self.as_dict())
+
+    def read(self, file):
+        # Reads the uv coordinates
+        self.u = struct.unpack("<f", file.read(4))[0]
+        self.v = struct.unpack("<f", file.read(4))[0]
+
+    def write(self, file):
+        # Writes the uv coordinates
+        file.write(struct.pack("<f", self.u))
+        file.write(struct.pack("<f", self.v))
+
+    def as_dict(self):
+        dic = {"u": self.u,
+               "v": self.v
+               }
+        return dic
+
+    def from_dict(self, dic):
+        self.u = dic["u"]
+        self.v = dic["v"]
+
+
 class Vector:
     """
     A very simple vector class
@@ -475,41 +512,3 @@ class Vector:
     @property
     def z(self):
         return self[2]
-
-
-class UV:
-    """
-    Reads UV-map structure and stores it
-    """
-    def __init__(self, file=None, uv=None):
-        if uv:
-            self.u, self.v = uv
-        else:
-            self.u = 1.0
-            self.v = 0.0
-
-        if file:
-            self.read(file)
-
-    def __repr__(self):
-        return str(self.as_dict())
-
-    def read(self, file):
-        # Reads the uv coordinates
-        self.u = struct.unpack("<f", file.read(4))[0]
-        self.v = struct.unpack("<f", file.read(4))[0]
-
-    def write(self, file):
-        # Writes the uv coordinates
-        file.write(struct.pack("<f", self.u))
-        file.write(struct.pack("<f", self.v))
-
-    def as_dict(self):
-        dic = {"u": self.u,
-               "v": self.v
-               }
-        return dic
-
-    def from_dict(self, dic):
-        self.u = dic["u"]
-        self.v = dic["v"]

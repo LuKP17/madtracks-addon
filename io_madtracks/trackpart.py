@@ -181,7 +181,7 @@ def append_to_new_sequence(scene, descriptor=None):
             descriptor = props.trackpart_medium
         elif props.trackpart_category == "G":
             descriptor = props.trackpart_golf
-    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
+    filepath = props.settings_madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties
     trackpart.madtracks.num_trackpart = 0
@@ -216,7 +216,7 @@ def append_to_sequence(scene, groupName, groupSize, descriptor=None):
             descriptor = props.trackpart_medium
         elif props.trackpart_category == "G":
             descriptor = props.trackpart_golf
-    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
+    filepath = props.settings_madtracks_dir + DESCRIPTOR_PATH + descriptor
     trackpart = object_in.import_file(filepath, scene)
     # set trackpart properties
     trackpart.madtracks.num_trackpart = groupSize

@@ -78,22 +78,24 @@ TRACKPARTS_GOLF = (
 )
 
 class MadSceneProperties(bpy.types.PropertyGroup):
-    # Settings
-    madtracks_dir = StringProperty(
+    settings_madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
         default = "",
         description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nNeeded for import/export"
     )
 
-    # LDO
-    separate_atomics = BoolProperty(
+    ldo_separate_atomics = BoolProperty(
         name = "Separate Atomics",
         default = True,
-        description = "Keep the Geometry atomics in separate objects"
+        description = "Split atomics into separate objects"
+    )
+    ldo_debug_info = BoolProperty(
+        name = "LDO Debug Info",
+        default = False,
+        description = "Enable all LDO debug info"
     )
 
-    # Level
-    import_trackparts = BoolProperty(
+    level_import_trackparts = BoolProperty(
         name = "Import Trackparts",
         default = True,
         description = "Import the trackparts contained in the level"

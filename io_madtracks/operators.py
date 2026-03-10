@@ -49,7 +49,7 @@ class ImportMad(bpy.types.Operator):
 
         frmt = get_format(self.filepath)
 
-        if props.madtracks_dir == "":
+        if props.settings_madtracks_dir == "":
             msg_box("No data directory specified.")
             return {'CANCELLED'}
 
@@ -74,26 +74,18 @@ class ImportMad(bpy.types.Operator):
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
 
-            # Enables texture mode after import
-            # if props.enable_tex_mode:
-            enable_any_tex_mode(context)
+            # Disable debug info if user then imports a level for instance.
+            # If user wants debug info when importing a level, check the LDO import option before selecting a level.
+            props.ldo_debug_info = False
         
         elif frmt == FORMAT_OBJ_INI:
             if object_in.import_file(self.filepath, scene) == None:
                 msg_box("Unsupported type of Object.")
                 return {'CANCELLED'}
-
-            # Enables texture mode after import
-            # if props.enable_tex_mode:
-            enable_any_tex_mode(context)
         
         elif frmt == FORMAT_LVL_INI:
             from . import level_in
             level_in.import_file(self.filepath, scene)
-
-            # Enables texture mode after import
-            # if props.enable_tex_mode:
-            enable_any_tex_mode(context)
         
         else:
             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
@@ -112,7 +104,7 @@ class ImportMad(bpy.types.Operator):
 
         # Displays a message box with the import results
         msg_box(
-            "Import of {} done in {:.3f} seconds.\n{}".format(
+            "Import of {} done in {:.3f} seconds.\n{}\n".format(
                 FORMATS[frmt], end_time, errors),
             icon=ico
         )
@@ -142,11 +134,12 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_LDO:
             box = layout.box()
-            box.prop(props, "separate_atomics")
+            box.prop(props, "ldo_separate_atomics")
+            box.prop(props, "ldo_debug_info")
         
         if frmt == FORMAT_LVL_INI:
             box = layout.box()
-            box.prop(props, "import_trackparts")
+            box.prop(props, "level_import_trackparts")
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -213,7 +206,7 @@ class ExportMad(bpy.types.Operator):
         # Displays a message box with the import results
         end_time = time.time() - start_time
         msg_box(
-            "Export to {} done in {:.3f} seconds.\n{}".format(
+            "Export to {} done in {:.3f} seconds.\n{}\n".format(
                 FORMATS[frmt], end_time, errors),
             icon=ico
         )
