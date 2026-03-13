@@ -52,7 +52,7 @@ def import_file(filepath, scene):
         ldo.read(file, props.ldo_debug_info)
         # check for EOF
         if len(file.read(1)) != 0:
-            dprint("WARNING: End of file %s wasn't reached!" % filepath)
+            dprint("End of file %s wasn't reached. May be normal." % filepath)
 
     # create Blender meshes from LDO atomics
     meshes = []
@@ -106,7 +106,7 @@ def atomic_to_mesh(atomic, scene, filepath, props):
     for atomic_mesh in atomic.meshes:
         bmesh_add_atomic_mesh(bm, atomic_mesh, scene, vertex_offset)
         # 2026: why not call it vertex_offset already?
-        vertex_offset += atomic_mesh.vertex_count
+        vertex_offset += atomic_mesh.vertex_cnt
 
     # fill Blender mesh with bmesh
     bm.to_mesh(mesh)
@@ -135,12 +135,13 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         mesh.materials.append(material)
     
     # assign material to mesh faces
-    poly_offset = 0
+    tri_offset = 0
     for atomic_mesh in atomic.meshes:
         # rely on the fact the mesh vertices and materials are created in the LDO order
-        for ti in range(atomic_mesh.polygon_count):
-            mesh.polygons[ti + poly_offset].material_index = atomic_mesh.polygons[ti].material_index
-        poly_offset += atomic_mesh.polygon_count
+        for material_id, sequence_len in zip(atomic_mesh.tri_seq_mat, atomic_mesh.tri_seq_len):
+            for ti in range(sequence_len):
+                mesh.polygons[ti + tri_offset].material_index = material_id
+            tri_offset += sequence_len
 
     return mesh
 
@@ -149,38 +150,38 @@ def bmesh_add_atomic_mesh(bm, atomic_mesh, scene, vertex_offset=0):
     """
     Adds an atomic mesh to an existing bmesh. Returns the resulting bmesh.
     """
-    props = scene.madtracks
+    #props = scene.madtracks
     uv_layer = bm.loops.layers.uv["UVMap"]
-    tex_layer = bm.faces.layers.tex["UVMap"]
+    #tex_layer = bm.faces.layers.tex["UVMap"]
 
     for vert in atomic_mesh.vertices:
         position = to_blender_coord(vert.position.data)
         normal = to_blender_axis(vert.normal.data)
 
-        # Creates vertices
+        # create vertices
         vert = bm.verts.new(Vector(data=(position[0], position[1], position[2])))
         vert.normal = Vector(data=(normal[0], normal[1], normal[2]))
 
-        # Ensures lookup table (potentially puts out an error otherwise)
+        # ensure lookup table (potentially puts out an error otherwise)
         bm.verts.ensure_lookup_table()
 
-    for poly in atomic_mesh.polygons:
-        num_loops = 3 # Mad tracks only uses tris
-        indices = poly.vertex_indices
+    for poly in atomic_mesh.tris:
+        num_loops = 3 # Mad Tracks only uses tris
+        indices = poly.vertices_id
 
         verts = (bm.verts[indices[0] + vertex_offset], bm.verts[indices[1] + vertex_offset],
                  bm.verts[indices[2] + vertex_offset])
 
         uvs = []
         for i in indices:
-            uvs.append(atomic_mesh.vertices[i].uvcoords)
+            uvs.append(atomic_mesh.vertices[i].uv)
 
         # Tries to create a face and yells at you when the face already exists
         try:
             face = bm.faces.new(verts)
         except Exception as e:
             print(e)
-            continue  # Skips this face
+            continue  # skip this face
 
         # Assigns the texture to the face (/!\ once materials are supported the texture won't be linked)
         #material = atomic_mesh.atomic.materials[poly.material_index]
@@ -199,4 +200,4 @@ def bmesh_add_atomic_mesh(bm, atomic_mesh, scene, vertex_offset=0):
             face.loops[l][uv_layer].uv = (uvs[l].u, 1 - uvs[l].v)
 
         # Enables smooth shading for that face
-        face.smooth = True
+        #face.smooth = True

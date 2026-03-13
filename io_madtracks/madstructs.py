@@ -33,7 +33,7 @@ from .common import *
 
 class LDO:
     """
-    Handles .ldo files and contains all sub-structures.
+    Handles .ldo files and contains all sub-structures
     """
     def __init__(self):
         self.atomic_cnt = 0
@@ -81,7 +81,7 @@ DUMMY_FLOAT12 =     128
 
 class Atomic:
     """
-    Reads an atomic contained in a .ldo file.
+    Handles a LDO atomic
     """
     def __init__(self):
         self.mesh_cnt = 0
@@ -90,7 +90,7 @@ class Atomic:
 
         self.meshes = []
         self.materials = []
-        self.name = "UNKNOWN"  # used for LDO with multiple atomics
+        self.name = ""  # used for LDO with multiple atomics
 
     def __repr__(self):
         return "Atomic"
@@ -117,9 +117,11 @@ class Atomic:
         
         # Meshes
         for _ in range(self.mesh_cnt):
-            self.meshes.append(Mesh(file, self))
+            mesh = Mesh()
+            mesh.read(file, debug)
+            self.meshes.append(mesh)
         
-        # Skip dummies
+        # Dummies
         file.seek(10, 1)  # skip usual 10 bytes
         name_len = file.read(1)[0]
         dummy_count = file.read(1)[0]
@@ -177,7 +179,7 @@ MAT_FLAG_ENVMAP =        128
 
 class Material:
     """
-    Reads a material contained in a .ldo file.
+    Handles a LDO material
     """
     def __init__(self):
         self.name_len = 0
@@ -251,138 +253,132 @@ class Material:
 
 class Mesh:
     """
-    Reads the Meshes found in .ldo files from an opened file.
+    Handles a LDO mesh
     """
-    def __init__(self, file=None, atomic=None):
-        self.atomic = atomic        # atomic it belongs to
-        self.vertex_count = 0       # amount of Vertex objects
-        self.polygon_count = 0      # amount of Polyon objects
-
-        self.vert_attrib_count = 0  # amount of vertex attributes
-        self.vert_data_size = 0     # FIXME dictates what is contained in a vertex, but what does each byte represent?
-        self.vertices = []          # sequence of Vertex objects
-
-        self.nb_materials = 0       # amount of materials used
-        self.polygons = []          # sequence of Polygon objects
-
-        if file:
-            self.read(file)
-    
-    def read(self, file):
-        # Reads the MESH HEADER
-        self.vertex_count = struct.unpack("<i", file.read(4))[0]
-        self.polygon_count = struct.unpack("<i", file.read(4))[0]
-
-        file.seek(4, 1) # FIXME skip unknown vertex property
-        file.seek(4, 1) # FIXME skip idk what this is, or if they are 2 byte values
-
-        file.seek(16, 1) # skip visibility bytes
-
-        file.seek(4, 1) # FIXME skip unknown index
-
-        self.vert_attrib_count = file.read(1)[0]
-        self.vert_data_size = file.read(self.vert_attrib_count)
-
-        # Reads the MESH VERTICES
-        for i in range(self.vertex_count):
-            self.vertices.append(Vertex(file, self.vert_attrib_count, self.vert_data_size))
+    def __init__(self):
+        self.vertex_cnt = 0
+        self.tri_cnt = 0
+        self.va_cnt = 0
+        self.va = ()
         
-        # Reads the MESH TRIS
-        self.nb_materials = struct.unpack("<i", file.read(4))[0]
-        for i in range(self.nb_materials):
-            mat_idx = struct.unpack("<i", file.read(4))[0] # material index to use
-            nb_tris = struct.unpack("<i", file.read(4))[0] # number of tris that use this material
-            for j in range(nb_tris):
-                self.polygons.append(Polygon(file, mat_idx))
+        self.vertices = []
+        self.tri_seq_cnt = 0
+        self.tri_seq_mat = []
+        self.tri_seq_len = []
+        self.tris = []
+            
+    def __repr__(self):
+        return "Mesh"
+    
+    def read(self, file, debug=False):
+        # Mesh header
+        self.vertex_cnt = struct.unpack("<i", file.read(4))[0]
+        self.tri_cnt = struct.unpack("<i", file.read(4))[0]
+        file.seek(8, 1)  # skip unknown data
+        file.seek(16, 1)  # skip unknown data
+        file.seek(4, 1)  # skip unknown data
+        self.va_cnt = file.read(1)[0]
+        self.va += (file.read(1)[0], file.read(1)[0], file.read(1)[0], file.read(1)[0],)
+
+        # Vertices
+        for _ in range(self.vertex_cnt):
+            vertex = Vertex()
+            vertex.read(file, self.va_cnt, self.va)
+            self.vertices.append(vertex)
+        
+        # Tris header
+        self.tri_seq_cnt = struct.unpack("<i", file.read(4))[0]
+        # Tri sequences
+        for _ in range(self.tri_seq_cnt):
+            self.tri_seq_mat.append(struct.unpack("<i", file.read(4))[0])
+            self.tri_seq_len.append(struct.unpack("<i", file.read(4))[0])
+            for _ in range(self.tri_seq_len[-1]):
+                tri = Tri()
+                tri.read(file)
+                self.tris.append(tri)
+        
+        if debug:
+            self.dbg_print()
     
     def as_dict(self):
-        dic = { "vertex_count": self.vertex_count,
-                "polygon_count": self.polygon_count,
-                "vert_attrib_count": self.vert_attrib_count,
-                "vert_data_size": self.vert_data_size,
+        dic = { "vertex_cnt": self.vertex_cnt,
+                "tri_cnt": self.tri_cnt,
+                "va_cnt": self.va_cnt,
+                "va": self.va,
                 "vertices": self.vertices,
-                "nb_materials": self.nb_materials,
-                "polygons": self.polygons
+                "tri_seq_cnt": self.tri_seq_cnt,
+                "tri_seq_mat": self.tri_seq_mat,
+                "tri_seq_len": self.tri_seq_len,
+                "tris": self.tris
         }
         return dic
-
-
-class Polygon:
-    """
-    Reads a Polygon structure and stores it.
-    """
-    def __init__(self, file=None, mat_idx=0):
-        self.material_index = mat_idx
-        self.vertex_indices = []
-
-        if file:
-            self.read(file)
-
-    def __repr__(self):
-        return "Polygon"
-
-    def read(self, file):
-        self.vertex_indices = struct.unpack("<3h", file.read(6))
-
-    def as_dict(self):
-        dic = { "material_index": self.material_index,
-                "vertex_indices": self.vertex_indices
-        }
-        return dic
+    
+    def dbg_print(self):
+        print("------------------- MESH DEBUG INFO --------------------")
+        print("vertex_cnt: {}  tri_cnt: {}  tri_seq_mat: {}  tri_seq_len: {}".format(self.vertex_cnt, self.tri_cnt, self.tri_seq_mat, self.tri_seq_len))
+        print("va_cnt: {}  va: {}".format(self.va_cnt, self.va))
+        print()
 
 
 class Vertex:
     """
-    Reads a Vertex structure and stores it
+    Handles a LDO vertex
     """
-    def __init__(self, file=None, attrib_count=None, data_size=None):
-        self.position = None    # Vector
-        self.normal = None      # Vector
-        self.uvcoords = None    # UV structure
-
-        # TODO in Mad Tracks a vertex can also have additional attributes
-        # skip them for now using parameters in the read() method
-        if file:
-            self.read(file, attrib_count, data_size)
+    def __init__(self):
+        self.position = None
+        self.normal = None
+        self.uv = None
 
     def __repr__(self):
         return "Vertex"
 
-    def read(self, file, attrib_count, data_size):
-        # Stores position and normal as a vector
+    def read(self, file, va_cnt, va):
+        # Vertex
         self.position = Vector(file)
         self.normal = Vector(file)
-
-        # Stores UV coordinates as a UV structure
-        self.uvcoords = UV(file)
-
-        if (data_size[2] == 0x0b):
-            file.seek(4, 1) # FIXME skip unknown additional float
-
-        if (attrib_count > 3):
-            file.seek(8, 1) # FIXME skip 2 unknown floats
-            if (data_size[3] == 0x0c):
-                file.seek(4, 1) # FIXME skip unknown additional float
+        self.uv = UV(file)
+        if (va[2] == 0x0b):
+            file.seek(4, 1)  # skip unknown data
+        if (va_cnt > 3):
+            file.seek(8, 1)  # skip unknown data
+            if (va[3] == 0x0c):
+                file.seek(4, 1)  # skip unknown data
 
     def as_dict(self):
         dic = {"position": self.position.as_dict(),
                "normal": self.normal.as_dict(),
-               "uvcoords": self.uvcoords.as_dict()
+               "uv": self.uv.as_dict()
                }
+        return dic
+
+
+class Tri:
+    """
+    Handles a LDO tri
+    """
+    def __init__(self):
+        self.vertices_id = []
+
+    def __repr__(self):
+        return "Tri"
+
+    def read(self, file):
+        self.vertices_id = struct.unpack("<3h", file.read(6))
+
+    def as_dict(self):
+        dic = { "vertices_id": self.vertices_id
+        }
         return dic
 
 
 class UV:
     """
-    Reads UV-map structure and stores it
+    Handles a LDO uv
     """
-    def __init__(self, file=None, uv=None):
-        if uv:
-            self.u, self.v = uv
-        else:
-            self.u = 1.0
-            self.v = 0.0
-
+    def __init__(self, file=None):
+        self.u = 0.0
+        self.v = 0.0
+        
         if file:
             self.read(file)
 
@@ -390,12 +386,14 @@ class UV:
         return str(self.as_dict())
 
     def read(self, file):
-        # Reads the uv coordinates
         self.u = struct.unpack("<f", file.read(4))[0]
         self.v = struct.unpack("<f", file.read(4))[0]
+        
+        #if self.u < 0. or self.u > 1. or self.v < 0. or self.v > 1.:
+            # do something about it?
+            #print("Warning: UV coordinates out of bounds: ({};{})".format(self.u, self.v))
 
     def write(self, file):
-        # Writes the uv coordinates
         file.write(struct.pack("<f", self.u))
         file.write(struct.pack("<f", self.v))
 
