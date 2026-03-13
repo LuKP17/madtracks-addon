@@ -12,6 +12,7 @@ From the debug messages, the file contains a boolean named
 Command in case the game freezes when testing other values:
 `taskkill /f /im MadTracks.exe`
 
+
 ## Overview
 
 - HEADER, gives the number of atomics Z
@@ -21,11 +22,14 @@ Command in case the game freezes when testing other values:
         - MATERIAL
     - Y meshes, each containing:
         - MESH HEADER
-        - MESH VERTICES
-        - MESH TRIS
-    - ATOMIC DUMMY HEADER, gives the number of dummies D
+        - VERTICES
+        - TRIS HEADER, gives the number of materials M used
+        - M tri sequences, each containing:
+            - TRI SEQUENCE
+    - DUMMY HEADER, gives the number of dummies D
     - D dummies, each containing:
         - DUMMY
+
 
 ### HEADER
 
@@ -35,7 +39,6 @@ Command in case the game freezes when testing other values:
 | obj-v | ato-v | msh-v | mat-v | atomic-cnt    |
 +-------+-------+-------+-------+---------------+
 ```
-
 
 | Field          | Description                                        |
 |----------------|----------------------------------------------------|
@@ -51,6 +54,7 @@ Command in case the game freezes when testing other values:
 |                | Cars use 3 atomics: body, front wheel, rear wheel. |
 |                | Breakable objects have one atomic for the whole    |
 |                | model and one atomic per broken part.              |
+
 
 ### ATOMIC HEADER
 
@@ -72,7 +76,6 @@ It represents a 3D model made of meshes and materials.
 +-------------------------------+
 ```
 
-
 | Field          | Description                                        |
 |----------------|----------------------------------------------------|
 | `mesh-cnt`     | Number of meshes                                   |
@@ -92,6 +95,7 @@ It represents a 3D model made of meshes and materials.
 |                | at the center of the atomic from a certain angle   |
 |                | and from a certain distance.                       |
 
+
 ### MATERIAL
 
 ```
@@ -110,7 +114,6 @@ It represents a 3D model made of meshes and materials.
 | ???
 +-------------------------------+-------------------------------+
 ```
-
 
 | Field          | Description                                        |
 |----------------|----------------------------------------------------|
@@ -154,3 +157,138 @@ It represents a 3D model made of meshes and materials.
 |                |                                                    |
 | `???`          | Unknown data from other flag bits                  |
 
+
+### MESH HEADER
+
+```
+    0       1       2       3       4       5       6       7    bytes
++-------------------------------+-------------------------------+
+| vertex-cnt                    | tri-cnt                       |
++-------------------------------+-------------------------------+
+| <unknown1>                    | <unknown2>                    |
++-------------------------------+-------------------------------+
+| ~visibility1                  | ~visibility2                  |
++-------------------------------+-------------------------------+
+| ~visibility3                  | ~visibility4                  |
++-------------------------------+-------+-------+-------+-------+
+| <unknown3>                    | ~vacnt| <unk4>| <unk5>| <unk6>|
++-------+-----------------------+-------+-------+-------+-------+
+| <unk7>|
++-------+
+```
+
+| Field          | Description                                        |
+|----------------|----------------------------------------------------|
+| `vertex-cnt`   | Number of vertices                                 |
+|                |                                                    |
+| `tri-cnt`      | Number of tris                                     |
+|                |                                                    |
+| `<unknown1>`   | Seems like a vertex property, maybe a size         |
+|                |                                                    |
+| `<unknown2>`   | Could either be one or two values                  |
+|                |                                                    |
+| `~visibility1` |                                                    |
+| `~visibility2` |                                                    |
+| `~visibility3` |                                                    |
+| `~visibility4` | Seem like visibility related. Needs testing        |
+|                |                                                    |
+| `<unknown3>`   | A mysterious index: "_Index < m_CurrentSize"       |
+|                |                                                    |
+| `~vacnt`       | Behaves like a vertex attribute count.             |
+|                | Indicates the number of the following bytes.       |
+|                |                                                    |
+| `<unk4>`       | Usually 0x00                                       |
+| `<unk5>`       | Usually 0x01                                       |
+| `<unk6>`       | Usually 0x07 or 0x0b                               |
+| `<unk7>`       | Usually 0x08 or 0x0c                               |
+
+
+### VERTICES
+
+Mad Tracks coordinate system:
+-X right  / +X left
+-Y bottom / +Y up
+-Z front  / +Z back
+
+```
+    0       1       2       3       4       5       6       7    bytes
++-------------------------------+-------------------------------+
+| position-x                    | position-y                    |
++-------------------------------+-------------------------------+
+| position-z                    | normal-x                      |
++-------------------------------+-------------------------------+
+| normal-y                      | normal-z                      |
++-------------------------------+-------------------------------+
+| uv-x                          | uv-y                          |
++-------------------------------+-------------------------------+
+| <unknown1>                    | <unknown2a>                   |
++-------------------------------+-------------------------------+
+| <unknown2b>                   | <unknown3>                    |
++-------------------------------+-------------------------------+
+```
+
+| Field          | Description                                        |
+|----------------|----------------------------------------------------|
+| `position-x`   |                                                    |
+| `position-y`   |                                                    |
+| `position-z`   | Position                                           |
+|                |                                                    |
+| `normal-x`     |                                                    |
+| `normal-y`     |                                                    |
+| `normal-z`     | Normal                                             |
+|                |                                                    |
+| `uv-x`         | Texture UV                                         |
+| `uv-y`         | (0;0) = top left corner                            |
+|                | Texture repeats probably above 1                   |
+|                |                                                    |
+| `<unknown1>`   | Appears when `<unk6>` in MESH HEADER is 0x0b       |
+|                |                                                    |
+| `<unknown2a>`  |                                                    |
+| `<unknown2b>`  | Repeated value, testing doesn't reveal anything    |
+|                |                                                    |
+| `<unknown3>`   | Appears when `<unk7>` in MESH HEADER is 0x0c       |
+
+
+### TRIS HEADER
+
+```
+    0       1       2       3    bytes
++-------------------------------+
+| tri-seq-cnt                  |
++-------------------------------+
+```
+
+| Field          | Description                                        |
+|----------------|----------------------------------------------------|
+| `tri-seq-cnt`  | Number of tri sequences                            |
+
+
+### TRI SEQUENCE
+
+```
+    0       1       2       3       4       5       6       7    bytes
++-------------------------------+-------------------------------+
+| material-id                   | sequence-len                  |
++---------------+---------------+---------------+---------------+
+| vertex-id1    | vertex-id2    | vertex-id3    |
+...
+```
+
+| Field          | Description                                        |
+|----------------|----------------------------------------------------|
+| `material-id`  | ID of the assigned material                        |
+|                |                                                    |
+| `sequence-len` | Number of tris in the sequence                     |
+|                |                                                    |
+| `vertex-id1`   |                                                    |
+| `vertex-id2`   |                                                    |
+| `vertex-id3`   | ID of the vertices making a tri.                   |
+|                | The order determines which side the tri is facing  |
+|                | (clockwise = in, counter-clockwise = out)          |
+
+
+### DUMMY HEADER
+
+Atomic dummies are too obscure at the moment.
+`madtracks-addon` has just enough knowledge to skip them and reach EOF.
+See madstructs.py for more info.
