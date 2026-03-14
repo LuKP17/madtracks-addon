@@ -117,18 +117,35 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         # /!\ don't use atomic_mat.name after that as a suffix can be added to the material name
         material = bpy.data.materials.new(atomic_mat.name)
         
-        # new Blender texture
-        texslot = material.texture_slots.add()
-        texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
-        image = None
-        image_path = props.settings_madtracks_dir + TEXTURE_PATH + atomic_mat.diffuse_name + ".dds"
-        for img in bpy.data.images:
-            if img.filepath == image_path:
-                image = img
-        if not image:
-            image = img_in.import_file(image_path)
-        texture.image = image
-        texslot.texture = texture
+        if atomic_mat.diffuse_name_len:
+            # new Blender texture
+            texslot = material.texture_slots.add()
+            texture = bpy.data.textures.new("DIF_" + atomic_mat.diffuse_name, "IMAGE")
+            image = None
+            image_path = props.settings_madtracks_dir + TEXTURE_PATH + atomic_mat.diffuse_name + ".dds"
+            for img in bpy.data.images:
+                if img.filepath == image_path:
+                    image = img
+            if not image:
+                image = img_in.import_file(image_path)
+            texture.image = image
+            texslot.texture = texture
+        
+        if atomic_mat.envmap_name_len:
+            # new Blender texture
+            texslot = material.texture_slots.add()
+            texture = bpy.data.textures.new("ENV_" + atomic_mat.envmap_name, "IMAGE")
+            image = None
+            image_path = props.settings_madtracks_dir + TEXTURE_PATH + atomic_mat.envmap_name + ".dds"
+            for img in bpy.data.images:
+                if img.filepath == image_path:
+                    image = img
+            if not image:
+                image = img_in.import_file(image_path)
+            texture.image = image
+            texslot.texture = texture
+            texslot.blend_type = "SOFT_LIGHT"
+            texslot.diffuse_color_factor = 0.5
         
         # link the material to the merged mesh
         mesh.materials.append(material)
