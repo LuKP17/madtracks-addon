@@ -54,7 +54,6 @@ class ImportMad(bpy.types.Operator):
             return {'CANCELLED'}
 
         start_time = time.time()
-
         context.window.cursor_set("WAIT")
 
         dprint("Importing {}".format(self.filepath))
@@ -147,6 +146,9 @@ class ImportMad(bpy.types.Operator):
 
 
 class ExportMad(bpy.types.Operator):
+    """
+    Export Operator for all file types
+    """
     bl_idname = "export_scene.madtracks"
     bl_label = "Export Mad Tracks Files"
     bl_description = "Export Mad Tracks game files"
@@ -155,21 +157,27 @@ class ExportMad(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        props = context.scene.madtracks
+        props = scene.madtracks
+        
+        frmt = get_format(self.filepath)
+        
+        if props.settings_madtracks_dir == "":
+            msg_box("No data directory specified.")
+            return {'CANCELLED'}
 
         start_time = time.time()
         context.window.cursor_set("WAIT")
 
-        if self.filepath == "":
-            msg_box("File not specified.", "ERROR")
-            return {"FINISHED"}
-
-        # Gets the format from the file path
-        frmt = get_format(self.filepath)
+        dprint("Exporting {}".format(self.filepath))
+        
+        if frmt == FORMAT_INI:
+            # for now don't differentiate between .ini files
+            frmt = FORMAT_LVL_INI
 
         if frmt == FORMAT_UNK:
-            msg_box("Not supported for export.", "INFO")
-            return {"FINISHED"}
+            msg_box("Unknown format.")
+            return {'CANCELLED'}
+        
         else:
             # Turns off undo for better performance
             use_global_undo = bpy.context.user_preferences.edit.use_global_undo
@@ -178,11 +186,14 @@ class ExportMad(bpy.types.Operator):
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode="OBJECT")
 
-            if frmt == FORMAT_INI:
-                # for now don't differentiate between .ini files
-                frmt = FORMAT_LVL_INI
+            if frmt == FORMAT_LDO:
+                from . import ldo_out
+                ldo_out.export_file(self.filepath, scene)
 
-            if frmt == FORMAT_LVL_INI:
+                # Disable debug info if user then exports a level for instance.
+                props.ldo_debug_info = False
+
+            elif frmt == FORMAT_LVL_INI:
                 from . import level_out
                 level_out.export_file(self.filepath, scene)
             
@@ -192,7 +203,7 @@ class ExportMad(bpy.types.Operator):
             # Re-enables undo
             bpy.context.user_preferences.edit.use_global_undo = use_global_undo
 
-        context.window.cursor_set("DEFAULT")
+        end_time = time.time() - start_time
 
         # Gets any encountered errors
         errors = get_errors()
@@ -204,12 +215,13 @@ class ExportMad(bpy.types.Operator):
             ico = "ERROR"
 
         # Displays a message box with the import results
-        end_time = time.time() - start_time
         msg_box(
             "Export to {} done in {:.3f} seconds.\n{}\n".format(
                 FORMATS[frmt], end_time, errors),
             icon=ico
         )
+        
+        context.window.cursor_set("DEFAULT")
 
         return {"FINISHED"}
 
@@ -222,9 +234,16 @@ class ExportMad(bpy.types.Operator):
         frmt = get_format(space.params.filename)
 
         if frmt == -1 and not space.params.filename == "":
+            if frmt == FORMAT_INI:
+                # for now don't differentiate between .ini files
+                frmt = FORMAT_LVL_INI
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
             layout.label("Export {}:".format(FORMATS[frmt]))
+            
+        if frmt == FORMAT_LDO:
+            box = layout.box()
+            box.prop(props, "ldo_debug_info")
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

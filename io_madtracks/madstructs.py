@@ -56,6 +56,18 @@ class LDO:
             atomic.read(file, debug)
             self.atomics.append(atomic)
 
+    def write(self, file, debug=False):
+        # Header
+        file.write(struct.pack("<4B", 0x01, 0x03, 0x02, 0x03))
+        file.write(struct.pack("<H", self.atomic_cnt))
+        
+        if debug:
+            self.dbg_print()
+        
+        # Atomics
+        for i in range(self.atomic_cnt):
+            self.atomics[i].write(file, debug)
+
     def __repr__(self):
         return "LDO"
 
@@ -155,6 +167,14 @@ class Atomic:
                 file.seek(10, 1)  # skip "DUMMY ROOF"
             elif (dummy_type == DUMMY_TYPE_BONUS):
                 file.seek(11, 1)  # skip "DUMMY BONUS"
+
+    def write(self, file, debug=False):
+        # Atomic header
+        file.write(struct.pack("<H", self.mesh_cnt))
+        file.write(struct.pack("<H", self.material_cnt))
+        
+        if debug:
+            self.dbg_print()
 
     def as_dict(self):
         dic = { "mesh_cnt": self.mesh_cnt,

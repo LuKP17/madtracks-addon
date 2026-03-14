@@ -64,9 +64,9 @@ def import_file(filepath, scene):
         # one Blender object per mesh
         for mesh in meshes:
             dprint("Creating Blender object for {}...".format(filename))
-            ob = bpy.data.objects.new(filename, mesh)
-            scene.objects.link(ob)
-            scene.objects.active = ob
+            obj = bpy.data.objects.new(filename, mesh)
+            scene.objects.link(obj)
+            scene.objects.active = obj
     else:
         # one Blender object with all meshes merged
         merged_mesh = bpy.data.meshes.new(filename)
@@ -75,14 +75,14 @@ def import_file(filepath, scene):
             bm.from_mesh(mesh)
         bm.to_mesh(merged_mesh)
         dprint("Creating Blender object for {}...".format(filename))
-        ob = bpy.data.objects.new(filename, merged_mesh)
-        scene.objects.link(ob)
-        scene.objects.active = ob
+        obj = bpy.data.objects.new(filename, merged_mesh)
+        scene.objects.link(obj)
+        scene.objects.active = obj
 
     dprint("Imported {} ({} atomics)".format(filename, ldo.atomic_cnt))
 
     # for the level importer, won't work if we separate atomics in multiple Blender objects
-    return ob
+    return obj
 
 
 def atomic_to_mesh(atomic, scene, filepath, props):
@@ -105,7 +105,6 @@ def atomic_to_mesh(atomic, scene, filepath, props):
     vertex_offset = 0
     for atomic_mesh in atomic.meshes:
         bmesh_add_atomic_mesh(bm, atomic_mesh, scene, vertex_offset)
-        # 2026: why not call it vertex_offset already?
         vertex_offset += atomic_mesh.vertex_cnt
 
     # fill Blender mesh with bmesh

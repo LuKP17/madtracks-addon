@@ -61,6 +61,8 @@ if "img_in" in locals():
     imp.reload(img_in)
 if "ldo_in" in locals():
     imp.reload(ldo_in)
+if "ldo_out" in locals():
+    imp.reload(ldo_out)
 if "object_in" in locals():
     imp.reload(object_in)
 if "level_in" in locals():
