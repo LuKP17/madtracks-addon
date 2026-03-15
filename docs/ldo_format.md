@@ -137,7 +137,7 @@ It represents a 3D model made of meshes and materials.
 | `green`        |                                                    |
 | `blue`         |                                                    |
 | `alpha`        | (Only if has RGBA color channels)                  |
-|                | Color channels from 0 to 255, `alpha` is a guess   |
+|                | Color channels from 0 to 255.                      |
 |                |                                                    |
 | `<unknown1>`   | (Only if flag bit 2 is set)                        |
 |                |                                                    |

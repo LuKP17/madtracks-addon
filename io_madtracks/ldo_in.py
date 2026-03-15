@@ -117,10 +117,20 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         # /!\ don't use atomic_mat.name after that as a suffix can be added to the material name
         material = bpy.data.materials.new(atomic_mat.name)
         
+        if (bool(atomic_mat.flags & MAT_FLAG_RGBA)):
+            material.diffuse_color = [float(atomic_mat.RGBA[0] / 255),
+                                      float(atomic_mat.RGBA[1] / 255),
+                                      float(atomic_mat.RGBA[2] / 255)]
+            material.use_transparency = True
+            material.alpha = float(atomic_mat.RGBA[3] / 255)
+        if (bool(atomic_mat.flags & MAT_FLAG_BRIGHTNESS)):
+            # Blender's default diffuse_intensity is 0.8
+            material.diffuse_intensity = atomic_mat.brightness
+        
         if atomic_mat.diffuse_name_len:
             # new Blender texture
             texslot = material.texture_slots.add()
-            texture = bpy.data.textures.new("DIF_" + atomic_mat.diffuse_name, "IMAGE")
+            texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
             image = None
             image_path = props.settings_madtracks_dir + TEXTURE_PATH + atomic_mat.diffuse_name + ".dds"
             for img in bpy.data.images:
@@ -134,7 +144,7 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         if atomic_mat.envmap_name_len:
             # new Blender texture
             texslot = material.texture_slots.add()
-            texture = bpy.data.textures.new("ENV_" + atomic_mat.envmap_name, "IMAGE")
+            texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
             image = None
             image_path = props.settings_madtracks_dir + TEXTURE_PATH + atomic_mat.envmap_name + ".dds"
             for img in bpy.data.images:
