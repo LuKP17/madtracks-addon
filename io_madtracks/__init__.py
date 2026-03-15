@@ -39,12 +39,14 @@ from . import (
 from .props import (
     props_obj,
     props_scene,
+    props_mat
 )
 
 from .ui import (
     headers,
     trackpart_editor,
     object,
+    material
 )
 
 # Reloads potentially changed modules on reload (F8 in Blender)
@@ -52,9 +54,11 @@ imp.reload(common)
 imp.reload(operators)
 imp.reload(props_obj)
 imp.reload(props_scene)
+imp.reload(props_mat)
 imp.reload(headers)
 imp.reload(trackpart_editor)
 imp.reload(object)
+imp.reload(material)
 
 # Reloaded here because it's used in a class which is instanced here
 if "img_in" in locals():
@@ -77,6 +81,7 @@ if "trackpart" in locals():
 from .common import *
 from .props.props_obj import *
 from .props.props_scene import *
+from .props.props_mat import *
 
 bl_info = {
 "name": "Mad Tracks",
@@ -111,6 +116,9 @@ def register():
     bpy.types.Object.madtracks = bpy.props.PointerProperty(
         type=MadObjectProperties
     )
+    bpy.types.Material.madtracks = bpy.props.PointerProperty(
+        type=MadMaterialProperties
+    )
 
     bpy.types.INFO_MT_file_import.prepend(menu_func_import)
     bpy.types.INFO_MT_file_export.prepend(menu_func_export)
@@ -121,6 +129,7 @@ def unregister():
 
     del bpy.types.Scene.madtracks
     del bpy.types.Object.madtracks
+    del bpy.types.Material.madtracks
 
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)

@@ -118,12 +118,14 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         material = bpy.data.materials.new(atomic_mat.name)
         
         if (bool(atomic_mat.flags & MAT_FLAG_RGBA)):
+            material.madtracks.has_rgba = True
             material.diffuse_color = [float(atomic_mat.RGBA[0] / 255),
                                       float(atomic_mat.RGBA[1] / 255),
                                       float(atomic_mat.RGBA[2] / 255)]
             material.use_transparency = True
             material.alpha = float(atomic_mat.RGBA[3] / 255)
         if (bool(atomic_mat.flags & MAT_FLAG_BRIGHTNESS)):
+            material.madtracks.has_brightness = True
             # Blender's default diffuse_intensity is 0.8
             material.diffuse_intensity = atomic_mat.brightness
         
