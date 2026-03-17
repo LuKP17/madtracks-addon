@@ -140,6 +140,7 @@ It represents a 3D model made of meshes and materials.
 |                | Color channels from 0 to 255.                      |
 |                |                                                    |
 | `<unknown1>`   | (Only if flag bit 2 is set)                        |
+|                | Car models have it, float value is 10.             |
 |                |                                                    |
 | `dif-l`        |                                                    |
 | `dif-name-str` | (Only if has diffuse texture)                      |

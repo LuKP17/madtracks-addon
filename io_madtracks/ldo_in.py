@@ -127,7 +127,7 @@ def atomic_to_mesh(atomic, scene, filepath, props):
         if (bool(atomic_mat.flags & MAT_FLAG_BRIGHTNESS)):
             material.madtracks.has_brightness = True
             # Blender's default diffuse_intensity is 0.8
-            material.diffuse_intensity = atomic_mat.brightness
+            material.diffuse_intensity = float((atomic_mat.brightness + 1) / 2)
         
         if atomic_mat.diffuse_name_len:
             # new Blender texture

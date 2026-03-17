@@ -114,6 +114,8 @@ class Atomic:
         data = file.read(1)[0]
         if (data == 0x01):
             self.is_empty = True
+            if debug:
+                self.dbg_print()
             return
         file.seek(1, 1)  # skip ~anim
         file.seek(16, 1)  # skip ~visibility
@@ -172,9 +174,20 @@ class Atomic:
         # Atomic header
         file.write(struct.pack("<H", self.mesh_cnt))
         file.write(struct.pack("<H", self.material_cnt))
+        file.write(struct.pack("<B", self.is_empty))
+        if self.is_empty:
+            if debug:
+                self.dbg_print()
+            return
+        file.write(struct.pack("<B", 0x00))  # ~anim
+        file.write(struct.pack(">4I", 0x00000036, 0x03002040, 0xffffef40, 0x305c4841))  # ~visibility taken from Amorce_15.ldo
         
         if debug:
             self.dbg_print()
+            
+        # Materials
+        for i in range(self.material_cnt):
+            self.materials[i].write(file, debug)
 
     def as_dict(self):
         dic = { "mesh_cnt": self.mesh_cnt,
@@ -239,6 +252,29 @@ class Material:
             self.envmap_name = struct.unpack("<%ds" % self.envmap_name_len, file.read(self.envmap_name_len))[0].decode("utf-8")
             file.seek(1, 1)  # skip null termination
 
+        if debug:
+            self.dbg_print()
+            
+    def write(self, file, debug=False):
+        file.write(struct.pack("<B", self.name_len))
+        file.write(struct.pack("<%ds" % self.name_len, self.name.encode("utf-8")))
+        file.write(struct.pack("<B", 0))  # null termination
+        file.write(struct.pack("<H", self.flags))
+        file.write(struct.pack("<H", self.shader_tech))
+        if (bool(self.flags & MAT_FLAG_RGBA)):
+            file.write(struct.pack("<4B", self.RGBA[0], self.RGBA[1], self.RGBA[2], self.RGBA[3]))
+        if (bool(self.flags & MAT_FLAG_DIFFUSE)):
+            file.write(struct.pack("<B", self.diffuse_name_len))
+            file.write(struct.pack("<%ds" % self.diffuse_name_len, self.diffuse_name.encode("utf-8")))
+            file.write(struct.pack("<B", 0))  # null termination
+        if (bool(self.flags & MAT_FLAG_BRIGHTNESS)):
+            file.write(struct.pack("<f", self.brightness))
+        if (bool(self.flags & MAT_FLAG_ENVMAP)):
+            file.write(struct.pack("<f", 0.4))  # <unknown2> taken from FrBis_Verre.ldo
+            file.write(struct.pack("<B", self.envmap_name_len))
+            file.write(struct.pack("<%ds" % self.envmap_name_len, self.envmap_name.encode("utf-8")))
+            file.write(struct.pack("<B", 0))  # null termination
+        
         if debug:
             self.dbg_print()
     
