@@ -59,9 +59,9 @@ class INI:
                 # read parameter
                 parameter = Parameter()
                 parameter.name, values = line[:-1].split("=", 1)
-                if values[0] == '"':
+                if values[0] == '"' or values[-4:] == ".ldo":  # thanks Load Inc
                     # string value
-                    parameter.values = values[1:-1]
+                    parameter.values = values.replace("\"", "")
                 elif "," in values:
                     # multiple numbers
                     values = values.split(",")

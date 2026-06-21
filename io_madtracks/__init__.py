@@ -34,6 +34,7 @@ import imp
 from . import (
     common,
     operators,
+    madini
 )
 
 from .props import (
@@ -59,6 +60,7 @@ imp.reload(headers)
 imp.reload(trackpart_editor)
 imp.reload(object)
 imp.reload(material)
+imp.reload(madini)
 
 # Reloaded here because it's used in a class which is instanced here
 if "img_in" in locals():
@@ -73,6 +75,8 @@ if "level_in" in locals():
     imp.reload(level_in)
 if "level_out" in locals():
     imp.reload(level_out)
+if "madini" in locals():
+    imp.reload(madini)
 if "trackpart" in locals():
     imp.reload(trackpart)
 
