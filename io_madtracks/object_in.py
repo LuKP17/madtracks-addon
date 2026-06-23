@@ -1,4 +1,4 @@
-# Copyright (C) 2024  Lucas Pottier
+# Copyright (C) 2024-2026  Lucas Pottier
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
@@ -11,7 +11,7 @@ Name:    object_in
 Purpose: Imports Objects (.ini descriptors)
 
 Description:
-Objects include geometry with a different collision mesh, lights, cameras, pickups, game zones...
+Objects include a LDO with a separate collision mesh, lights, cameras, pickups, game zones...
 They are defined in .ini descriptors.
 
 """
@@ -34,14 +34,14 @@ from .ldo_in import *
 def import_file(filepath, scene):
     """
     Imports a descriptor .ini file.
-    Returns a Blender object with geometry data and added Mad Tracks properties.
+    Returns a Blender object with LDO data and added Mad Tracks properties.
     """
     props = scene.madtracks
     with open(filepath, 'r') as file:
         # read the .ini file
         ini = INI(file).as_dict()
 
-        # import the .ldo found or node.ldo if the object doesn't have geometry attached to it
+        # import the .ldo found or node.ldo if the object doesn't have a LDO attached to it
         if "Filename" in ini['object'].keys():
             if ".ldo" in ini['object']['Filename']:
                 ldoFilename = ini['object']['Filename'].split("/", 1)[1] # strip useless "geometry/"

@@ -1,4 +1,4 @@
-# Copyright (C) 2024  Lucas Pottier
+# Copyright (C) 2024-2026  Lucas Pottier
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
@@ -11,7 +11,7 @@ Name:    level_in
 Purpose: Imports level .ini files.
 
 Description:
-Level files contain Geometry instances (.ldo files) from Gfx\models\Geometry
+Level files contain LDO instances (.ldo files) from Gfx\models\Geometry
 and Object instances (.ini descriptors) from Bin\Descriptors.
 
 """
@@ -66,7 +66,7 @@ def import_file(filepath, scene):
             ext = section.as_dict()['Filename'].split(".", 1)[1]
             # import section
             if ext == "ldo":
-                import_geometry_instance(section, scene)
+                import_LDO_instance(section, scene)
             elif ext == "ini":
                 descriptor_filename = props.settings_madtracks_dir + DESCRIPTOR_PATH + section.as_dict()['Filename']
                 # check object type (trackpart or not?)
@@ -86,9 +86,9 @@ def import_file(filepath, scene):
     print("Imported {}".format(filename))
 
 
-def import_geometry_instance(section, scene):
+def import_LDO_instance(section, scene):
     """
-    Imports a Geometry instance by reading a level .ini section.
+    Imports a LDO instance by reading a level .ini section.
     """
     props = scene.madtracks
 

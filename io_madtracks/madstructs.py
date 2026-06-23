@@ -1,14 +1,10 @@
-# Copyright (C) 2024  Lucas Pottier
+# Copyright (C) 2024-2026  Lucas Pottier
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #-----------------------------------------------------------------------------
 # Mad Tracks Blender Add-on, based on Re-Volt Blender Add-on.
-# Original file name: rvstruct.py
 # Original author: Marvin Thiel
-#
-# File first modified on 02/28/24
-# Author: Lucas Pottier
 #-----------------------------------------------------------------------------
 
 """

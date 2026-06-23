@@ -1,4 +1,4 @@
-# Copyright (C) 2024  Lucas Pottier
+# Copyright (C) 2024-2026  Lucas Pottier
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
@@ -11,7 +11,7 @@ Name:    level_out
 Purpose: Exports level .ini files.
 
 Description:
-Level files contain Geometry instances (.ldo files) from Gfx\models\Geometry
+Level files contain LDO instances (.ldo files) from Gfx\models\Geometry
 and Object instances (.ini descriptors) from Bin\Descriptors.
 This module reads all Blender objects in a scene to export them as instances in a level file.
 

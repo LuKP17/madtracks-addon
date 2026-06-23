@@ -1,4 +1,4 @@
-# Copyright (C) 2024  Lucas Pottier
+# Copyright (C) 2024-2026  Lucas Pottier
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
