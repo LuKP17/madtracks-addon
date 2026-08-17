@@ -3,16 +3,6 @@
 Geometry, rendering, texture mapping of one or multiple atomics (3D models)
 of a game object.
 
-FOR VALUES DIFFICULT TO FIGURE OUT BY HAND, WRITE A TAILORED SCANNER
-TO RETRIEVE THEM FROM ALL FILES AND PRINT THE ONES THAT DO NOT HAVE
-THE VALUE I EXPECT.
-From the debug messages, the file contains a boolean named
-“AnimatedParticles”
-
-Command in case the game freezes when testing other values:
-`taskkill /f /im MadTracks.exe`
-
-
 ## Overview
 
 - HEADER, gives the number of atomics Z
@@ -93,8 +83,6 @@ It represents a 3D model made of meshes and materials.
 | `~visibility4` | Makes the atomic disappear when the camera looks         |
 |                | at the center of the atomic from a certain angle         |
 |                | and from a certain distance.                             |
-
-FIXME there should be an atomic name somewhere when there are multiple in a file.
 
 
 ### MATERIAL

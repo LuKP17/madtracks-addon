@@ -38,7 +38,6 @@ global ERRORS
 ERRORS = {}  # Dictionary that holds error messages
 
 # If True, more debug messages will be printed
-# TODO disable for release version
 DEBUG = True
 
 SCALE = 1

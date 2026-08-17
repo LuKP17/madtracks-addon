@@ -35,7 +35,7 @@ from ..trackpart import *
 class MadSceneProperties(bpy.types.PropertyGroup):
     settings_madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
-        default = "C:\Dev\MTLE", # TODO remove for public release
+        default = "",
         description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nNeeded for import/export"
     )
 
