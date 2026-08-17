@@ -1,4 +1,4 @@
-# Mad Tracks Blender Add-on
+# Mad Tracks Blender 2.79b Add-on
 
 ## Description
 
@@ -7,7 +7,7 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 ## Requirements
 
 * Mad Tracks Steam version
-* Blender 2.79b (not tested with newer versions)
+* Blender 2.79b
 
 ## Setting up
 
