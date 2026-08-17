@@ -11,8 +11,8 @@ Name:    level_in
 Purpose: Imports level .ini files.
 
 Description:
-Level files contain LDO instances (.ldo files) from Gfx\models\Geometry
-and Object instances (.ini descriptors) from Bin\Descriptors.
+Level files contain LDO level instances from Gfx\models\Geometry and
+Object level instances from Bin\Descriptors.
 
 """
 
@@ -20,7 +20,7 @@ if "bpy" in locals():
     import imp
     imp.reload(common)
     imp.reload(ldo_in)
-    imp.reload(object_in)
+    imp.reload(descriptor_in)
     imp.reload(madstructs)
     imp.reload(madini)
     imp.reload(trackpart)
@@ -29,19 +29,49 @@ import os
 import bpy
 import bmesh
 
+import numpy as np
+
 from . import common
 from . import ldo_in
-from . import object_in
+from . import descriptor_in
 from . import madstructs
 from . import madini
 from . import trackpart
 
 from .common import *
 from .ldo_in import *
-from .object_in import *
+from .descriptor_in import *
 from .madstructs import *
 from .madini import *
 from .trackpart import *
+
+WORLD_FRA_BISTRO    = 0
+WORLD_DEV_ONE       = 1  # dev test world
+WORLD_DEV_TWO       = 2  # dev test world
+WORLD_UK_MINIGOLF   = 3
+WORLD_GER_BAL       = 4
+WORLD_UK_STAIRS     = 5
+WORLD_USA_ROOF      = 6
+WORLD_GER_REMP      = 7
+WORLD_USA_TOY       = 8
+WORLD_FRA_MUSEE     = 9
+WORLD_ANT           = 10
+WORLD_DEV_LABO      = 11  # dev test world
+
+world_filenames = [
+    "FrBistrot.ini",
+    "WorldTest.ini",
+    "WorldTest.ini",
+    "UkMiniGolf.ini",
+    "GerBal.ini",
+    "UkStairs.ini",
+    "UsRoofs.ini",
+    "GerRamparts.ini",
+    "US_ToyStore.ini",
+    "FR_Musee.ini",
+    "Antartique.ini",
+    "Labo.ini"
+]
 
 
 def import_file(filepath, scene):
@@ -50,192 +80,280 @@ def import_file(filepath, scene):
     """
     props = scene.madtracks
 
-    with open(filepath, 'r') as file:
-        filename = os.path.basename(filepath)
-        # disable separate atomics property
-        separate_atomics_save = props.ldo_separate_atomics
-        props.ldo_separate_atomics = False
-        # read and store level .ini file
-        ini = INI(file)
+    # enable instance mode
+    instance_mode_save = props.instance_mode
+    props.instance_mode = True
 
-        num_sequence = 0
+    lightmap = None
+    if props.level_import_lightmap:
+        # open lightmap file and read first instance
+        filename = os.path.basename(filepath)
+        filename = filename[:-3] + "ldl"
+        lightmap_file = open(props.settings_madtracks_dir + LDL_PATH + filename, 'rb')
+        lightmap = LDL(lightmap_file)
+        success = lightmap.read_header()
+        if success:
+            lightmap.read_instance(props.lightmap_debug_info)
+        else:
+            # give up on the lightmap
+            lightmap = None
+
+    # import world
+    dam_filepath = filepath.split(".", 1)[0] + ".dam"
+    with open(dam_filepath, 'r') as settings_file:
+        ini = INI(settings_file)
+        world = int(ini.as_dict()['base']['world'])
+        import_world(world, lightmap, scene)
+
+    with open(filepath, 'r') as instance_file:
+        filename = os.path.basename(filepath)
+        # read and store level .ini file
+        ini = INI(instance_file)
+
         si = 0
         while si < len(ini.sections):
             # get current section and its type
             section = ini.sections[si]
-            ext = section.as_dict()['Filename'].split(".", 1)[1]
+            ext = section.as_dict()['filename'].split(".", 1)[1]
             # import section
             if ext == "ldo":
-                import_LDO_instance(section, scene)
+                success = import_LDO_instance(section, lightmap, scene)
             elif ext == "ini":
-                descriptor_filename = props.settings_madtracks_dir + DESCRIPTOR_PATH + section.as_dict()['Filename']
-                # check object type (trackpart or not?)
-                with open(descriptor_filename, 'r') as descriptor:
-                    ini_descriptor = INI(descriptor).as_dict()
-                    if "ObjectType" in ini_descriptor['object'].keys() and (ini_descriptor['object']['ObjectType'] in ["trackpart", "start", "startfinish", "checkpoint", "finish"]):
-                        si = import_trackpart_sequence(ini, si, scene, num_sequence)
-                        num_sequence += 1
-                    else:
-                        import_object_instance(section, scene)
-            # go to next section
+                success = import_descriptor_instance(section, lightmap, scene)
+            # go to next section or stop there
+            if not success:
+                set_error('importing a level', "Import of level instance failed")
+                return
             si += 1
+    
+    if lightmap:
+        lightmap_file.close()
+        if lightmap.instance_cnt > 0:
+            set_error('importing a level', "Missed %d lightmap instances" % lightmap.instance_cnt)
 
-    # reinstate old separate atomics property
-    props.ldo_separate_atomics = separate_atomics_save
+    # reinstate old instance mode
+    props.instance_mode = instance_mode_save
 
     print("Imported {}".format(filename))
 
 
-def import_LDO_instance(section, scene):
+def import_LDO_instance(section, lightmap, scene, ldo_filename=None):
     """
-    Imports a LDO instance by reading a level .ini section.
-    """
-    props = scene.madtracks
-
-    # create Blender object
-    fname = section.as_dict()['Filename']
-    obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + fname.split("/", 1)[1], scene)
-
-    # edit location and rotation of Blender object
-    place_blender_object(section, obj)
-
-    return
-
-
-def import_object_instance(section, scene):
-    """
-    Imports an Object instance by reading a level .ini section.
+    Imports a LDO level instance from a .ini section.
     """
     props = scene.madtracks
 
-    # create Blender object
-    fname = section.as_dict()['Filename']
-    obj = object_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + fname, scene)
-
-    # edit location and rotation of Blender object
-    place_blender_object(section, obj)
-
-    return obj
-
-
-def import_trackpart_sequence(ini, si, scene, num_sequence):
-    """
-    Imports a sequence of trackparts by reading consecutive level .ini sections starting at index "si".
-    Returns the index of the last level .ini section read and imported, which is the end of the sequence of trackparts.
-    """
-    props = scene.madtracks
-    if props.level_import_trackparts:
-        # create new trackpart sequence
-        ob = trackpart.append_to_new_sequence(scene, ini.sections[si].as_dict()['Filename'])
-        # place the first trackpart of the sequence with its INI coordinates
-        place_blender_object(ini.sections[si], ob)
-    si += 1
-    while si < len(ini.sections) and len(ini.sections[si].params) == 1:
-        if props.level_import_trackparts:
-            # append to active trackpart sequence
-            sequence = bpy.context.selected_objects[0].users_group[0]
-            trackpart.append_to_sequence(scene, sequence.name, len(bpy.context.selected_objects), ini.sections[si].as_dict()['Filename'])
-        # go to next trackpart
-        si += 1
-    if props.level_import_trackparts:
-        # set sequence ID
-        sequence = bpy.context.selected_objects[0].users_group[0]
-        trackpart.set_sequence_ID(scene, sequence.name, len(bpy.context.selected_objects), num_sequence)
-
-    # unselect objects
-    bpy.ops.object.select_all(action='TOGGLE')
+    filename = section.as_dict()['filename']
+    lightmapped = is_lightmapped(lightmap, filename)
+    ldoname = filename.split("/", 1)[1].split(".", 1)[0]
     
-    return si - 1
+    if not lightmapped:
+        # reuse already imported instances that are not lightmapped
+        obj_index = bpy.data.objects.find(ldoname)
+        if obj_index >= 0:
+            obj = bpy.data.objects[obj_index]
+            dprint("Copying Blender object {}...".format(obj.name))
+            obj = obj.copy()
+            scene.objects.link(obj)
+            scene.objects.active = obj
+            obj.select = False
+        else:
+            # import LDO without lightmap to be reused
+            ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname + ".ldo", scene)
+            obj = bpy.context.active_object
+    else:
+        # import LDO and consume lightmap data
+        ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname + ".ldo", scene, lightmap)
+        obj = bpy.context.active_object
+        lightmap.read_instance(props.lightmap_debug_info)
+
+    # edit location and rotation of Blender object
+    place_instance_object(section, obj)
+
+    return True
 
 
-def place_blender_object(section, obj):
+def import_descriptor_instance(section, lightmap, scene):
     """
-    Edits a Blender object's location and rotation by reading a level .ini section's parameters.
+    Imports a Descriptor level instance from a .ini section.
     """
-    bpy.context.object.name = obj.name
-    bpy.context.object.rotation_mode = 'AXIS_ANGLE'
+    props = scene.madtracks
 
+    filename = section.as_dict()['filename']
+    descname = filename.split(".", 1)[0]
+
+    ldo_filename = False
+    is_trackpart = False
+    is_collectible = False
+    with open(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
+        descriptor = INI(file).as_dict()
+        if "filename" in descriptor['object'].keys() and ".ldo" in descriptor['object']['filename']:
+            ldo_filename = descriptor['object']['filename']
+        if "objecttype" in descriptor['object'].keys():
+            if descriptor['object']['objecttype'] in trackpart_types:
+                is_trackpart = True
+            if descriptor['object']['objecttype'] in collectible_types:
+                is_collectible = True
+    
+    if not props.level_import_raceline and (is_trackpart or is_collectible):
+        # don't import descriptor
+        if is_lightmapped(lightmap, ldo_filename):
+            lightmap.read_instance()
+        return True
+    
+    if ldo_filename:
+        if not is_lightmapped(lightmap, ldo_filename):
+            # reuse already imported instances that are not lightmapped
+            obj_index = bpy.data.objects.find(descname)
+            if obj_index >= 0:
+                obj = bpy.data.objects[obj_index]
+                dprint("Copying Blender object {}...".format(obj.name))
+                obj = obj.copy()
+                scene.objects.link(obj)
+                scene.objects.active = obj
+                obj.select = False
+            else:
+                # import descriptor without lightmap to be reused
+                if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
+                    return False
+                obj = bpy.context.active_object
+        else:
+            # import descriptor and consume lightmap data
+            if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene, lightmap):
+                return False
+            obj = bpy.context.active_object
+            lightmap.read_instance(props.lightmap_debug_info)
+    else:
+        # import descriptor which doesn't have a LDO
+        if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
+            return False
+        obj = bpy.context.active_object
+        
+    # edit location and rotation of Blender object
+    place_instance_object(section, obj)
+
+    if is_trackpart:
+        prev = None
+        if len(section.params) > 1:
+            # new trackpart sequence
+            trackpart.add(scene, obj)
+        elif len(section.params) == 1:
+            # add to trackpart sequence
+            prev = bpy.context.selected_objects[0]
+            trackpart.add(scene, obj, prev)
+        # select the trackpart to remember it at the next iteration as *prev*
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select = True
+
+    return True
+
+
+def import_world(world, lightmap, scene):
+    props = scene.madtracks
+    filepath = props.settings_madtracks_dir + WORLD_PATH + world_filenames[world]
+
+    with open(filepath, 'r') as file:
+        dprint("Reading world file %s..." % filepath)
+        ini = INI(file)
+
+        # import the sky color
+        sky_color = ini.as_dict()['base']['skycolor']
+        bpy.data.worlds[0].horizon_color = [float(sky_color[0] / 255),
+                                            float(sky_color[1] / 255),
+                                            float(sky_color[2] / 255)]
+
+        # import the optional skybox
+        if 'skybox' in ini.as_dict().keys():
+            skybox_pos = to_blender_coord(ini.as_dict()['skybox']['position'])
+            skybox_scale = to_blender_scale(ini.as_dict()['skybox']['scale'])
+            bpy.ops.mesh.primitive_cube_add(location=(skybox_pos[0], skybox_pos[1], skybox_pos[2]),
+
+                                            radius=skybox_scale,
+                                            enter_editmode=True)
+            bpy.ops.mesh.flip_normals()
+            bpy.ops.mesh.uv_texture_add()
+            obj = bpy.context.edit_object
+            bpy.ops.object.editmode_toggle()
+            obj.name = "Skybox"
+            obj.data.name = "Skybox"
+            # rotate the skybox to the right orientation
+            bpy.context.object.rotation_euler[2] = 7.85398
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+
+            # assign skybox textures
+            skybox_textures = [ini.as_dict()['skybox']['back'],
+                               ini.as_dict()['skybox']['right'],
+                               ini.as_dict()['skybox']['front'],
+                               ini.as_dict()['skybox']['left'],
+                               ini.as_dict()['skybox']['down'],
+                               ini.as_dict()['skybox']['up']
+                            ]
+            for side in range(6):
+                texture_name = skybox_textures[side]
+                material = bpy.data.materials.new(texture_name)
+                texslot = material.texture_slots.add()
+                texture = bpy.data.textures.new(texture_name, "IMAGE")
+                image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + texture_name + ".dds")
+                texture.image = image
+                texslot.texture = texture
+                # other convenient material properties
+                material.specular_intensity = 0
+                obj.data.materials.append(material)
+                # assign to faces
+                obj.data.polygons[side].material_index = side
+            # TODO check if orientation is correct
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.select_mode(type='FACE')
+            bpy.ops.mesh.select_by_direction(direction=(0, 0, -1))
+            bpy.ops.mesh.uvs_rotate()
+            bpy.ops.mesh.uvs_rotate()
+            bpy.ops.mesh.select_all(action='DESELECT')
+            bpy.ops.object.editmode_toggle()
+
+        # import the optional world mesh
+        if 'mesh' in ini.as_dict()['base'].keys():
+            filename = ini.as_dict()['base']['mesh']
+            if is_lightmapped(lightmap, filename):
+                obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene, lightmap)
+                lightmap.read_instance(props.lightmap_debug_info)
+            else:
+                obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene)
+
+
+def place_instance_object(section, obj):
+    """
+    Edit an instance object's location and rotation by reading a level .ini section's parameters.
+    """
     if len(section.params) == 4:
-        obj.location = to_blender_coord(section.as_dict()['Position'])
-        # compute rotation matrix from directions
-        rotation_matrix = rotation_matrix_from_directions(section.as_dict()['DirectionAT'], section.as_dict()['DirectionUp'])
-        # convert rotation matrix to axis-angle representation
-        axis, angle = axis_angle_from_rotation_matrix(rotation_matrix)
-        axis = to_blender_axis(axis)
-        obj.rotation_axis_angle[0] = angle
-        obj.rotation_axis_angle[1] = axis[0]
-        obj.rotation_axis_angle[2] = axis[1]
-        obj.rotation_axis_angle[3] = axis[2]
-    else:
-        print("Object imported from level .ini file section doesn't have the usual number of parameters, skipping...")
+        directionAT = section.as_dict()['directionat']
+        directionUp = section.as_dict()['directionup']
+        directionRight = np.cross(directionAT, directionUp)
+        directionLeft = -directionRight
 
-    # this is important for how I handle trackparts in general
-    bpy.context.object.rotation_mode = 'XYZ'
+        mat = [
+            (directionAT[0], directionAT[1], directionAT[2]),
+            (directionUp[0], directionUp[1], directionUp[2]),
+            (directionLeft[0], directionLeft[1], directionLeft[2]),
+        ]
 
-    return
+        bmat = to_blender_matrix(mat)
+        obj.rotation_euler = bmat.to_euler()
+        obj.location = to_blender_coord(section.as_dict()['position'])
 
 
-"""
-ChatGPT code to compute Blender objects rotation from the directionAT and directionUp parameters.
-FIXME The rotation obtained sometimes isn't the one we want, maybe because of Gimbal lock.
-"""
+def is_lightmapped(lightmap, filename):
+    """
+    Return True if the LDO to import is present in the LDL file and has lightmap data to import.
+    Skip the LDL instance if it has no data to import.
+    """
+    if not lightmap:
+        return False
 
-import numpy as np
+    if lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo":
+        if lightmap.mesh_cnt == 0 or lightmap.vertex_cnt[0] == 0:
+            # skip the instance with no data to import
+            lightmap.read_instance()
+        else:
+            return True
 
-def rotation_matrix_from_directions(directionAT, directionUp):
-    # Compute the rotation matrix
-    # Direction vector along Z-axis (standard orientation)
-    standard_forward = np.array([0, 0, 1])
-
-    # Compute rotation axis as the cross product of standard_forward and directionAT
-    axis = np.cross(standard_forward, directionAT)
-    axis_norm = np.linalg.norm(axis)
-    
-    # If directionAT is parallel to standard_forward, choose axis as directionUp
-    if axis_norm < 1e-6:
-        axis = directionUp
-    else:
-        axis = axis / axis_norm
-
-    # Compute the rotation angle as the angle between standard_forward and directionAT
-    angle = np.arccos(np.dot(standard_forward, directionAT))
-
-    # Compute the rotation matrix
-    rotation_matrix = rotation_matrix_from_axis_angle(axis, angle)
-
-    return rotation_matrix
-
-def rotation_matrix_from_axis_angle(axis, angle):
-    # Convert axis-angle representation to rotation matrix
-    axis = axis / np.linalg.norm(axis)
-    c = np.cos(angle)
-    s = np.sin(angle)
-    t = 1 - c
-
-    rotation_matrix = np.array([[t * axis[0]**2 + c, t * axis[0] * axis[1] - s * axis[2], t * axis[0] * axis[2] + s * axis[1]],
-                                [t * axis[0] * axis[1] + s * axis[2], t * axis[1]**2 + c, t * axis[1] * axis[2] - s * axis[0]],
-                                [t * axis[0] * axis[2] - s * axis[1], t * axis[1] * axis[2] + s * axis[0], t * axis[2]**2 + c]])
-
-    return rotation_matrix
-
-def axis_angle_from_rotation_matrix(rotation_matrix):
-    # Convert rotation matrix to axis-angle representation
-    epsilon = 1e-8
-    angle = np.arccos((np.trace(rotation_matrix) - 1) / 2)
-
-    axis = np.zeros(3)
-    if abs(angle) < epsilon:
-        axis = np.array([0, 0, 1])  # Rotation angle close to zero, axis is arbitrary
-    elif abs(np.pi - angle) < epsilon:
-        # Rotation angle close to pi, axis is sqrt(2) times the eigenvector corresponding to the eigenvalue 1
-        eigvals, eigvecs = np.linalg.eig(rotation_matrix)
-        idx = np.argmax(eigvals)
-        axis = eigvecs[:, idx]
-    else:
-        # Normal case, compute axis from skew-symmetric part of the rotation matrix
-        axis = np.array([rotation_matrix[2, 1] - rotation_matrix[1, 2],
-                         rotation_matrix[0, 2] - rotation_matrix[2, 0],
-                         rotation_matrix[1, 0] - rotation_matrix[0, 1]])
-        axis = axis / np.linalg.norm(axis)
-
-    return axis, angle
+    return False

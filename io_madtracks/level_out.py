@@ -11,8 +11,8 @@ Name:    level_out
 Purpose: Exports level .ini files.
 
 Description:
-Level files contain LDO instances (.ldo files) from Gfx\models\Geometry
-and Object instances (.ini descriptors) from Bin\Descriptors.
+Level files contain LDO level instances from Gfx\models\Geometry and
+Object level instances from Bin\Descriptors.
 This module reads all Blender objects in a scene to export them as instances in a level file.
 
 """
@@ -34,9 +34,13 @@ from .trackpart import *
 
 def export_file(filepath, scene):
     """
-    Exports a Blender scene's objects in a level file.
+    Exports a level from Blender objects by writing the level .ini file.
     """
     props = scene.madtracks
+
+    # enable instance mode
+    instance_mode_save = props.instance_mode
+    props.instance_mode = True
 
     with open(filepath, 'w') as fini:
         filename = os.path.basename(filepath)
@@ -44,71 +48,45 @@ def export_file(filepath, scene):
         # export objects that are not trackparts
         for obj in bpy.data.objects:
             if not obj.madtracks.is_trackpart:
-                export_object(fini, obj)
+                export_instance(fini, obj, obj.location, obj.matrix_world)
         
         # export trackpart sequences
-        trackparts = get_all_trackparts()
-        for trackpart in trackparts:
-            obj = bpy.data.objects[trackpart[0]]
-            export_object(fini, obj)
+        for group in bpy.data.groups:
+            for obj in group.objects:
+                if obj.madtracks.is_trackpart:
+                    if obj.parent == None:
+                        export_instance(fini, obj, obj.location, obj.matrix_world)
+                    else:
+                        export_instance(fini, obj)
+    
+    # reinstate old instance mode
+    props.instance_mode = instance_mode_save
 
     print("Exported {}".format(filename))
 
 
-def export_object(fini, obj):
+def export_instance(fini, obj, location=None, matrix_world=None):
     """
     Writes a Blender object as a level instance in the level file.
     Handles trackpart sequences, which are Object instances without position/rotation parameters,
     since they are automatically computed by Mad Tracks' engine.
     """
-    if obj.madtracks.descriptor != "None":
+    if obj.madtracks.descriptor != '':
         name = obj.madtracks.descriptor
     else:
-        name = "geometry/" + obj.name.rsplit(".ldo")[0] + ".ldo"
+        if "_lgt" in obj.name:
+            name = "geometry/" + obj.name.split("_lgt")[0] + ".ldo"
+        else:
+            name = "geometry/" + obj.name.split(".")[0] + ".ldo"
 
     fini.write("[" + name + "]\n")
-    if not obj.madtracks.is_trackpart or obj.madtracks.num_trackpart == 0:
-        fini.write("Position = " + float_format(-obj.location[0]) + "," + float_format(obj.location[2]) + "," + float_format(obj.location[1]) + "\n")
-        euler_angles = obj.rotation_euler
-        direction_vectors = euler_to_direction(euler_angles)
-        fini.write("DirectionAT = " + float_format(-direction_vectors[0][0]) + "," + float_format(direction_vectors[0][2]) + "," + float_format(direction_vectors[0][1]) + "\n")
-        fini.write("DirectionUp = " + float_format(-direction_vectors[1][0]) + "," + float_format(direction_vectors[1][2]) + "," + float_format(direction_vectors[1][1]) + "\n")
+    if location:
+        pos = to_madtracks_axis(location)
+        fini.write("Position = " + float_format(pos[0]) + "," + float_format(pos[1]) + "," + float_format(pos[2]) + "\n")
+    if matrix_world:
+        rot = to_madtracks_matrix(matrix_world)
+        fini.write("DirectionAT = " + float_format(rot[0][0]) + "," + float_format(rot[0][1]) + "," + float_format(rot[0][2]) + "\n")
+        fini.write("DirectionUp = " + float_format(rot[1][0]) + "," + float_format(rot[1][1]) + "," + float_format(rot[1][2]) + "\n")
     fini.write("Filename = \"" + name + "\"\n\n")
 
-
-"""
-ChatGPT code to compute directionAT and directionUp parameters from a Blender object's rotation.
-
-"""
-
-def euler_to_direction(euler_angles):
-    # Extract Euler angles
-    angle_x, angle_y, angle_z = euler_angles
-
-    # Initial direction vectors
-    initial_directionAT = np.array([0, 1, 0])
-    initial_directionUp = np.array([0, 0, 1])
-
-    # Rotation matrices around X, Y, Z axes
-    rotation_x = np.array([[1, 0, 0],
-                           [0, np.cos(angle_x), -np.sin(angle_x)],
-                           [0, np.sin(angle_x), np.cos(angle_x)]])
-
-    rotation_y = np.array([[np.cos(angle_y), 0, np.sin(angle_y)],
-                           [0, 1, 0],
-                           [-np.sin(angle_y), 0, np.cos(angle_y)]])
-
-    rotation_z = np.array([[np.cos(angle_z), -np.sin(angle_z), 0],
-                           [np.sin(angle_z), np.cos(angle_z), 0],
-                           [0, 0, 1]])
-
-    # Apply rotations
-    intermediate_directionAT = np.dot(rotation_x, initial_directionAT)
-    intermediate_directionAT = np.dot(rotation_y, intermediate_directionAT)
-    final_directionAT = np.dot(rotation_z, intermediate_directionAT)
-    
-    intermediate_directionUp = np.dot(rotation_x, initial_directionUp)
-    intermediate_directionUp = np.dot(rotation_y, intermediate_directionUp)
-    final_directionUp = np.dot(rotation_z, intermediate_directionUp)
-
-    return final_directionAT, final_directionUp
+    print("Exported {}".format(obj.name))

@@ -18,300 +18,160 @@ if "bpy" in locals():
     import imp
     imp.reload(common)
     imp.reload(ldo_in)
-    imp.reload(object_in)
+    imp.reload(descriptor_in)
     imp.reload(madstructs)
     imp.reload(madini)
 
 from . import common
 from . import ldo_in
-from . import object_in
+from . import descriptor_in
 from . import madstructs
 from . import madini
 
 from .common import *
 from .ldo_in import *
-from .object_in import *
+from .descriptor_in import *
 from .madstructs import *
 from .madini import *
 
-from math import radians
 import numpy as np
+import mathutils
 
-# Dictionary containing offsets for each trackpart.
-# Serves to visualize the trackpart sequences in Blender with high accuracy compared to how they'll look in-game.
-# I couldn't find them in the game files, so I assume they were hardcoded and I recomputed them by hand here.
-# Two additional values "pos_invert" and "rot_invert" are used for trackparts marked as inverted in their descriptor,
-# meaning the end point of the trackpart is used instead of the start point when using appending them in a sequence.
-trackparts = {
-    "M_gris_amorce_05_in.ini" : {
-        "pos_offset" : [0, 0, 5],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_amorce_15_in.ini" : {
-        "pos_offset" : [0, 0, 15],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_amorce_30_in.ini" : {
-        "pos_offset" : [0, 0, 30],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_amorce_15_out.ini" : {
-        "pos_offset" : [0, 0, 15],
-        "rot_offset" : [0, 0, 0],
-        "pos_invert" : [0, 0, 15],
-        "rot_invert" : [0, 180, 0]
-    },
-    "M_gris_amorce_30_out.ini" : {
-        "pos_offset" : [0, 0, 30],
-        "rot_offset" : [0, 0, 0],
-        "pos_invert" : [0, 0, 30],
-        "rot_invert" : [0, 180, 0]
-    },
-    "M_gris_rail_15.ini" : {
-        "pos_offset" : [0, 0, 15],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_rail_50.ini" : {
-        "pos_offset" : [0, 0, 50],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_neon_rail_50.ini" : {
-        "pos_offset" : [0, 0, 50],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_virage_45_left.ini" : {
-        "pos_offset" : [17.5848, 0, 42.4152],
-        "rot_offset" : [0, 45, 0]
-    },
-    "M_gris_virage_45_right.ini" : {
-        "pos_offset" : [-17.5848, 0, 42.4152],
-        "rot_offset" : [0, -45, 0]
-    },
-    "M_gris_rampe_30_up.ini" : {
-        "pos_offset" : [0, 10.9245, 40.3482],
-        "rot_offset" : [-30, 0, 0]
-    },
-    "M_gris_rampe_30_down.ini" : {
-        "pos_offset" : [0, -10.7132, 40.4182],
-        "rot_offset" : [30, 0, 0]
-    },
-    "M_none_start.ini" : {
-        "pos_offset" : [0, 0, 0],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_none_checkpoint.ini" : {
-        "pos_offset" : [0, 0, 0],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_none_finish_50.ini" : {
-        "pos_offset" : [0, 0, 0],
-        "rot_offset" : [0, 0, 0]
-    },
-    "M_gris_to_S_50.ini" : {
-        "pos_offset" : [0, 0, 50],
-        "rot_offset" : [0, 0, 0],
-        "pos_invert" : [0, 0, 50],
-        "rot_invert" : [0, 180, 0]
-    },
-    "S_bleu_amorce_15_in.ini" : {
-        "pos_offset" : [0, 0, 15],
-        "rot_offset" : [0, 0, 0]
-    },
-    "S_bleu_amorce_15_out.ini" : {
-        "pos_offset" : [0, 0, 15],
-        "rot_offset" : [0, 0, 0],
-        "pos_invert" : [0, 0, 15],
-        "rot_invert" : [0, 180, 0]
-    },
-    "S_neon_rail_50.ini" : {
-        "pos_offset" : [0, 0, 50],
-        "rot_offset" : [0, 0, 0]
-    },
-    "S_neon_virage_45_left.ini" : {
-        "pos_offset" : [8.7924, 0, 21.2076],
-        "rot_offset" : [0, 45, 0]
-    },
-    "S_neon_virage_45_right.ini" : {
-        "pos_offset" : [-8.7924, 0, 21.2076],
-        "rot_offset" : [0, -45, 0],
-        "pos_invert" : [-8.7924, 0, 21.2076],
-        "rot_invert" : [0, 135, 0]
-    },
-    "S_raye_rampe_30_up.ini" : {
-        "pos_offset" : [0, 10.1114, 37.3328],
-        "rot_offset" : [-30, 0, 0]
-    },
-    "S_raye_rampe_30_down.ini" : {
-        "pos_offset" : [0, -10.342, 37.2943],
-        "rot_offset" : [30, 0, 0]
-    },
-    "S_gris_to_M_50.ini" : {
-        "pos_offset" : [0, 0, 50],
-        "rot_offset" : [0, 0, 0]
-    },
-    "S_raye_looping.ini" : {
-        "pos_offset" : [29.6271, 0.229707, 4.7106],
-        "rot_offset" : [0, 0, 0]
-    },
-    "G_none_checkpoint.ini" : {
-        "pos_offset" : [0, 0, 0],
-        "rot_offset" : [0, 0, 0]
-    },
-    "G_none_finish.ini" : {
-        "pos_offset" : [0, 0, 0],
-        "rot_offset" : [0, 0, 0]
-    },
-}
+TRACKPART_CATEGORIES = (
+    ("M", "Medium", "", 0),
+    ("S", "Small", "", 1),
+    ("G", "Golf", "", 2),
+    # ("U", "Custom", "Custom trackparts"),
+    # ("X", "Control", "Starts, checkpoints, finishes"),
+    # ("W", "Wood", "Wood trackparts"),
+    # ("B", "Bobsleigh", "Bobsleigh trackparts"),
+    # ("C", "Croquet", "Croquet trackparts"),
+    # ("V", "Vent", "Vent trackparts"),
+    # ("A", "Antartica", "Antartica trackparts"),
+)
+TRACKPARTS_SMALL = (
+    ("S_bleu_amorce_15_in.ini", "Amorce In 15", ""),
+    ("S_bleu_amorce_15_out.ini", "Amorce Out 15", ""),
+    ("S_neon_rail_50.ini", "Neon Straight 50", ""),
+    ("S_neon_virage_45_left.ini", "Neon Left 45", ""),
+    ("S_neon_virage_45_right.ini", "Neon Right 45", ""),
+    ("S_raye_rampe_30_up.ini", "Stripe Up 30", ""),
+    ("S_raye_rampe_30_down.ini", "Stripe Down 30", ""),
+    ("S_gris_to_M_50.ini", "Small to Medium 50", ""),
+    ("S_raye_looping.ini", "Stripe Looping", ""),
+)
+TRACKPARTS_MEDIUM = (
+    ("M_gris_amorce_05_in.ini", "Amorce In 05", ""),
+    ("M_gris_amorce_15_in.ini", "Amorce In 15", ""),
+    ("M_gris_amorce_15_out.ini", "Amorce Out 15", ""),
+    ("M_gris_amorce_30_in.ini", "Amorce In 30", ""),
+    ("M_gris_amorce_30_out.ini", "Amorce Out 30", ""),
+    ("M_gris_rail_15.ini", "Straight 15", ""),
+    ("M_gris_rail_50.ini", "Straight 50", ""),
+    ("M_neon_rail_50.ini", "Neon Straight 50", ""),
+    ("M_gris_virage_45_left.ini", "Left 45", ""),
+    ("M_gris_virage_45_right.ini", "Right 45", ""),
+    ("M_gris_rampe_30_up.ini", "Up 30", ""),
+    ("M_gris_rampe_30_down.ini", "Down 30", ""),
+    ("M_none_start.ini", "Start", ""),
+    ("M_none_startfinish.ini", "Start/Finish", ""),
+    ("M_none_checkpoint.ini", "Checkpoint", ""),
+    ("M_none_finish_50.ini", "Finish", ""),
+    ("M_gris_to_S_50.ini", "Medium to Small 50", ""),
+    ("M_none_cache_out.ini", "Cache Out", ""),
+    ("M_none_cache_in.ini", "Cache In", ""),
+)
+TRACKPARTS_GOLF = (
+    ("G_none_checkpoint.ini", "Checkpoint", ""),
+    ("G_none_finish.ini", "Finish", ""),
+)
 
-def append_to_new_sequence(scene, descriptor=None):
+
+def from_dropdown(scene):
+    props = scene.madtracks
+    # use the active descriptor set in the trackpart editor
+    if props.trackpart_category == "S":
+        return props.trackpart_small
+    elif props.trackpart_category == "M":
+        return props.trackpart_medium
+    elif props.trackpart_category == "G":
+        return props.trackpart_golf
+
+
+def add_user(scene, descriptor):
     """
-    Creates a new trackpart sequence in the Blender scene from a first trackpart.
-    The trackpart used is described in the descriptor if one is provided.
-    Otherwise it will use the trackpart set in the trackpart editor.
-
-    Returns the Blender data of the trackpart created.
+    Used to handle trackparts selected by the user.
     """
     props = scene.madtracks
-    # get filepath of trackpart to import
-    if descriptor == None:
-        # use the active descriptor set in the trackpart editor
-        if props.trackpart_category == "S":
-            descriptor = props.trackpart_small
-        elif props.trackpart_category == "M":
-            descriptor = props.trackpart_medium
-        elif props.trackpart_category == "G":
-            descriptor = props.trackpart_golf
     filepath = props.settings_madtracks_dir + DESCRIPTOR_PATH + descriptor
-    trackpart = object_in.import_file(filepath, scene)
-    # set trackpart properties
-    trackpart.madtracks.num_trackpart = 0
-    # restrict rotation
-    trackpart.lock_rotation[0] = True
-    trackpart.lock_rotation[1] = True
-    trackpart.lock_rotation[2] = False
-    # create a new trackpart sequence
-    sequence = bpy.data.groups.new("Sequence")
-    bpy.ops.object.group_link(group=sequence.name)
-    # select group to make the sequence "active"
-    bpy.ops.object.select_grouped(type='GROUP')
 
-    return trackpart
+    # look for a selected trackpart to append to
+    prev = None
+    sel = bpy.context.selected_objects
+    if len(sel) == 1 and sel[0].madtracks.is_trackpart:
+        prev = sel[0]
+    elif len(sel) > 1:
+        set_error('adding trackpart', "Please select one object at most")
+        return
+    # don't reuse already imported since it could be a custom modified version
+    descriptor_in.import_file(filepath, scene)
+    obj = bpy.context.active_object
+    # call method shared with level importer
+    add(scene, obj, prev)
+    # move trackpart to 3D cursor if standalone
+    if not prev:
+        obj.location = bpy.context.scene.cursor_location
+    # update selection
+    if prev:
+        prev.select = False
+    obj.select = True
 
 
-def append_to_sequence(scene, groupName, groupSize, descriptor=None):
-    """
-    Appends a trackpart to an existing trackpart sequence in the Blender scene.
-    The trackpart used is described in the descriptor if one is provided.
-    Otherwise it will use the trackpart set in the trackpart editor.
-    *groupName* is the name of the trackpart sequence, which is a Blender group.
-    *groupSize* is the number of trackparts in the sequence before appending.
-    """
-    props = scene.madtracks
-    # get filepath of trackpart to import
-    if descriptor == None:
-        # use the active descriptor set in the trackpart editor
-        if props.trackpart_category == "S":
-            descriptor = props.trackpart_small
-        elif props.trackpart_category == "M":
-            descriptor = props.trackpart_medium
-        elif props.trackpart_category == "G":
-            descriptor = props.trackpart_golf
-    filepath = props.settings_madtracks_dir + DESCRIPTOR_PATH + descriptor
-    trackpart = object_in.import_file(filepath, scene)
-    # set trackpart properties
-    trackpart.madtracks.num_trackpart = groupSize
-    # restrict rotation
-    trackpart.lock_rotation[0] = True
-    trackpart.lock_rotation[1] = True
-    trackpart.lock_rotation[2] = False
-    # add to active trackpart sequence
-    bpy.ops.object.group_link(group=groupName)
-    # only select the trackpart to append
-    bpy.ops.object.select_all()
-    bpy.data.objects[trackpart.name].select = True
-
-    # place the trackpart at the end of the sequence
-    first = get_trackpart(groupName, 0)
-    trackpart.location = first.location
-    trackpart.rotation_euler = first.rotation_euler
-    for i in range(0, groupSize):
-        next = get_trackpart(groupName, i)
-        pos_offset = to_blender_axis(trackparts[next.madtracks.descriptor]['pos_offset'])
-        bpy.ops.transform.translate(value=(pos_offset[0], pos_offset[1], pos_offset[2]), constraint_axis=(pos_offset[0]!=0, pos_offset[1]!=0, pos_offset[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-        rot_offset = to_blender_axis(trackparts[next.madtracks.descriptor]['rot_offset'])
-        trackpart.rotation_euler.rotate_axis("X", radians(rot_offset[0]))
-        trackpart.rotation_euler.rotate_axis("Y", radians(rot_offset[1]))
-        trackpart.rotation_euler.rotate_axis("Z", radians(rot_offset[2]))
-
-    # "Invert" descriptor flag for trackparts:
-    # In the case of amorce_out, the model is rotated by 180°, not mirrored
-    # "Invert" means: the other end of the trackpart is attached to the sequence
-
-    # By analyzing the M_raye_virage_90_kit_left_in.ini and M_raye_virage_90_kit_left_out.ini descriptors
-    # to make a 180 turn, "Invert" might just mean finding the other end of the trackpart and putting the object's origin there.
-    # If I can't move the origin directly, try using the 3D cursor temporarily
-    # Then move the trackpart at the end of the sequence, but for the rotation I might need to use the trackparts' rotation offsets in the dictionary.
-    # I say that because a straight inverted trackpart need to be rotated 180° and a 90° turn inverted trackpart doesn't need to be rotated.
-
-    # My trackparts dictionary works per descriptor, so if I already hardcode the anchor offsets,
-    # I just apply the inversion by hand.
-    # The challenge is to invert the trackpart in the viewport.
-
-    # As a simple solution I added "position_invert" and "rotation_invert" attributes to update in the viewport.
-    if trackpart.madtracks.invert:
-        pos_invert = to_blender_axis(trackparts[trackpart.madtracks.descriptor]['pos_invert'])
-        bpy.ops.transform.translate(value=(pos_invert[0], pos_invert[1], pos_invert[2]), constraint_axis=(pos_invert[0]!=0, pos_invert[1]!=0, pos_invert[2]!=0), constraint_orientation='LOCAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-        rot_invert = to_blender_axis(trackparts[trackpart.madtracks.descriptor]['rot_invert'])
-        trackpart.rotation_euler.rotate_axis("X", radians(rot_invert[0]))
-        trackpart.rotation_euler.rotate_axis("Y", radians(rot_invert[1]))
-        trackpart.rotation_euler.rotate_axis("Z", radians(rot_invert[2]))
+def add(scene, obj, prev=None):
+    eps = 0.00001
+    if not prev:
+        # new trackpart sequence
+        sequence = bpy.data.groups.new("Sequence")
+        bpy.ops.object.group_link(group=sequence.name)
+    else:
+        # add to trackpart sequence
+        bpy.ops.object.group_link(group=prev.users_group[0].name)
+        # compute rotation
+        dummy_rotmat = mathutils.Matrix([prev.madtracks.dummy_rot1, prev.madtracks.dummy_rot2, prev.madtracks.dummy_rot3, prev.madtracks.dummy_rot4])
+        dummy_roteuler = dummy_rotmat.to_euler()
+        obj.rotation_euler = prev.rotation_euler
+        if prev.madtracks.invert:
+            obj.rotation_euler.rotate_axis("Z", 3.141593)
+        else:
+            obj.rotation_euler.rotate_axis("X", dummy_roteuler[0])
+            obj.rotation_euler.rotate_axis("Y", dummy_roteuler[1])
+            obj.rotation_euler.rotate_axis("Z", dummy_roteuler[2])
+        # calculate location
+        if prev.madtracks.invert:
+            # use prev origin instead of its dummy
+            obj.location = prev.location
+        else:
+            prev_pos = np.array(prev.location)
+            prev_rot = np.array(prev.rotation_euler.to_matrix())
+            dummy_pos = prev.madtracks.dummy_pos
+            dummy_pos = np.matmul(dummy_pos, np.transpose(prev_rot))
+            obj.location = np.add(prev_pos, dummy_pos)
     
-    # give the trackpart the same sequence number as the first trackpart of the sequence
-    trackpart.madtracks.num_sequence = first.madtracks.num_sequence
-
-    # select group to make the sequence "active" again
-    bpy.ops.object.select_grouped(type='GROUP')
-
-
-def set_sequence_ID(scene, groupName, groupSize, ID=None):
-    """
-    Sets the sequence number property of every trackpart in a sequence.
-    The sequence number is either *ID* if provided, or the sequence ID set in the trackpart editor otherwise.
-    *groupName* and *groupSize* are the name and number of trackparts of the sequence.
-    """
-    props = scene.madtracks
-    if ID == None:
-        ID = props.sequence_ID
-    for i in range(0, groupSize):
-        next = get_trackpart(groupName, i)
-        next.madtracks.num_sequence = ID
-
-
-def get_trackpart(groupName, number):
-    """
-    Returns the trackpart of a given sequence at a given number.
-    """
-    trackpart = None
-    i = 0
-    while not trackpart and i < len(bpy.data.objects):
-        ob = bpy.data.objects[i]
-        # since we loop through all objects, handle non-trackparts or trackparts imported without using the editor
-        if ob.madtracks.is_trackpart and len(ob.users_group) > 0 and ob.users_group[0].name == groupName and ob.madtracks.num_trackpart == number:
-            trackpart = ob
-        i += 1
-    
-    return trackpart
-
-
-def get_all_trackparts():
-    """
-    Returns a list of all the trackpart sequences in order.
-    Each element of the list is itself a list containing [name, num_sequence, num_trackpart].
-    """
-    sequences = []
-    for obj in bpy.data.objects:
-        if obj.madtracks.is_trackpart:
-            sequences.append([obj.name, obj.madtracks.num_sequence, obj.madtracks.num_trackpart])
-    sequences.sort(key=lambda sequences: (sequences[1], sequences[2]))
-    
-    return sequences
+    if obj.madtracks.invert:
+        # all stock trackparts which are inverted either have no rotation offset or 90 Z rotation offset
+        # maybe it was a hack to avoid making more models and fit in Xbox Live, just like having to compute every trackpart position
+        # 1) apply additional rotation
+        dummy_rotmat = mathutils.Matrix([obj.madtracks.dummy_rot1, obj.madtracks.dummy_rot2, obj.madtracks.dummy_rot3, obj.madtracks.dummy_rot4])
+        dummy_roteuler = dummy_rotmat.to_euler()
+        if abs(dummy_roteuler[2]) < eps:
+            # a. no rotation offset, rotate 180 on Z
+            obj.rotation_euler.rotate_axis("Z", 3.141593)
+        else:
+            # b. rotation offset, apply own endpoint rotation
+            obj.rotation_euler.rotate_axis("Z", dummy_roteuler[2])
+        # 2) apply inverse of own dummy position offset
+        obj_pos = np.array(obj.location)
+        obj_rot = np.array(obj.rotation_euler.to_matrix())
+        dummy_pos = obj.madtracks.dummy_pos
+        dummy_pos = np.matmul(dummy_pos, np.transpose(obj_rot))
+        obj.location = np.add(obj_pos, -dummy_pos)

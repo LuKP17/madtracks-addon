@@ -30,7 +30,20 @@ class INI:
             self.read(file)
 
     def read(self, file):
+        commented = False
         for line in file:
+            # check for block comment markers
+            if "*/" in line:
+                commented = False
+                # all stock files have block comment markers in their own line
+                continue
+            if commented == True:
+                # line is part of a block comment
+                continue
+            if "/*" in line:
+                commented = True
+                # all stock files have block comment markers in their own line
+                continue
             # remove comments, but keep the newline
             if "//" in line:
                 line = line.rsplit("//", 1)[0]
@@ -58,20 +71,22 @@ class INI:
             else:
                 # read parameter
                 parameter = Parameter()
-                parameter.name, values = line[:-1].split("=", 1)
-                if values[0] == '"' or values[-4:] == ".ldo":  # thanks Load Inc
+                parameter.name, value = line[:-1].split("=", 1)
+                parameter.name = parameter.name.lower()
+                if value[0] == '"' or value[-4:] == ".ldo":  # thanks Load Inc
                     # string value
-                    parameter.values = values.replace("\"", "")
-                elif "," in values:
+                    parameter.value = value.replace("\"", "")
+                    parameter.value = parameter.value.lower()
+                elif "," in value:
                     # multiple numbers
-                    values = values.split(",")
-                    for value in values:
-                        parameter.values.append(float(value))
+                    value = value.split(",")
+                    for v in value:
+                        parameter.value.append(float(v))
                 else:
                     # one number
-                    if "f" in values:
-                        values = values.replace('f', '0')
-                    parameter.values = float(values)
+                    if "f" in value:
+                        value = value.replace('f', '0')
+                    parameter.value = float(value)
                 # add parameter to the last section added
                 self.sections[-1].params.append(parameter)
                 
@@ -80,7 +95,7 @@ class INI:
         for s in self.sections:
             dic[s.name] = {}
             for p in s.params:
-                dic[s.name][p.name] = p.values
+                dic[s.name][p.name] = p.value
         return dic
 
 
@@ -92,11 +107,11 @@ class Section:
     def as_dict(self):
         dic = {}
         for p in self.params:
-            dic[p.name] = p.values
+            dic[p.name] = p.value
         return dic
 
 
 class Parameter:
     def __init__(self):
-        self.name = ""      # parameter name
-        self.values = []    # sequence of values
+        self.name = ""
+        self.value = []

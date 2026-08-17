@@ -21,11 +21,17 @@ import bpy
 import bmesh
 import os
 
+import mathutils
+import numpy as np
+
 # Relative paths from the user's Mad Tracks data folder
 LDO_PATH = "\\Gfx\\models\\Geometry\\"
 TEXTURE_PATH = "\\Graph\\maps\\High\\"
+HUD_PATH = "\\Graph\\hud\\in\\"
 DESCRIPTOR_PATH = "\\Bin\\Descriptors\\"
 LEVEL_PATH = "\\Bin\\Levels\\"
+WORLD_PATH = "\\Bin\\universes\\"
+LDL_PATH = "\\Gfx\\Lightmaps\\"
 
 # Global dictionaries
 global ERRORS
@@ -50,15 +56,32 @@ Supported File Formats
 FORMAT_UNK = -1
 FORMAT_LDO = 0
 FORMAT_INI = 2
-FORMAT_OBJ_INI = 3
-FORMAT_LVL_INI = 4
+FORMAT_DESCRIPTOR = 3
+FORMAT_LEVEL_INI = 4
 
 FORMATS = {
     FORMAT_LDO: "LDO (.ldo)",
     FORMAT_INI: "Unsupported (.ini)",
-    FORMAT_OBJ_INI: "Object (.ini)",
-    FORMAT_LVL_INI: "Level (.ini)",
+    FORMAT_DESCRIPTOR: "Descriptor (.ini)",
+    FORMAT_LEVEL_INI: "Level (.ini)",
 }
+
+
+"""
+Constants used by multiple modules
+"""
+DUMMY_FLAG_POS    =  64
+DUMMY_FLAG_POSROT = 128
+DUMMY_MASK_TYPE = 15
+
+DUMMY_TYPE_WORLD =  5
+DUMMY_TYPE_NUM =    6
+DUMMY_TYPE_OUT =    9
+DUMMY_TYPE_ROOF =  10
+DUMMY_TYPE_BONUS = 11
+
+trackpart_types = {"trackpart", "start", "startfinish", "checkpoint", "looping", "finish"}
+collectible_types = {"pickupbonus", "achievement1", "achievement2"}
 
 
 """
@@ -78,6 +101,15 @@ def to_blender_scale(num):
     return num * SCALE
 
 
+def to_blender_matrix(matrix):
+    return mathutils.Matrix((
+        (matrix[2][0], -matrix[0][0], -matrix[1][0], 0),
+        (-matrix[2][2], matrix[0][2], matrix[1][2], 0),
+        (-matrix[2][1], matrix[0][1], matrix[1][1], 0),
+        (0, 0, 0, 1)
+        ))
+
+
 def to_madtracks_axis(vec):
     return [-vec[0], vec[2], vec[1]]
 
@@ -88,6 +120,14 @@ def to_madtracks_coord(vec):
 
 def to_madtracks_scale(num):
     return num / SCALE
+
+
+def to_madtracks_matrix(matrix):
+    return [
+        (-matrix[0][1], matrix[2][1], matrix[1][1]),
+        (-matrix[0][2], matrix[2][2], matrix[1][2]),
+        (matrix[0][0], -matrix[2][0], -matrix[1][0])
+    ]
 
 
 class DialogOperator(bpy.types.Operator):
@@ -134,6 +174,14 @@ def get_errors():
     ERRORS = {}
 
     return errors
+
+
+def set_error(step, msg):
+    global ERRORS
+    if step in ERRORS.keys():
+        # don't overwrite previous error
+        return
+    ERRORS[step] = msg
 
 
 def redraw_3d():

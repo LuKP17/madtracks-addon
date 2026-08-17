@@ -76,24 +76,25 @@ It represents a 3D model made of meshes and materials.
 +-------------------------------+
 ```
 
-| Field          | Description                                        |
-|----------------|----------------------------------------------------|
-| `mesh-cnt`     | Number of meshes                                   |
-|                | TODO find stock atomics with multiple meshes.      |
-|                | Is it related to a polygon limit?                  |
-|                |                                                    |
-| `material-cnt` | Number of materials                                |
-|                |                                                    |
-| `empty`        | 0x01 if the atomic is empty, 0x00 otherwise        |
-|                |                                                    |
-| `~anim`        | Maybe whether the atomic is animated               |
-|                |                                                    |
-| `~visibility1` |                                                    |
-| `~visibility2` |                                                    |
-| `~visibility3` |                                                    |
-| `~visibility4` | Makes the atomic disappear when the camera looks   |
-|                | at the center of the atomic from a certain angle   |
-|                | and from a certain distance.                       |
+| Field          | Description                                              |
+|----------------|----------------------------------------------------------|
+| `mesh-cnt`     | Number of meshes                                         |
+|                | FrBis_Affiches.ldo has one atomic with multiple meshes.  |
+|                |                                                          |
+| `material-cnt` | Number of materials                                      |
+|                |                                                          |
+| `empty`        | 0x01 if the atomic is empty, 0x00 otherwise              |
+|                |                                                          |
+| `~anim`        | Maybe whether the atomic is animated                     |
+|                |                                                          |
+| `~visibility1` |                                                          |
+| `~visibility2` |                                                          |
+| `~visibility3` |                                                          |
+| `~visibility4` | Makes the atomic disappear when the camera looks         |
+|                | at the center of the atomic from a certain angle         |
+|                | and from a certain distance.                             |
+
+FIXME there should be an atomic name somewhere when there are multiple in a file.
 
 
 ### MATERIAL
@@ -102,7 +103,7 @@ It represents a 3D model made of meshes and materials.
     0       1       2       3       4       5       6       7    bytes
 +-------+-------------------------------------------------------+
 | str-l | mat-name-str
-...                             | mat-flags     | shader-tech   |
+...                             | flags         | shader-tech   |
 +-------------------------------+---------------+---------------+
 | red   | green | blue  | alpha | <unknown1>                    |
 +-------+-------+-------+-------+-------------------------------+
@@ -121,7 +122,7 @@ It represents a 3D model made of meshes and materials.
 | `mat-name-str` | Material name string, null terminated despite      |
 |                | having a string length to know where it ends.      |
 |                |                                                    |
-| `mat-flags`    | Flags for material properties.                     |
+| `flags`        | Flags for material properties.                     |
 |                | Bit 0: has RGBA color channels ('A' needs testing) |
 |                | Bit 3: has diffuse texture                         |
 |                | Bit 6: has brightness                              |
@@ -154,7 +155,8 @@ It represents a 3D model made of meshes and materials.
 | `env-l`        |                                                    |
 | `env-name-str` | (Only if has environment map texture)              |
 |                | Environment map texture name length and string,    |
-|                | null terminated. The first 4 bytes are unknown.    |
+|                | null terminated. The first 4 bytes are unknown,    |
+|                | they could be the intensity.                       |
 |                |                                                    |
 | `???`          | Unknown data from other flag bits                  |
 
@@ -255,7 +257,7 @@ Mad Tracks coordinate system:
 ```
     0       1       2       3    bytes
 +-------------------------------+
-| tri-seq-cnt                  |
+| tri-seq-cnt                   |
 +-------------------------------+
 ```
 
@@ -290,6 +292,44 @@ Mad Tracks coordinate system:
 
 ### DUMMY HEADER
 
-Atomic dummies are too obscure at the moment.
-`madtracks-addon` has just enough knowledge to skip them and reach EOF.
-See madstructs.py for more info.
+```
+    0       1       2       3       4       5       6       7    bytes
++----------------------------------------------------------------
+| <unknown1>                                                   
++---------------+-------+-------+--------------------------------
+                | str-l | count | <unknown2>
+----------------+-------+-------+--------------------------------
+                                |            
+--------------------------------+
+```
+
+| Field          | Description                                        |
+|----------------|----------------------------------------------------|
+| `str-l`        | Length of a string, a dummy type string AFAICT     |
+|                |                                                    |
+| `count`        | Dummy count                                        |
+
+
+### DUMMY
+
+```
+    0       1       2       3       4       5       6       7    bytes
++---------------+------------------------------------------------
+| flags         | <unknown1>
+----------------+-------------------------------+----------------
+                                                | type-str
+------------------------------------------------+----------------
+...
+```
+
+| Field          | Description                                            | 
+|----------------|--------------------------------------------------------|
+| `flags`        | Dummy flags.                                           |
+|                | Bit 0-4: dummy type (WORLD, NUM, OUT, ROOF, BONUS)     |
+|                | WORLD: dummy is a world offset (see Frbis_Affiches.ldo)|
+|                | (if this is true then use Blender delta transforms)    |
+|                | OUT: dummy is a trackpart endpoint anchor              |
+|                | Bit 6: flag for 3 position floats                      |
+|                | Bit 7: flag for 3 position + 9 rotation matrix floats  |
+|                |                                                        |
+| `type-str`     | Dummy type string                                      |

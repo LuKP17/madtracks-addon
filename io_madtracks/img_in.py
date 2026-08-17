@@ -20,15 +20,15 @@ def import_file(filepath):
     path, fname = filepath.rsplit(os.sep, 1)
     if os.path.exists(filepath):
         image = bpy.data.images.load(filepath)
-        # Sets a fake user because it doesn't get automatically set
+        # Set a fake user because it doesn't get automatically set
         image.use_fake_user = True
         image.name = fname
     else:
-        # Finds existing dummy texture
+        # Find existing dummy texture
         for img in bpy.data.images:
             if img.name == fname:
                 return img
-        # Creates a dummy texture
+        # Create a dummy texture
         print("Texture not found: ", filepath)
         bpy.ops.image.new(name=fname, width=512, height=512,
                           generated_type="UV_GRID")

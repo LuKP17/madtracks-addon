@@ -20,7 +20,7 @@ providing the functions behind the UI buttons.
 import bpy
 import time
 
-from . import object_in
+from . import descriptor_in
 from . import trackpart
 
 from .common import *
@@ -57,9 +57,9 @@ class ImportMad(bpy.types.Operator):
         if frmt == FORMAT_INI:
             # differentiate between .ini files based on filepath
             if DESCRIPTOR_PATH.split("\\")[-2] in self.filepath:
-                frmt = FORMAT_OBJ_INI
+                frmt = FORMAT_DESCRIPTOR
             elif LEVEL_PATH.split("\\")[-2] in self.filepath:
-                frmt = FORMAT_LVL_INI
+                frmt = FORMAT_LEVEL_INI
 
         if frmt == FORMAT_UNK:
             msg_box("Unknown format.")
@@ -73,12 +73,12 @@ class ImportMad(bpy.types.Operator):
             # If user wants debug info when importing a level, check the LDO import option before selecting a level.
             props.ldo_debug_info = False
         
-        elif frmt == FORMAT_OBJ_INI:
-            if object_in.import_file(self.filepath, scene) == None:
-                msg_box("Unsupported type of Object.")
+        elif frmt == FORMAT_DESCRIPTOR:
+            if not descriptor_in.import_file(self.filepath, scene):
+                msg_box("Descriptor not supported.")
                 return {'CANCELLED'}
         
-        elif frmt == FORMAT_LVL_INI:
+        elif frmt == FORMAT_LEVEL_INI:
             from . import level_in
             level_in.import_file(self.filepath, scene)
         
@@ -122,19 +122,20 @@ class ImportMad(bpy.types.Operator):
             if frmt == FORMAT_INI:
                 # differentiate between .ini files based on filepath
                 if DESCRIPTOR_PATH.split("\\")[-2] in space.params.directory:
-                    frmt = FORMAT_OBJ_INI
+                    frmt = FORMAT_DESCRIPTOR
                 elif LEVEL_PATH.split("\\")[-2] in space.params.directory:
-                    frmt = FORMAT_LVL_INI
+                    frmt = FORMAT_LEVEL_INI
             layout.label("Import {}:".format(FORMATS[frmt]))
 
         if frmt == FORMAT_LDO:
             box = layout.box()
-            box.prop(props, "ldo_separate_atomics")
             box.prop(props, "ldo_debug_info")
         
-        if frmt == FORMAT_LVL_INI:
+        if frmt == FORMAT_LEVEL_INI:
             box = layout.box()
-            box.prop(props, "level_import_trackparts")
+            box.prop(props, "level_import_raceline")
+            box.prop(props, "level_import_lightmap")
+            box.prop(props, "lightmap_debug_info")
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -168,7 +169,7 @@ class ExportMad(bpy.types.Operator):
         
         if frmt == FORMAT_INI:
             # for now don't differentiate between .ini files
-            frmt = FORMAT_LVL_INI
+            frmt = FORMAT_LEVEL_INI
 
         if frmt == FORMAT_UNK:
             msg_box("Unknown format.")
@@ -189,7 +190,7 @@ class ExportMad(bpy.types.Operator):
                 # Disable debug info if user then exports a level for instance.
                 props.ldo_debug_info = False
 
-            elif frmt == FORMAT_LVL_INI:
+            elif frmt == FORMAT_LEVEL_INI:
                 from . import level_out
                 level_out.export_file(self.filepath, scene)
             
@@ -232,7 +233,7 @@ class ExportMad(bpy.types.Operator):
         if frmt == -1 and not space.params.filename == "":
             if frmt == FORMAT_INI:
                 # for now don't differentiate between .ini files
-                frmt = FORMAT_LVL_INI
+                frmt = FORMAT_LEVEL_INI
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
             layout.label("Export {}:".format(FORMATS[frmt]))
@@ -251,65 +252,20 @@ TRACKPART EDITOR ---------------------------------------------------------------
 """
 
 class ButtonNewTrackpartSequence(bpy.types.Operator):
-    bl_idname = "trackpart_sequence.new"
-    bl_label = "New"
-    bl_description = "Append the active trackpart to a new trackpart sequence"
+    bl_idname = "trackpart.add_dropdown"
+    bl_label = "Add"
+    bl_description = "Add the trackpart from the dropdown menu to a new sequence if no trackpart is selected, or appends it to the last selected one otherwise"
 
     def execute(self, context):
         scene = context.scene
-        trackpart.append_to_new_sequence(scene)
-        # Enables texture mode after import
-        # if props.enable_tex_mode:
-        enable_any_tex_mode(context)
-        return {"FINISHED"}
+        trackpart.add_user(scene, trackpart.from_dropdown(scene))
 
-
-class ButtonAppendTrackpartSequence(bpy.types.Operator):
-    bl_idname = "trackpart_sequence.append"
-    bl_label = "Append"
-    bl_description = "Append the active trackpart to the active trackpart sequence"
-
-    def execute(self, context):
-        scene = context.scene
-        sequence = context.selected_objects[0].users_group[0]
-        trackpart.append_to_sequence(scene, sequence.name, len(context.selected_objects))
-        # Enables texture mode after import
-        # if props.enable_tex_mode:
-        enable_any_tex_mode(context)
-        return {"FINISHED"}
-
-
-class ButtonRemoveTrackpartSequence(bpy.types.Operator):
-    bl_idname = "trackpart_sequence.remove"
-    bl_label = "Remove Last"
-    bl_description = "Remove the last trackpart of the active trackpart sequence"
-
-    def execute(self, context):
-        # get sequence group while trackparts are selected
-        sequence = context.selected_objects[0].users_group[0]
-        # get and remove the last trackpart of the sequence
-        last = trackpart.get_trackpart(sequence.name, len(context.selected_objects) - 1)
-        bpy.data.objects.remove(bpy.data.objects[last.name], do_unlink=True)
-        # if the sequence is now empty, delete the Blender group
-        if len(context.selected_objects) == 0:
-            bpy.data.groups.remove(bpy.data.groups[sequence.name])
-
-        # Enables texture mode after import
-        # if props.enable_tex_mode:
-        enable_any_tex_mode(context)
-        return {"FINISHED"}
-
-
-class ButtonSetSequenceID(bpy.types.Operator):
-    bl_idname = "trackpart_sequence.setid"
-    bl_label = "Set ID"
-    bl_description = "Set the sequence ID for all trackparts in the active sequence"
-
-    def execute(self, context):
-        scene = context.scene
-        # get sequence group while trackparts are selected
-        sequence = context.selected_objects[0].users_group[0]
-        # set sequence_number attribute of all trackparts of the sequence
-        trackpart.set_sequence_ID(scene, sequence.name, len(context.selected_objects))
-
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
         return {"FINISHED"}

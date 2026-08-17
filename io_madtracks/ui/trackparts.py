@@ -12,12 +12,10 @@
 #-----------------------------------------------------------------------------
 
 import bpy
-from ..common import *
 
 class MadTracksTrackpartsPanel(bpy.types.Panel):
     """
-    Tool panel in the left sidebar of the viewport for editing
-    trackpart sequences in a level.
+    Tool panel in the left sidebar of the viewport for editing trackpart sequences.
     """
     bl_label = "Trackparts"
     bl_space_type = "VIEW_3D"
@@ -32,24 +30,15 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
         props = context.scene.madtracks
         layout = self.layout
 
-        layout.label("Active Trackpart:")
+        layout.label("Category:")
         row = layout.row()
         row.prop(props, "trackpart_category", text="")
-        row = layout.row()
+        layout.label("Trackpart:")
+        row = layout.row(align=True)
         if props.trackpart_category == "S":
             row.prop(props, "trackpart_small", text="")
         elif props.trackpart_category == "M":
             row.prop(props, "trackpart_medium", text="")
         elif props.trackpart_category == "G":
             row.prop(props, "trackpart_golf", text="")
-
-        layout.label("Active Sequence:")
-        row = layout.row()
-        row.operator("trackpart_sequence.append")
-        row = layout.row()
-        row.operator("trackpart_sequence.remove")
-        row = layout.row()
-        row.operator("trackpart_sequence.new")
-        row = layout.row()
-        row.operator("trackpart_sequence.setid")
-        row.prop(props, "sequence_ID", text="ID")
+        row.operator("trackpart.add_dropdown", text="", icon='ZOOMIN')

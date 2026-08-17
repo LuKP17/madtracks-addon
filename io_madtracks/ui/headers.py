@@ -36,6 +36,7 @@ class MadTracksIOToolPanel(bpy.types.Panel):
         box.prop(props, "settings_madtracks_dir", text="")
         if props.settings_madtracks_dir == "":
             box.label("No directory specified", icon="ERROR")
+        box.prop(props, "instance_mode")
 
         row = self.layout.row(align=True)
         row.operator("import_scene.madtracks", text="Import", icon="IMPORT")

@@ -27,6 +27,14 @@ import struct
 from math import ceil, sqrt
 from .common import *
 
+import numpy as np
+
+MAT_FLAG_RGBA =          1
+MAT_FLAG_UNKNOWN =       4
+MAT_FLAG_DIFFUSE =       8
+MAT_FLAG_BRIGHTNESS =    64
+MAT_FLAG_ENVMAP =        128
+
 class LDO:
     """
     Handles .ldo files and contains all sub-structures
@@ -78,15 +86,6 @@ class LDO:
         print("atomic_cnt: {}\n".format(self.atomic_cnt))
 
 
-DUMMY_TYPE_MASK =   15
-DUMMY_TYPE_WORLD =  5
-DUMMY_TYPE_NUM =    6
-DUMMY_TYPE_OUT =    9
-DUMMY_TYPE_ROOF =   10
-DUMMY_TYPE_BONUS =  11
-DUMMY_FLOAT3 =      64
-DUMMY_FLOAT12 =     128
-
 class Atomic:
     """
     Handles a LDO atomic
@@ -94,10 +93,12 @@ class Atomic:
     def __init__(self):
         self.mesh_cnt = 0
         self.material_cnt = 0
+        self.dummy_cnt = 0
         self.is_empty = False
 
         self.meshes = []
         self.materials = []
+        self.dummies = []
         self.name = ""  # used for LDO with multiple atomics
 
     def __repr__(self):
@@ -134,37 +135,14 @@ class Atomic:
         # Dummies
         file.seek(10, 1)  # skip usual 10 bytes
         name_len = file.read(1)[0]
-        dummy_count = file.read(1)[0]
+        self.dummy_cnt = file.read(1)[0]
         file.seek(8, 1)  # skip usual 8 bytes
         self.name = struct.unpack("<%ds" % name_len, file.read(name_len))[0].decode("utf-8")
-        for i in range(dummy_count):
-            dummy_flags = struct.unpack("<h", file.read(2))[0]
-
-            # retrieve dummy flags
-            dflag_floats3 = bool(dummy_flags & DUMMY_FLOAT3)
-            dflag_floats12 = bool(dummy_flags & DUMMY_FLOAT12)
-
-            if (dflag_floats3):
-                file.seek(12, 1)  # skip 3 floats
-            if (dflag_floats12):
-                file.seek(48, 1)  # skip 12 floats
-
-            file.seek(4, 1)  # skip dummy index
-            file.seek(4, 1)  # skip usual 4 bytes
-
-            # retrieve dummy type
-            dummy_type = dummy_flags & DUMMY_TYPE_MASK
-
-            if (dummy_type == DUMMY_TYPE_WORLD):
-                file.seek(5, 1)  # skip "world"
-            elif (dummy_type == DUMMY_TYPE_NUM):
-                file.seek(6, 1)  # skip "Dummy#"
-            elif (dummy_type == DUMMY_TYPE_OUT):
-                file.seek(9, 1)  # skip "DUMMY_OUT"
-            elif (dummy_type == DUMMY_TYPE_ROOF):
-                file.seek(10, 1)  # skip "DUMMY ROOF"
-            elif (dummy_type == DUMMY_TYPE_BONUS):
-                file.seek(11, 1)  # skip "DUMMY BONUS"
+        for _ in range(self.dummy_cnt):
+            dummy = Dummy()
+            dummy.read(file, debug)
+            self.dummies.append(dummy)
+            
 
     def write(self, file, debug=False):
         # Atomic header
@@ -188,23 +166,19 @@ class Atomic:
     def as_dict(self):
         dic = { "mesh_cnt": self.mesh_cnt,
                 "material_cnt": self.material_cnt,
+                "dummy_cnt": self.dummy_cnt,
                 "is_empty": self.is_empty,
                 "meshes": self.meshes,
                 "materials": self.materials,
+                "dummies": self.dummies,
                 "name": self.name
         }
         return dic
     
     def dbg_print(self):
         print("------------------ ATOMIC DEBUG INFO -------------------")
-        print("mesh_cnt: {}  material_cnt: {}   is_empty: {}\n".format(self.mesh_cnt, self.material_cnt, self.is_empty))
+        print("is_empty: {}  mesh_cnt: {}  material_cnt: {}\n".format(self.is_empty, self.mesh_cnt, self.material_cnt))
 
-
-MAT_FLAG_RGBA =          1
-MAT_FLAG_UNKNOWN =       4
-MAT_FLAG_DIFFUSE =       8
-MAT_FLAG_BRIGHTNESS =    64
-MAT_FLAG_ENVMAP =        128
 
 class Material:
     """
@@ -345,7 +319,7 @@ class Mesh:
             self.tri_seq_mat.append(struct.unpack("<i", file.read(4))[0])
             self.tri_seq_len.append(struct.unpack("<i", file.read(4))[0])
             for _ in range(self.tri_seq_len[-1]):
-                tri = Tri()
+                tri = Tri(self.tri_seq_mat[-1])
                 tri.read(file)
                 self.tris.append(tri)
         
@@ -372,6 +346,67 @@ class Mesh:
         print()
 
 
+class Dummy:
+    """
+    Handles a LDO dummy
+    """
+    def __init__(self):
+        self.flags = 0
+        
+        self.position = None
+        self.rotmat = []
+            
+    def __repr__(self):
+        return "Dummy"
+    
+    def read(self, file, debug=False):
+        self.flags = struct.unpack("<h", file.read(2))[0]
+
+        if (bool(self.flags & DUMMY_FLAG_POS)):
+            self.position = Vector(file)
+        if (bool(self.flags & DUMMY_FLAG_POSROT)):
+            self.position = Vector(file)
+            self.rotmat.append(Vector(file))
+            self.rotmat.append(Vector(file))
+            self.rotmat.append(Vector(file))
+
+        file.seek(4, 1)  # skip dummy index
+        file.seek(4, 1)  # skip usual 4 bytes
+
+        # retrieve dummy type
+        dummy_type = self.flags & DUMMY_MASK_TYPE
+
+        if (dummy_type == DUMMY_TYPE_WORLD):
+            file.seek(5, 1)  # skip "world"
+        elif (dummy_type == DUMMY_TYPE_NUM):
+            file.seek(6, 1)  # skip "Dummy#"
+        elif (dummy_type == DUMMY_TYPE_OUT):
+            file.seek(9, 1)  # skip "DUMMY_OUT"
+        elif (dummy_type == DUMMY_TYPE_ROOF):
+            file.seek(10, 1)  # skip "DUMMY ROOF"
+        elif (dummy_type == DUMMY_TYPE_BONUS):
+            file.seek(11, 1)  # skip "DUMMY BONUS"
+        
+        if debug:
+            self.dbg_print()
+    
+    def as_dict(self):
+        dic = { "flags": self.flags,
+                "position": self.position,
+                "rotation": self.rotmat
+        }
+        return dic
+    
+    def dbg_print(self):
+        print("------------------- DUMMY DEBUG INFO --------------------")
+        print("flags: {}".format(self.flags))
+        if self.position:
+            print("position: {}".format(self.position.as_dict()))
+        if len(self.rotmat) == 3:
+            print("rotmat: {} {} {}".format(self.rotmat[0].as_dict(), self.rotmat[1].as_dict(),self.rotmat[2].as_dict()))
+        print()
+
+
 class Vertex:
     """
     Handles a LDO vertex
@@ -388,7 +423,8 @@ class Vertex:
         # Vertex
         self.position = Vector(file)
         self.normal = Vector(file)
-        self.uv = UV(file)
+        self.uv = UV()
+        self.uv.read4(file)
         if (va[2] == 0x0b):
             file.seek(4, 1)  # skip unknown data
         if (va_cnt > 3):
@@ -408,8 +444,9 @@ class Tri:
     """
     Handles a LDO tri
     """
-    def __init__(self):
+    def __init__(self, material_id):
         self.vertices_id = []
+        self.material_id = material_id
 
     def __repr__(self):
         return "Tri"
@@ -423,31 +460,89 @@ class Tri:
         return dic
 
 
+class LDL:
+    """
+    Handles .ldl files to be read in conjunction with a level .ini file
+    """
+    def __init__(self, file):
+        self.bit_depth = 0
+        self.instance_cnt = 0
+        self.file = file
+
+        self.mesh_cnt = 0
+        self.vertex_cnt = []
+        self.current_name = None
+        self.current_uvs = []
+
+    def read_header(self):
+        self.bit_depth = self.file.read(1)[0]
+        if self.bit_depth not in [16, 32]:
+            set_error('reading LDL header', "Bit depth %d unsupported" % self.bit_depth)
+            return False
+        self.file.seek(3, 1) # skip unknown, maybe part of bit depth
+        self.instance_cnt = struct.unpack("<i", self.file.read(4))[0]
+        return True
+
+    def read_instance(self, debug=False):
+        self.instance_cnt -= 1
+        if self.instance_cnt < 0:
+            # allow trying to read one instance past the file (need to read each instance in advance)
+            if self.instance_cnt == -2:
+                set_error('reading LDL instance', "No more instances to read")
+            return
+        self.mesh_cnt = struct.unpack("<i", self.file.read(4))[0]
+        name_len = self.file.read(1)[0]
+        self.current_name = struct.unpack("<%ds" % name_len, self.file.read(name_len))[0].decode("utf-8")
+        self.file.seek(1, 1)  # skip null termination
+        self.vertex_cnt = []
+        self.current_uvs = []
+        for _ in range(self.mesh_cnt):
+            uvs = []
+            vertex_cnt = struct.unpack("<i", self.file.read(4))[0]
+            for _ in range(vertex_cnt):
+                uv = UV()
+                if self.bit_depth == 16:
+                    uv.read2(self.file)
+                if self.bit_depth == 32:
+                    uv.read4(self.file)
+                uvs.append(uv)
+            self.vertex_cnt.append(vertex_cnt)
+            self.current_uvs.append(uvs)
+
+        if debug:
+            self.dbg_print()
+
+    def __repr__(self):
+        return "LDL"
+    
+    def dbg_print(self):
+        print("----------------- LIGHTMAP DEBUG INFO ------------------")
+        print("current_name: {}  mesh_cnt: {}  vertex_cnt: {}".format(self.current_name, self.mesh_cnt, self.vertex_cnt))
+        print()
+
+
 class UV:
     """
     Handles a LDO uv
     """
-    def __init__(self, file=None):
+    def __init__(self):
         self.u = 0.0
         self.v = 0.0
-        
-        if file:
-            self.read(file)
 
     def __repr__(self):
         return str(self.as_dict())
 
-    def read(self, file):
+    def read2(self, file):
+        self.u = np.frombuffer(file.read(2), dtype='<f2')[0]
+        self.v = np.frombuffer(file.read(2), dtype='<f2')[0]
+
+    def read4(self, file):
         self.u = struct.unpack("<f", file.read(4))[0]
         self.v = struct.unpack("<f", file.read(4))[0]
         
         #if self.u < 0. or self.u > 1. or self.v < 0. or self.v > 1.:
             # do something about it?
             #print("Warning: UV coordinates out of bounds: ({};{})".format(self.u, self.v))
-
-    def write(self, file):
-        file.write(struct.pack("<f", self.u))
-        file.write(struct.pack("<f", self.v))
 
     def as_dict(self):
         dic = {"u": self.u,

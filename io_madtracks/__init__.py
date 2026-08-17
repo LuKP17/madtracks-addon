@@ -45,7 +45,7 @@ from .props import (
 
 from .ui import (
     headers,
-    trackpart_editor,
+    trackparts,
     object,
     material
 )
@@ -57,7 +57,7 @@ imp.reload(props_obj)
 imp.reload(props_scene)
 imp.reload(props_mat)
 imp.reload(headers)
-imp.reload(trackpart_editor)
+imp.reload(trackparts)
 imp.reload(object)
 imp.reload(material)
 imp.reload(madini)
@@ -69,8 +69,8 @@ if "ldo_in" in locals():
     imp.reload(ldo_in)
 if "ldo_out" in locals():
     imp.reload(ldo_out)
-if "object_in" in locals():
-    imp.reload(object_in)
+if "descriptor_in" in locals():
+    imp.reload(descriptor_in)
 if "level_in" in locals():
     imp.reload(level_in)
 if "level_out" in locals():

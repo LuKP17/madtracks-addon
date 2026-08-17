@@ -26,11 +26,17 @@ from bpy.props import (
     BoolProperty,
     IntProperty,
     StringProperty,
+    FloatVectorProperty,
 )
 from ..common import *
 
 class MadObjectProperties(bpy.types.PropertyGroup):
     # Common
+    is_instance = BoolProperty(
+        name = "Is Instance",
+        default = False,
+        description = "Object is a level instance"
+    )
     descriptor = StringProperty(
         name = "Descriptor",
         default = "",
@@ -41,22 +47,39 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     is_trackpart = BoolProperty(
         name = "Is Trackpart",
         default = False,
-        description = "Is the object a trackpart"
-    )
-    num_sequence = IntProperty(
-        name = "Sequence",
-        default = -1,
-        min = -1,
-        description = "Which trackpart sequence the trackpart belongs to. Valid values start at 0"
-    )
-    num_trackpart = IntProperty(
-        name = "Number",
-        default = -1,
-        min = -1,
-        description = "Where in the trackpart sequence the trackpart is. Valid values start at 0"
+        description = "Object is a trackpart"
     )
     invert = BoolProperty(
         name = "Invert",
         default = False,
-        description = "Is the trackpart inverted"
+        description = "Trackpart is inverted"
+    )
+    dummy_pos = FloatVectorProperty(
+        name = "Dummy position",
+        default = (0.0, 0.0, 0.0),
+        description = "Dummy position"
+    )
+    dummy_rot1 = FloatVectorProperty(
+        name = "Dummy rotation matrix row 1",
+        size = 4,
+        default = (1.0, 0.0, 0.0, 0.0),
+        description = "First row of dummy rotation matrix"
+    )
+    dummy_rot2 = FloatVectorProperty(
+        name = "Dummy rotation matrix row 2",
+        size = 4,
+        default = (0.0, 1.0, 0.0, 0.0),
+        description = "Second row of dummy rotation matrix"
+    )
+    dummy_rot3 = FloatVectorProperty(
+        name = "Dummy rotation matrix row 3",
+        size = 4,
+        default = (0.0, 0.0, 1.0, 0.0),
+        description = "Third row of dummy rotation matrix"
+    )
+    dummy_rot4 = FloatVectorProperty(
+        name = "Dummy rotation matrix row 4",
+        size = 4,
+        default = (0.0, 0.0, 0.0, 1.0),
+        description = "Fourth row of dummy rotation matrix"
     )
