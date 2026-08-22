@@ -18,20 +18,19 @@ and helper functions for Blender.
 """
 
 import bpy
-import bmesh
 import os
+import platform
 
 import mathutils
-import numpy as np
 
 # Relative paths from the user's Mad Tracks data folder
-LDO_PATH = "\\Gfx\\models\\Geometry\\"
-TEXTURE_PATH = "\\Graph\\maps\\High\\"
-HUD_PATH = "\\Graph\\hud\\in\\"
-DESCRIPTOR_PATH = "\\Bin\\Descriptors\\"
-LEVEL_PATH = "\\Bin\\Levels\\"
-WORLD_PATH = "\\Bin\\universes\\"
-LDL_PATH = "\\Gfx\\Lightmaps\\"
+LDO_PATH =        os.path.join("Gfx", "models", "Geometry") + os.path.sep
+TEXTURE_PATH =    os.path.join("Graph", "maps", "High") + os.path.sep
+HUD_PATH =        os.path.join("Graph", "hud", "in") + os.path.sep
+DESCRIPTOR_PATH = os.path.join("Bin", "Descriptors") + os.path.sep
+LEVEL_PATH =      os.path.join("Bin", "Levels") + os.path.sep
+WORLD_PATH =      os.path.join("Bin", "universes") + os.path.sep
+LDL_PATH =        os.path.join("Gfx", "Lightmaps") + os.path.sep
 
 # Global dictionaries
 global ERRORS
@@ -165,7 +164,7 @@ def get_errors():
         errors = "The following errors have been encountered:\n\n"
         for error in ERRORS:
             errors += "~ ERROR while {}:\n     {}\n\n".format(error, ERRORS[error])
-        errors += "Check the console for more information."
+        errors += "Check the console if available for more information."
     else:
         errors = "Successfully completed."
 
@@ -215,6 +214,31 @@ def enable_texture_mode():
 """
 Non-Blender helper functions
 """
+def filepath_insensitive(filepath):
+    """
+    Mad Tracks heavily relies on insensitive casing for files.
+    Doesn't guarantee that the filepath returned exists.
+    """
+    if platform.system() == "Linux":
+        path, filename = os.path.split(filepath)
+        for filename_real in os.listdir(path):
+            if filename_real.lower() == filename.lower():
+                return os.path.join(path, filename_real)
+    return filepath
+
+
+def open_insensitive(filepath, mode):
+    """
+    Opens a file in a case sensitive filesystem.
+    Additionally use valid codec for caractères spéciaux français.
+    """
+    filepath_real = filepath_insensitive(filepath)
+
+    if mode in ['r', 'w']:
+        return open(filepath_real, mode, encoding="ISO-8859-1")
+    else:
+        return open(filepath_real, mode)
+
 
 def get_format(fstr):
     """

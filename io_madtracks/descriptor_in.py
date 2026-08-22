@@ -36,7 +36,7 @@ def import_file(filepath, scene, lightmap=None):
     """
     props = scene.madtracks
 
-    with open(filepath, 'r') as file:
+    with open_insensitive(filepath, 'r') as file:
         # read the .ini file
         ini = INI(file).as_dict()
         obj = None
@@ -104,7 +104,7 @@ def import_file(filepath, scene, lightmap=None):
         parse_parameters(ini['object'], props)
 
         # set name and descriptor
-        obj.madtracks.descriptor = filepath.split("\\")[-1]
+        obj.madtracks.descriptor = filepath.split(os.path.sep)[1]
         obj.name = obj.madtracks.descriptor.rsplit(".")[0]
         if lightmap:
             # reinstate lightmap suffix on the object to not be reused later

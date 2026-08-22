@@ -42,7 +42,7 @@ def export_file(filepath, scene):
     instance_mode_save = props.instance_mode
     props.instance_mode = True
 
-    with open(filepath, 'w') as fini:
+    with open_insensitive(filepath, 'w') as fini:
         filename = os.path.basename(filepath)
 
         # export objects that are not trackparts

@@ -16,22 +16,16 @@ Purpose: Imports image files.
 import bpy
 import os
 
+from .common import *
+
 def import_file(filepath):
-    path, fname = filepath.rsplit(os.sep, 1)
-    if os.path.exists(filepath):
-        image = bpy.data.images.load(filepath)
+    filepath_real = filepath_insensitive(filepath)
+    if os.path.exists(filepath_real):
+        image = bpy.data.images.load(filepath_real)
         # Set a fake user because it doesn't get automatically set
         image.use_fake_user = True
-        image.name = fname
+        image.name = filepath_real.rsplit(os.sep, 1)[1]
+        return image
     else:
-        # Find existing dummy texture
-        for img in bpy.data.images:
-            if img.name == fname:
-                return img
-        # Create a dummy texture
-        print("Texture not found: ", filepath)
-        bpy.ops.image.new(name=fname, width=512, height=512,
-                          generated_type="UV_GRID")
-        image = bpy.data.images.get(fname)
-
-    return image
+        set_error('importing image', "Couldn't find image %s with sensitive case checking" % filepath)
+        return None

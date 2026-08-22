@@ -46,7 +46,7 @@ def export_file(filepath, scene):
         ldo.atomic_cnt += 1
 
     # export LDO data
-    with open(filepath, 'wb') as file:
+    with open_insensitive(filepath, 'wb') as file:
         filename = os.path.basename(filepath)
         # write the .ldo file
         ldo.write(file, props.ldo_debug_info)

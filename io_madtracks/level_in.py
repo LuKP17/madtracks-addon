@@ -100,12 +100,12 @@ def import_file(filepath, scene):
 
     # import world
     dam_filepath = filepath.split(".", 1)[0] + ".dam"
-    with open(dam_filepath, 'r') as settings_file:
+    with open_insensitive(dam_filepath, 'r') as settings_file:
         ini = INI(settings_file)
         world = int(ini.as_dict()['base']['world'])
         import_world(world, lightmap, scene)
 
-    with open(filepath, 'r') as instance_file:
+    with open_insensitive(filepath, 'r') as instance_file:
         filename = os.path.basename(filepath)
         # read and store level .ini file
         ini = INI(instance_file)
@@ -185,7 +185,7 @@ def import_descriptor_instance(section, lightmap, scene):
     ldo_filename = False
     is_trackpart = False
     is_collectible = False
-    with open(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
+    with open_insensitive(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
         descriptor = INI(file).as_dict()
         if "filename" in descriptor['object'].keys() and ".ldo" in descriptor['object']['filename']:
             ldo_filename = descriptor['object']['filename']
@@ -252,7 +252,7 @@ def import_world(world, lightmap, scene):
     props = scene.madtracks
     filepath = props.settings_madtracks_dir + WORLD_PATH + world_filenames[world]
 
-    with open(filepath, 'r') as file:
+    with open_insensitive(filepath, 'r') as file:
         dprint("Reading world file %s..." % filepath)
         ini = INI(file)
 

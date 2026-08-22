@@ -42,7 +42,7 @@ def import_file(filepath, scene, lightmap=None):
     filename = os.path.basename(filepath)
     ldoname = filename.rsplit(".", 1)[0]
 
-    with open(filepath, 'rb') as file:
+    with open_insensitive(filepath, 'rb') as file:
         # read the file
         dprint("Reading LDO file %s..." % filename)
         ldo = LDO()

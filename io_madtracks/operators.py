@@ -56,9 +56,9 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_INI:
             # differentiate between .ini files based on filepath
-            if DESCRIPTOR_PATH.split("\\")[-2] in self.filepath:
+            if DESCRIPTOR_PATH.split(os.path.sep)[-2] in self.filepath:
                 frmt = FORMAT_DESCRIPTOR
-            elif LEVEL_PATH.split("\\")[-2] in self.filepath:
+            elif LEVEL_PATH.split(os.path.sep)[-2] in self.filepath:
                 frmt = FORMAT_LEVEL_INI
 
         if frmt == FORMAT_UNK:
@@ -121,9 +121,9 @@ class ImportMad(bpy.types.Operator):
         elif frmt != -1:
             if frmt == FORMAT_INI:
                 # differentiate between .ini files based on filepath
-                if DESCRIPTOR_PATH.split("\\")[-2] in space.params.directory:
+                if DESCRIPTOR_PATH.split(os.path.sep)[-2] in space.params.directory:
                     frmt = FORMAT_DESCRIPTOR
-                elif LEVEL_PATH.split("\\")[-2] in space.params.directory:
+                elif LEVEL_PATH.split(os.path.sep)[-2] in space.params.directory:
                     frmt = FORMAT_LEVEL_INI
             layout.label("Import {}:".format(FORMATS[frmt]))
 
