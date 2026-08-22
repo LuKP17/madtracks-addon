@@ -70,9 +70,14 @@ def import_file(filepath, scene, lightmap=None):
             # no LDO, create a Blender object matching the type
             object_type = ini['object']['objecttype']
             if object_type == "minimap":
-                # Images as Planes
+                # Image Empty as Linux doesn't have Images as Planes
                 filename = ini['object']['filename'].split("/")[-1]
-                bpy.ops.import_image.to_plane(files=[{"name":filename, "name":filename}], directory=props.settings_madtracks_dir + HUD_PATH, align_axis='Z+', relative=False)
+                bpy.ops.object.empty_add(type='IMAGE')
+                imagepath = filepath_insensitive(props.settings_madtracks_dir + HUD_PATH + filename)
+                filename = imagepath.rsplit(os.path.sep, 1)[-1]
+                bpy.ops.image.open(filepath=imagepath, directory=props.settings_madtracks_dir + HUD_PATH, files=[{"name":filename, "name":filename}])
+                obj = bpy.context.active_object
+                obj.data = bpy.data.images[filename]
             elif object_type == "light":
                 # Lamp
                 bpy.ops.object.lamp_add(type='POINT')
