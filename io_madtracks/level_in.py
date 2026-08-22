@@ -300,14 +300,9 @@ def import_world(world, lightmap, scene):
                 obj.data.materials.append(material)
                 # assign to faces
                 obj.data.polygons[side].material_index = side
-            # TODO check if orientation is correct
-            bpy.ops.object.editmode_toggle()
-            bpy.ops.mesh.select_mode(type='FACE')
-            bpy.ops.mesh.select_by_direction(direction=(0, 0, -1))
-            bpy.ops.mesh.uvs_rotate()
-            bpy.ops.mesh.uvs_rotate()
-            bpy.ops.mesh.select_all(action='DESELECT')
-            bpy.ops.object.editmode_toggle()
+            # fix skybox texture rotation
+            mat_up = bpy.data.materials[skybox_textures[5]]
+            mat_up.texture_slots[0].scale = [-1, -1, 1]
 
         # import the optional world mesh
         if 'mesh' in ini.as_dict()['base'].keys():
