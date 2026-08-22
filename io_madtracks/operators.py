@@ -104,6 +104,9 @@ class ImportMad(bpy.types.Operator):
             icon=ico
         )
 
+        # Enable backface culling for a closer in-game preview
+        bpy.context.space_data.show_backface_culling = True
+
         context.window.cursor_set("DEFAULT")
 
         return {"FINISHED"}
