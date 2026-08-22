@@ -104,8 +104,8 @@ def import_file(filepath, scene, lightmap=None):
         parse_parameters(ini['object'], props)
 
         # set name and descriptor
-        obj.madtracks.descriptor = filepath.split(os.path.sep)[1]
-        obj.name = obj.madtracks.descriptor.rsplit(".")[0]
+        obj.madtracks.descriptor = filepath.rsplit(os.path.sep, 1)[1]
+        obj.name = obj.madtracks.descriptor.split(".")[0]
         if lightmap:
             # reinstate lightmap suffix on the object to not be reused later
             obj.name = obj.name + "_lgt"
