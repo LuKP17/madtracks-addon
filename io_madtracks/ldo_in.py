@@ -26,9 +26,6 @@ import os
 import bpy
 import bmesh
 
-import numpy as np
-import mathutils
-
 from . import common
 from . import madstructs
 from . import img_in

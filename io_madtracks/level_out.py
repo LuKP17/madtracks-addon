@@ -23,7 +23,6 @@ if "bpy" in locals():
     imp.reload(trackpart)
 
 import bpy
-import numpy as np
 
 from . import common
 from . import trackpart

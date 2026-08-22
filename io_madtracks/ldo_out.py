@@ -22,7 +22,6 @@ if "bpy" in locals():
 
 import os
 import bpy
-import bmesh
 
 from . import common
 from . import madstructs

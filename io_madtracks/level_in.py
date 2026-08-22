@@ -27,7 +27,6 @@ if "bpy" in locals():
 
 import os
 import bpy
-import bmesh
 
 import numpy as np
 

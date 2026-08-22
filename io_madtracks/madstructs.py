@@ -22,7 +22,6 @@ of Mad Tracks's file formats, but some classes names or attributes can be wrong.
 Especially since some values appeared in only one data file and required guess work.
 """
 
-import os
 import struct
 from math import ceil, sqrt
 from .common import *
