@@ -7,7 +7,7 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 ## Requirements
 
 * Mad Tracks Steam version
-* Windows Blender 2.79b (Linux version 2.79b isn't supported yet)
+* Blender 2.79b (Windows and Linux, macOS version is not tested)
 
 ## Setting up
 
