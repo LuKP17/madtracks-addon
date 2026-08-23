@@ -86,6 +86,8 @@ TRACKPARTS_GOLF = (
     ("G_none_finish.ini", "Finish", ""),
 )
 
+ANGLE_180 = 3.141592654
+
 
 def from_dropdown(scene):
     props = scene.madtracks
@@ -141,7 +143,7 @@ def add(scene, obj, prev=None):
         dummy_roteuler = dummy_rotmat.to_euler()
         obj.rotation_euler = prev.rotation_euler
         if prev.madtracks.invert:
-            obj.rotation_euler.rotate_axis("Z", 3.141593)
+            obj.rotation_euler.rotate_axis("Z", ANGLE_180)
         else:
             obj.rotation_euler.rotate_axis("X", dummy_roteuler[0])
             obj.rotation_euler.rotate_axis("Y", dummy_roteuler[1])
@@ -158,17 +160,17 @@ def add(scene, obj, prev=None):
             obj.location = np.add(prev_pos, dummy_pos)
     
     if obj.madtracks.invert:
-        # all stock trackparts which are inverted either have no rotation offset or 90 Z rotation offset
-        # maybe it was a hack to avoid making more models and fit in Xbox Live, just like having to compute every trackpart position
+        # all stock trackparts which are inverted have a left-right rotation offset which can be zero
+        # maybe they are a way to avoid making more models and fit in Xbox Live, just like having to compute every trackpart position
         # 1) apply additional rotation
         dummy_rotmat = mathutils.Matrix([obj.madtracks.dummy_rot1, obj.madtracks.dummy_rot2, obj.madtracks.dummy_rot3, obj.madtracks.dummy_rot4])
         dummy_roteuler = dummy_rotmat.to_euler()
-        if abs(dummy_roteuler[2]) < eps:
-            # a. no rotation offset, rotate 180 on Z
-            obj.rotation_euler.rotate_axis("Z", 3.141593)
+        if dummy_roteuler[2] > 0:
+            # left turn
+            obj.rotation_euler.rotate_axis("Z", ANGLE_180 - dummy_roteuler[2])
         else:
-            # b. rotation offset, apply own endpoint rotation
-            obj.rotation_euler.rotate_axis("Z", dummy_roteuler[2])
+            # right turn
+            obj.rotation_euler.rotate_axis("Z", -ANGLE_180 + dummy_roteuler[2])
         # 2) apply inverse of own dummy position offset
         obj_pos = np.array(obj.location)
         obj_rot = np.array(obj.rotation_euler.to_matrix())
