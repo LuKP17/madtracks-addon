@@ -88,7 +88,7 @@ def import_file(filepath, scene):
         # open lightmap file and read first instance
         filename = os.path.basename(filepath)
         filename = filename[:-3] + "ldl"
-        lightmap_file = open(props.settings_madtracks_dir + LDL_PATH + filename, 'rb')
+        lightmap_file = open(filepath_insensitive(props.settings_madtracks_dir + LDL_PATH + filename), 'rb')
         lightmap = LDL(lightmap_file)
         success = lightmap.read_header()
         if success:
@@ -136,7 +136,7 @@ def import_file(filepath, scene):
     print("Imported {}".format(filename))
 
 
-def import_LDO_instance(section, lightmap, scene, ldo_filename=None):
+def import_LDO_instance(section, lightmap, scene):
     """
     Imports a LDO level instance from a .ini section.
     """
