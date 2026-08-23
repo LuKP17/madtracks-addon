@@ -142,7 +142,7 @@ def import_LDO_instance(section, lightmap, scene):
     """
     props = scene.madtracks
 
-    filename = section.as_dict()['filename']
+    filename = section.name
     lightmapped = is_lightmapped(lightmap, filename)
     ldoname = filename.split("/", 1)[1].split(".", 1)[0]
     
@@ -178,10 +178,10 @@ def import_descriptor_instance(section, lightmap, scene):
     """
     props = scene.madtracks
 
-    filename = section.as_dict()['filename']
+    filename = section.name
     descname = filename.split(".", 1)[0]
 
-    ldo_filename = False
+    ldo_filename = None
     is_trackpart = False
     is_collectible = False
     with open_insensitive(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
@@ -277,8 +277,8 @@ def import_world(world, lightmap, scene):
             bpy.ops.mesh.uv_texture_add()
             obj = bpy.context.edit_object
             bpy.ops.object.editmode_toggle()
-            obj.name = "Skybox"
-            obj.data.name = "Skybox"
+            obj.name = "world_Skybox"
+            obj.data.name = "world_Skybox"
             # rotate the skybox to the right orientation
             bpy.context.object.rotation_euler[2] = 7.85398
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
@@ -312,10 +312,12 @@ def import_world(world, lightmap, scene):
         if 'mesh' in ini.as_dict()['base'].keys():
             filename = ini.as_dict()['base']['mesh']
             if is_lightmapped(lightmap, filename):
-                obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene, lightmap)
+                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene, lightmap)
                 lightmap.read_instance(props.lightmap_debug_info)
             else:
-                obj = ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene)
+                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene)
+            obj = bpy.context.active_object
+            obj.name = "world_Mesh"
 
 
 def place_instance_object(section, obj):

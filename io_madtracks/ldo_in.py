@@ -61,7 +61,7 @@ def import_file(filepath, scene, lightmap=None):
 
     for i in range(len(meshes)):
         dprint("Creating Blender object for {}...".format(meshes[i].name))
-        obj = bpy.data.objects.new(meshes[i].name, meshes[i])
+        obj = bpy.data.objects.new(ldoname, meshes[i])
         scene.objects.link(obj)
         if lightmap:
             # add lightmap suffixes to not be reused later

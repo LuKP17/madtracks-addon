@@ -43,20 +43,24 @@ def export_file(filepath, scene):
 
     with open_insensitive(filepath, 'w') as fini:
         filename = os.path.basename(filepath)
+        # empty line like the original levels
+        fini.write("\n")
 
-        # export objects that are not trackparts
-        for obj in bpy.data.objects:
-            if not obj.madtracks.is_trackpart:
-                export_instance(fini, obj, obj.location, obj.matrix_world)
-        
-        # export trackpart sequences
-        for group in bpy.data.groups:
-            for obj in group.objects:
-                if obj.madtracks.is_trackpart:
-                    if obj.parent == None:
-                        export_instance(fini, obj, obj.location, obj.matrix_world)
-                    else:
-                        export_instance(fini, obj)
+        # loop thru scene objects by creation order
+        for i in range(len(bpy.data.scenes[0].objects), 0, -1):
+            obj = bpy.data.scenes[0].objects[i-1]
+            if obj.name in ["world_Skybox", "world_Mesh"]:
+                # skip world
+                continue
+            if obj.madtracks.is_trackpart and obj.parent:
+                # skip sequence trackpart
+                continue
+            export_instance(fini, obj, obj.location, obj.matrix_world)
+            if obj.madtracks.is_trackpart and obj.children:
+                # loop thru trackpart sequence
+                while obj.children:
+                    obj = obj.children[0]
+                    export_instance(fini, obj)
     
     # reinstate old instance mode
     props.instance_mode = instance_mode_save

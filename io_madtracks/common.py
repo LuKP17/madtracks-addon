@@ -261,4 +261,8 @@ def get_format(fstr):
 
 
 def float_format(value):
+    eps = 0.000001
+    if -eps < value < eps:
+        # remove minus sign in front of zeroes, useful for export fidelity
+        value = 0.000000
     return '{:f}'.format(value)

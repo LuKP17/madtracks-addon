@@ -38,40 +38,44 @@ def import_file(filepath, scene, lightmap=None):
 
     with open_insensitive(filepath, 'r') as file:
         # read the .ini file
-        ini = INI(file).as_dict()
+        ini = INI(file)
+        ini_dic = ini.as_dict()
         obj = None
 
         filename = None
-        if "filename" in ini['object'].keys():
-            filename = ini['object']['filename']
+        if "filename" in ini_dic['object'].keys():
+            filename = ini_dic['object']['filename']
             if ".ldo" in filename:
-                ldoname = filename.split("/", 1)[1] # strip "geometry/"
+                ldoname = None
+                for p in ini.sections[0].params:
+                    if p.name.lower() == "filename":
+                        ldoname = p.value.split("/", 1)[1] # strip "geometry/"
                 # Handle .ldo filenames that differ between the descriptor parameter and the actual filename
                 # TODO the "_High" suffix needs to be automatically searched by the .ldo importer
-                if ldoname == "ant_out_sea.ldo":
-                    ldoname = "ant_out_sea_high.ldo"
-                elif ldoname == "ger_eau.ldo":
-                    ldoname = "ger_eau_high.ldo"
-                elif ldoname == "ger_eau_puit.ldo":
-                    ldoname = "ger_eau_puit_high.ldo"
-                elif ldoname == "ant_eau.ldo":
-                    ldoname = "ant_eau_high.ldo"
+                if ldoname.lower() == "ant_out_sea.ldo":
+                    ldoname = "ANT_Out_Sea_High.ldo"
+                elif ldoname.lower() == "ger_eau.ldo":
+                    ldoname = "GER_Eau_High.ldo"
+                elif ldoname.lower() == "ger_eau_puit.ldo":
+                    ldoname = "GER_Eau_Puit_High.ldo"
+                elif ldoname.lower() == "ant_eau.ldo":
+                    ldoname = "ANT_Eau_high.ldo"
 
                 # import LDO
                 ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname, scene, lightmap)
                 obj = bpy.context.active_object
-                if "objecttype" in ini['object'].keys() and ini['object']['objecttype'] in trackpart_types:
+                if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in trackpart_types:
                     # assign trackpart properties
                     obj.madtracks.is_trackpart = True
-                    if "invert" in ini['object'].keys():
-                        obj.madtracks.invert = ini['object']['invert']
+                    if "invert" in ini_dic['object'].keys():
+                        obj.madtracks.invert = ini_dic['object']['invert']
 
-        if not obj and "objecttype" in ini['object'].keys():
+        if not obj and "objecttype" in ini_dic['object'].keys():
             # no LDO, create a Blender object matching the type
-            object_type = ini['object']['objecttype']
+            object_type = ini_dic['object']['objecttype']
             if object_type == "minimap":
                 # Image Empty as Linux doesn't have Images as Planes
-                filename = ini['object']['filename'].split("/")[-1]
+                filename = ini_dic['object']['filename'].split("/")[-1]
                 bpy.ops.object.empty_add(type='IMAGE')
                 imagepath = filepath_insensitive(props.settings_madtracks_dir + HUD_PATH + filename)
                 filename = imagepath.rsplit(os.path.sep, 1)[-1]
@@ -87,8 +91,8 @@ def import_file(filepath, scene, lightmap=None):
                 bpy.ops.object.empty_add(type='CUBE')
             else:
                 # from primitive
-                if "primitivetype" in ini['object'].keys():
-                    primitive_type = ini['object']['primitivetype']
+                if "primitivetype" in ini_dic['object'].keys():
+                    primitive_type = ini_dic['object']['primitivetype']
                     if primitive_type == "box":
                         bpy.ops.object.empty_add(type='CUBE')
                     elif primitive_type == "sphere":
@@ -106,7 +110,7 @@ def import_file(filepath, scene, lightmap=None):
             obj.select = False
 
         # parse descriptor parameters (see _tutorial.txt)
-        parse_parameters(ini['object'], props)
+        parse_parameters(ini_dic['object'], props)
 
         # set name and descriptor
         obj.madtracks.descriptor = filepath.rsplit(os.path.sep, 1)[1]

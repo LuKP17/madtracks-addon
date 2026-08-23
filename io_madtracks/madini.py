@@ -63,7 +63,7 @@ class INI:
             if line[0] == '[' and line[-2] == ']':
                 # add new section with name contained between the brackets
                 section = Section()
-                section.name = line[1:-2].lower()
+                section.name = line[1:-2]
                 self.sections.append(section)
             elif line[0] == '\n':
                 # blank line, ignore it
@@ -72,14 +72,15 @@ class INI:
                 # read parameter
                 parameter = Parameter()
                 parameter.name, value = line[:-1].split("=", 1)
-                parameter.name = parameter.name.lower()
+                parameter.name = parameter.name
                 if value[0] == '"' or value[-4:] == ".ldo":  # thanks Load Inc
                     # string value
                     parameter.value = value.replace("\"", "")
-                    parameter.value = parameter.value.lower()
+                    parameter.value = parameter.value
                 elif "," in value:
                     # multiple numbers
                     value = value.split(",")
+                    parameter.value = []
                     for v in value:
                         parameter.value.append(float(v))
                 else:
@@ -93,9 +94,12 @@ class INI:
     def as_dict(self):
         dic = {}
         for s in self.sections:
-            dic[s.name] = {}
+            dic[s.name.lower()] = {}
             for p in s.params:
-                dic[s.name][p.name] = p.value
+                if type(p.value) is str:
+                    dic[s.name.lower()][p.name.lower()] = p.value.lower()
+                else:
+                    dic[s.name.lower()][p.name.lower()] = p.value
         return dic
 
 
@@ -107,11 +111,14 @@ class Section:
     def as_dict(self):
         dic = {}
         for p in self.params:
-            dic[p.name] = p.value
+            if type(p.value) is str:
+                dic[p.name.lower()] = p.value.lower()
+            else:
+                dic[p.name.lower()] = p.value
         return dic
 
 
 class Parameter:
     def __init__(self):
         self.name = ""
-        self.value = []
+        self.value = None
