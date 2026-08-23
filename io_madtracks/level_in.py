@@ -232,17 +232,22 @@ def import_descriptor_instance(section, lightmap, scene):
     place_instance_object(section, obj)
 
     if is_trackpart:
-        prev = None
         if len(section.params) > 1:
             # new trackpart sequence
             trackpart.add(scene, obj)
+            # keep the current trackpart selected to retrieve it at the next iteration
+            bpy.ops.object.select_all(action='DESELECT')
+            obj.select = True
         elif len(section.params) == 1:
             # add to trackpart sequence
             prev = bpy.context.selected_objects[0]
             trackpart.add(scene, obj, prev)
-        # select the trackpart to remember it at the next iteration as *prev*
-        bpy.ops.object.select_all(action='DESELECT')
-        obj.select = True
+            # set parent relation which requires operator not to break the placement
+            obj.select = True
+            scene.objects.active = prev
+            bpy.ops.object.parent_set(type='OBJECT', keep_transform=False)
+            # keep the current trackpart selected to retrieve it at the next iteration
+            prev.select = False
 
     return True
 
@@ -266,7 +271,6 @@ def import_world(world, lightmap, scene):
             skybox_pos = to_blender_coord(ini.as_dict()['skybox']['position'])
             skybox_scale = to_blender_scale(ini.as_dict()['skybox']['scale'])
             bpy.ops.mesh.primitive_cube_add(location=(skybox_pos[0], skybox_pos[1], skybox_pos[2]),
-
                                             radius=skybox_scale,
                                             enter_editmode=True)
             bpy.ops.mesh.flip_normals()
