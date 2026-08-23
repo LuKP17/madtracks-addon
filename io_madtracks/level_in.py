@@ -292,7 +292,7 @@ def import_world(world, lightmap, scene):
                 material = bpy.data.materials.new(texture_name)
                 texslot = material.texture_slots.add()
                 texture = bpy.data.textures.new(texture_name, "IMAGE")
-                image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + texture_name + ".dds")
+                image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + texture_name, reuse=False)
                 texture.image = image
                 texslot.texture = texture
                 # other convenient material properties

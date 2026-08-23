@@ -200,16 +200,11 @@ def bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset=0, light
             continue  # skip this face
 
         # Assigns the diffuse image to the face
+        # FIXME important but awfully handled
         material = atomic.materials[poly.material_id]
         if (bool(material.flags & MAT_FLAG_DIFFUSE)):
-           texture = None
-           texture_path = props.settings_madtracks_dir + TEXTURE_PATH + material.diffuse_name + ".dds"
-           for image in bpy.data.images:
-               if image.filepath == texture_path:
-                   texture = image
-           if not texture:
-               texture = img_in.import_file(texture_path)
-           face[tex_layer].image = texture
+            image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + material.diffuse_name, reuse=True)
+            face[tex_layer].image = image
 
         # Assigns the UV mapping, prevent UVs from leaving boundaries? (see Bistrot.ldo door)
         uvs = []
@@ -257,33 +252,34 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
 
             if atomic_mat.diffuse_name_len:
                 texslot = material.texture_slots.add()
-
-                # new Blender texture for diffuse
-                texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
-                image = None
-                filename = atomic_mat.diffuse_name + ".dds"
-                # reuse shared images between atomics
-                # FIXME this doesn't reload the image if another import loaded it before
-                if atomic_cnt > 1 and bpy.data.images.find(filename) >= 0:
-                    image = bpy.data.images[bpy.data.images.find(filename)]
-                else:
-                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename)
-                texture.image = image
+                texture = None
+                if props.instance_mode:
+                    tex_index = bpy.data.textures.find(atomic_mat.diffuse_name)
+                    if tex_index >= 0:
+                        texture = bpy.data.textures[tex_index]
+                if not texture:
+                    # new Blender texture for diffuse
+                    texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
+                    image = None
+                    filename = atomic_mat.diffuse_name
+                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    texture.image = image
                 texslot.texture = texture
 
             if atomic_mat.envmap_name_len:
                 texslot = material.texture_slots.add()
-
-                # new Blender texture for envmap
-                texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
-                image = None
-                filename = atomic_mat.envmap_name + ".dds"
-                # reuse shared images between atomics
-                if atomic_cnt > 1 and bpy.data.images.find(filename) >= 0:
-                    image = bpy.data.images[bpy.data.images.find(filename)]
-                else:
-                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename)
-                texture.image = image
+                texture = None
+                if props.instance_mode:
+                    tex_index = bpy.data.textures.find(atomic_mat.envmap_name)
+                    if tex_index >= 0:
+                        texture = bpy.data.textures[tex_index]
+                if not texture:
+                    # new Blender texture for envmap
+                    texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
+                    image = None
+                    filename = atomic_mat.envmap_name
+                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    texture.image = image
                 texslot.texture = texture
                 texslot.blend_type = "SOFT_LIGHT"
                 texslot.diffuse_color_factor = 0.5
@@ -302,8 +298,8 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                 if not texture:
                     # new Blender texture for lightmap
                     texture = bpy.data.textures.new(image_name, "IMAGE")
-                    filename = image_name + ".dds"
-                    image = img_in.import_file(props.settings_madtracks_dir + LDL_PATH + filename)
+                    filename = image_name
+                    image = img_in.import_file(props.settings_madtracks_dir + LDL_PATH + filename, reuse=False)
                     texture.image = image
                 texslot.texture = texture
                 texslot.blend_type = "MULTIPLY"
