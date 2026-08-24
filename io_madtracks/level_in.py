@@ -126,6 +126,9 @@ def import_file(filepath, scene):
             si += 1
     
     if lightmap:
+        # make imported lightmap more visible over imported light objects
+        bpy.context.scene.world.light_settings.environment_color = 'PLAIN'
+        bpy.context.scene.world.light_settings.environment_energy = 1
         lightmap_file.close()
         if lightmap.instance_cnt > 0:
             set_error('importing a level', "Missed %d lightmap instances" % lightmap.instance_cnt)

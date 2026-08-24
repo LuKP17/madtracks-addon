@@ -85,8 +85,7 @@ def import_file(filepath, scene, lightmap=None):
             elif object_type == "light":
                 # Lamp
                 bpy.ops.object.lamp_add(type='POINT')
-                obj = bpy.context.active_object
-                obj.data.energy = 0
+                import_light(ini_dic['object'], props)
             elif object_type in ["gamearea", "cameraarea"]:
                 bpy.ops.object.empty_add(type='CUBE')
             else:
@@ -109,8 +108,8 @@ def import_file(filepath, scene, lightmap=None):
             obj = bpy.context.active_object
             obj.select = False
 
-        # parse descriptor parameters (see _tutorial.txt)
-        parse_parameters(ini_dic['object'], props)
+        # parse remaining parameters
+        import_misc_params(ini_dic['object'], props)
 
         # set name and descriptor
         obj.madtracks.descriptor = filepath.rsplit(os.path.sep, 1)[1]
@@ -124,7 +123,10 @@ def import_file(filepath, scene, lightmap=None):
     return True
 
 
-def parse_parameters(section, props):
+def import_misc_params(section, props):
+    """
+    Handle optional parameters and parameters shared between object types.
+    """
     for param in section.keys():
         if param == "lengths":
             lengths = section[param]
@@ -134,3 +136,53 @@ def parse_parameters(section, props):
             obj.dimensions[2] = to_blender_scale(lengths[1])
             # if not props.instance_mode:
                 # TODO also import as metadata
+
+
+LIGHT_SHAPE_DIRECTIONAL = 0
+LIGHT_SHAPE_AMBIENT     = 1
+LIGHT_SHAPE_POINT       = 2
+
+LIGHT_METHOD_LIGHTMAP   = 3
+def import_light(section, props):
+    """
+    Handle light specific parameters.
+    Expects required parameters to be present (see _tutorial.txt in Descriptors game data folder)
+    """
+    obj = bpy.context.active_object
+
+    # set Blender specific parameters
+    obj.data.use_specular = False
+
+    # light color
+    rgb = section['rgbcolor']
+    rgb = to_blender_color(rgb)
+
+    # light type
+    shape = section['lightshape']
+    if shape == LIGHT_SHAPE_DIRECTIONAL:
+        obj.data.type = 'SUN'
+        obj.data.color = rgb
+    elif shape == LIGHT_SHAPE_AMBIENT:
+        # ambient light objects shouldn't emit light themselves 
+        obj.data.energy = 0
+        bpy.context.scene.world.light_settings.use_environment_light = True
+        bpy.context.scene.world.light_settings.environment_color = 'SKY_COLOR'
+        # FIXME overwrites level world's sky color
+        bpy.context.scene.world.horizon_color = rgb
+        bpy.context.scene.world.zenith_color = rgb
+    elif shape == LIGHT_SHAPE_POINT:
+        obj.data.type = 'POINT'
+        obj.data.color = rgb
+        obj.data.distance = float(section['radius'])
+    
+    # light method
+    method = section['lightingmethod']
+    if method == LIGHT_METHOD_LIGHTMAP:
+        # light only shows up in the lightmap image
+        bpy.context.object.hide_render = True
+
+    # optional light param
+    bpy.context.object.data.shadow_method = 'RAY_SHADOW' # default
+    if 'dontcastshadow' in section.keys():
+        if section['dontcastshadow'] == 1:
+            bpy.context.object.data.shadow_method = 'NOSHADOW'

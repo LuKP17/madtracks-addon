@@ -107,6 +107,11 @@ def to_blender_matrix(matrix):
         (0, 0, 0, 1)
         ))
 
+def to_blender_color(color):
+    return [float(color[0] / 255),
+            float(color[1] / 255),
+            float(color[2] / 255)]
+
 
 def to_madtracks_axis(vec):
     return [-vec[0], vec[2], vec[1]]

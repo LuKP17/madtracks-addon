@@ -240,9 +240,7 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
 
             if (bool(atomic_mat.flags & MAT_FLAG_RGBA)):
                 material.madtracks.has_rgba = True
-                material.diffuse_color = [float(atomic_mat.RGBA[0] / 255),
-                                        float(atomic_mat.RGBA[1] / 255),
-                                        float(atomic_mat.RGBA[2] / 255)]
+                material.diffuse_color = to_blender_color(atomic_mat.RGBA[0:3])
                 material.use_transparency = True
                 material.alpha = float(atomic_mat.RGBA[3] / 255)
             if (bool(atomic_mat.flags & MAT_FLAG_BRIGHTNESS)):
