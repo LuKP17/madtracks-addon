@@ -194,14 +194,14 @@ def import_descriptor_instance(section, lightmap, scene):
             if descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
     
-    if not props.level_import_raceline and (is_trackpart or is_collectible):
-        # don't import descriptor
-        if is_lightmapped(lightmap, ldo_filename):
-            lightmap.read_instance()
-        return True
-    
     if ldo_filename:
-        if not is_lightmapped(lightmap, ldo_filename):
+        lightmapped = is_lightmapped(lightmap, ldo_filename)
+        if not props.level_import_raceline and (is_trackpart or is_collectible):
+            # don't import descriptor
+            if lightmapped:
+                lightmap.read_instance()
+            return True
+        if not lightmapped:
             # reuse already imported instances that are not lightmapped
             obj_index = bpy.data.objects.find(descname)
             if obj_index >= 0:
@@ -223,10 +223,20 @@ def import_descriptor_instance(section, lightmap, scene):
             obj = bpy.context.active_object
             lightmap.read_instance(props.lightmap_debug_info)
     else:
-        # import descriptor which doesn't have a LDO
-        if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
-            return False
-        obj = bpy.context.active_object
+        # reuse already imported instances
+        obj_index = bpy.data.objects.find(descname)
+        if obj_index >= 0:
+            obj = bpy.data.objects[obj_index]
+            dprint("Copying Blender object {}...".format(obj.name))
+            obj = obj.copy()
+            scene.objects.link(obj)
+            scene.objects.active = obj
+            obj.select = False
+        else:
+            # import descriptor which doesn't have a LDO
+            if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
+                return False
+            obj = bpy.context.active_object
         
     # edit location and rotation of Blender object
     place_instance_object(section, obj)
@@ -262,9 +272,7 @@ def import_world(world, lightmap, scene):
 
         # import the sky color
         sky_color = ini.as_dict()['base']['skycolor']
-        bpy.data.worlds[0].horizon_color = [float(sky_color[0] / 255),
-                                            float(sky_color[1] / 255),
-                                            float(sky_color[2] / 255)]
+        bpy.data.worlds[0].horizon_color = to_blender_color(sky_color)
 
         # import the optional skybox
         if 'skybox' in ini.as_dict().keys():
