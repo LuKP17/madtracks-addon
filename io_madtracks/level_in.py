@@ -148,10 +148,14 @@ def import_LDO_instance(section, lightmap, scene):
     filename = section.name
     lightmapped = is_lightmapped(lightmap, filename)
     ldoname = filename.split("/", 1)[1].split(".", 1)[0]
-    
-    if not lightmapped:
-        # reuse already imported instances that are not lightmapped
-        obj_index = bpy.data.objects.find(ldoname)
+
+    obj = None
+    if not lightmapped or lightmap.is_empty:
+        # reuse already imported instances that don't have lightmap UVs
+        if lightmapped:
+            obj_index = bpy.data.objects.find(ldoname + "_lgt")
+        else:
+            obj_index = bpy.data.objects.find(ldoname)
         if obj_index >= 0:
             obj = bpy.data.objects[obj_index]
             dprint("Copying Blender object {}...".format(obj.name))
@@ -159,15 +163,17 @@ def import_LDO_instance(section, lightmap, scene):
             scene.objects.link(obj)
             scene.objects.active = obj
             obj.select = False
+            if lightmapped:
+                # skip empty lightmap instance
+                lightmap.read_instance(props.lightmap_debug_info)
+    if not obj:
+        # import LDO
+        if lightmapped:
+            ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname + ".ldo", scene, lightmap)
+            lightmap.read_instance(props.lightmap_debug_info)
         else:
-            # import LDO without lightmap to be reused
             ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname + ".ldo", scene)
-            obj = bpy.context.active_object
-    else:
-        # import LDO and consume lightmap data
-        ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname + ".ldo", scene, lightmap)
         obj = bpy.context.active_object
-        lightmap.read_instance(props.lightmap_debug_info)
 
     # edit location and rotation of Blender object
     place_instance_object(section, obj)
@@ -183,6 +189,7 @@ def import_descriptor_instance(section, lightmap, scene):
 
     filename = section.name
     descname = filename.split(".", 1)[0]
+    lightmapped = False
 
     ldo_filename = None
     is_trackpart = False
@@ -196,17 +203,21 @@ def import_descriptor_instance(section, lightmap, scene):
                 is_trackpart = True
             if descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
-    
+
+    obj = None
     if ldo_filename:
         lightmapped = is_lightmapped(lightmap, ldo_filename)
         if not props.level_import_raceline and (is_trackpart or is_collectible):
             # don't import descriptor
             if lightmapped:
                 lightmap.read_instance()
-            return True
-        if not lightmapped:
-            # reuse already imported instances that are not lightmapped
-            obj_index = bpy.data.objects.find(descname)
+            return True  
+        if not lightmapped or lightmap.is_empty:
+            # reuse already imported instances
+            if lightmapped:
+                obj_index = bpy.data.objects.find(descname + "_lgt")
+            else:
+                obj_index = bpy.data.objects.find(descname)
             if obj_index >= 0:
                 obj = bpy.data.objects[obj_index]
                 dprint("Copying Blender object {}...".format(obj.name))
@@ -214,32 +225,19 @@ def import_descriptor_instance(section, lightmap, scene):
                 scene.objects.link(obj)
                 scene.objects.active = obj
                 obj.select = False
-            else:
-                # import descriptor without lightmap to be reused
-                if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
-                    return False
-                obj = bpy.context.active_object
-        else:
-            # import descriptor and consume lightmap data
+                if lightmapped:
+                    # skip empty lightmap instance
+                    lightmap.read_instance(props.lightmap_debug_info)
+    if not obj:
+        # import descriptor
+        if lightmapped:
             if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene, lightmap):
                 return False
-            obj = bpy.context.active_object
             lightmap.read_instance(props.lightmap_debug_info)
-    else:
-        # reuse already imported instances
-        obj_index = bpy.data.objects.find(descname)
-        if obj_index >= 0:
-            obj = bpy.data.objects[obj_index]
-            dprint("Copying Blender object {}...".format(obj.name))
-            obj = obj.copy()
-            scene.objects.link(obj)
-            scene.objects.active = obj
-            obj.select = False
         else:
-            # import descriptor which doesn't have a LDO
             if not descriptor_in.import_file(props.settings_madtracks_dir + DESCRIPTOR_PATH + filename, scene):
                 return False
-            obj = bpy.context.active_object
+        obj = bpy.context.active_object
         
     # edit location and rotation of Blender object
     place_instance_object(section, obj)
@@ -325,10 +323,12 @@ def import_world(world, lightmap, scene):
             if is_lightmapped(lightmap, filename):
                 ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene, lightmap)
                 lightmap.read_instance(props.lightmap_debug_info)
+                obj = bpy.context.active_object
+                obj.name = "world_Mesh_lgt"
             else:
                 ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene)
-            obj = bpy.context.active_object
-            obj.name = "world_Mesh"
+                obj = bpy.context.active_object
+                obj.name = "world_Mesh"
 
 
 def place_instance_object(section, obj):
@@ -354,17 +354,10 @@ def place_instance_object(section, obj):
 
 def is_lightmapped(lightmap, filename):
     """
-    Return True if the LDO to import is present in the LDL file and has lightmap data to import.
-    Skip the LDL instance if it has no data to import.
+    Return True if the LDO to import is present in the LDL file, although it can have no UV data to import
     """
     if not lightmap:
         return False
 
-    if lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo":
-        if lightmap.mesh_cnt == 0 or lightmap.vertex_cnt[0] == 0:
-            # skip the instance with no data to import
-            lightmap.read_instance()
-        else:
-            return True
+    return lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo"
 
-    return False

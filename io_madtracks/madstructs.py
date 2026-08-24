@@ -468,6 +468,7 @@ class LDL:
         self.instance_cnt = 0
         self.file = file
 
+        self.is_empty = True
         self.mesh_cnt = 0
         self.vertex_cnt = []
         self.current_name = None
@@ -489,13 +490,14 @@ class LDL:
             if self.instance_cnt == -2:
                 set_error('reading LDL instance', "No more instances to read")
             return
+        self.is_empty = True
         self.mesh_cnt = struct.unpack("<i", self.file.read(4))[0]
         name_len = self.file.read(1)[0]
         self.current_name = struct.unpack("<%ds" % name_len, self.file.read(name_len))[0].decode("utf-8")
         self.file.seek(1, 1)  # skip null termination
         self.vertex_cnt = []
         self.current_uvs = []
-        for _ in range(self.mesh_cnt):
+        for i in range(self.mesh_cnt):
             uvs = []
             vertex_cnt = struct.unpack("<i", self.file.read(4))[0]
             for _ in range(vertex_cnt):
@@ -505,6 +507,8 @@ class LDL:
                 if self.bit_depth == 32:
                     uv.read4(self.file)
                 uvs.append(uv)
+            if vertex_cnt > 0:
+                self.is_empty = False
             self.vertex_cnt.append(vertex_cnt)
             self.current_uvs.append(uvs)
 
@@ -516,7 +520,7 @@ class LDL:
     
     def dbg_print(self):
         print("----------------- LIGHTMAP DEBUG INFO ------------------")
-        print("current_name: {}  mesh_cnt: {}  vertex_cnt: {}".format(self.current_name, self.mesh_cnt, self.vertex_cnt))
+        print("current_name: {}  mesh_cnt: {}  vertex_cnt: {}  is_empty: {}".format(self.current_name, self.mesh_cnt, self.vertex_cnt, self.is_empty))
         print()
 
 

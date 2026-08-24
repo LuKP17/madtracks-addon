@@ -134,7 +134,7 @@ def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
 
         bm = bmesh.new()
         bm.loops.layers.uv.new("UVMap")
-        if lightmap:
+        if lightmap and not lightmap.is_empty:
             bm.loops.layers.uv.new("LightMap")
         bm.faces.layers.tex.new("UVMap")
 
@@ -145,7 +145,7 @@ def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
                 continue
             i = atomic.mesh_cnt - 1 # meshes are stored in reverse order in the LDO, thanks for the rage Load xoxo
             for atomic_mesh in atomic.meshes:
-                if lightmap:
+                if lightmap and not lightmap.is_empty:
                     bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset, lightmap.current_uvs[i])
                 else:
                     bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset)
@@ -290,12 +290,12 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                 # reuse lightmap texture
                 image_name = os.path.basename(lightmap.file.name)
                 image_name = image_name.rsplit(".", 1)[0] + "_lgt0000"
-                tex_index = bpy.data.textures.find(image_name)
+                tex_index = bpy.data.textures.find("lightmap")
                 if tex_index >= 0:
                     texture = bpy.data.textures[tex_index]
                 if not texture:
                     # new Blender texture for lightmap
-                    texture = bpy.data.textures.new(image_name, "IMAGE")
+                    texture = bpy.data.textures.new("lightmap", "IMAGE")
                     filename = image_name
                     image = img_in.import_file(props.settings_madtracks_dir + LDL_PATH + filename, reuse=False)
                     texture.image = image
