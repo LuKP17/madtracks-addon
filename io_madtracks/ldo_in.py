@@ -39,7 +39,8 @@ def import_file(filepath, scene, lightmap=None):
     filename = os.path.basename(filepath)
     ldoname = filename.rsplit(".", 1)[0]
 
-    with open_insensitive(filepath, 'rb') as file:
+    filepath_real = filepath_insensitive(filepath)
+    with open(filepath_real, 'rb') as file:
         # read the file
         dprint("Reading LDO file %s..." % filename)
         ldo = LDO()
@@ -88,6 +89,14 @@ def import_file(filepath, scene, lightmap=None):
     if parent:
         parent.select = False
 
+    cache_path = props.settings_madtracks_dir + ".cache"
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
+    lgt_filepath = cache_path + os.path.sep + ldoname + ".lgt"
+    if not os.path.exists(lgt_filepath):
+        dprint("Writing LDO light cache file %s..." % lgt_filepath)
+        write_cache_file(lgt_filepath, ldo)
+        
     dprint("Imported {} ({} atomics)".format(filename, ldo.atomic_cnt))
 
 
@@ -263,6 +272,7 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                     image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
                     texture.image = image
                 texslot.texture = texture
+                texslot.uv_layer = "UVMap"
 
             if atomic_mat.envmap_name_len:
                 texslot = material.texture_slots.add()
@@ -279,6 +289,7 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                     image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
                     texture.image = image
                 texslot.texture = texture
+                texslot.uv_layer = "UVMap"
                 texslot.blend_type = "SOFT_LIGHT"
                 texslot.diffuse_color_factor = 0.5
             
@@ -316,3 +327,38 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
             for ti in range(sequence_len):
                 mesh.polygons[ti + tri_offset].material_index = material_id
             tri_offset += sequence_len
+
+
+def write_cache_file(filepath, ldo):
+    """
+    Writes one per-face-vertex index per LDO meshes vertices into a LGT file.
+    This file will then be read when writing the LDL file as it contains the LDO instance
+    lightmap data but with UV indices, to retrieve the actual UVs from Blender's lightmap layer arrays.
+    """
+    ldoname = "geometry/" + os.path.basename(filepath).rsplit(".", 1)[0] + ".ldo"
+    with open(filepath, 'wb') as file:
+        ldo_mesh_cnt = 0
+        for atomic in ldo.atomics:
+            # empty atomics have mesh count (wrongfully?) set to 1, but LDL doesn't count them
+            if not atomic.is_empty:
+                ldo_mesh_cnt += atomic.mesh_cnt
+        file.write(struct.pack("<i", ldo_mesh_cnt))
+        file.write(struct.pack("<b", len(ldoname)))
+        file.write(struct.pack("<%ds" % len(ldoname), bytes(ldoname.encode("utf-8"))))
+        file.write(struct.pack("<b", 0))
+
+        for atomic in ldo.atomics:
+            if atomic.is_empty:
+                # empty atomics have mesh count (wrongfully?) set to 1
+                atomic_mesh_cnt = 0
+            else:
+                atomic_mesh_cnt = atomic.mesh_cnt
+            # LDL files write LDO meshes in reverse order, do the same for consistency
+            for i in range(atomic_mesh_cnt, 0, -1):
+                mesh = atomic.meshes[i-1]
+                loop_cnt = sum(mesh.tri_seq_len) * 3
+                file.write(struct.pack("<i", mesh.vertex_cnt))
+                file.write(struct.pack("<i", loop_cnt))
+                for vertex in mesh.vertices:
+                    file.write(struct.pack("<h", vertex.per_face_index))
+                

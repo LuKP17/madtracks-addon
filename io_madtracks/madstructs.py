@@ -314,6 +314,7 @@ class Mesh:
         # Tris header
         self.tri_seq_cnt = struct.unpack("<i", file.read(4))[0]
         # Tri sequences
+        loop_offset = 0
         for _ in range(self.tri_seq_cnt):
             self.tri_seq_mat.append(struct.unpack("<i", file.read(4))[0])
             self.tri_seq_len.append(struct.unpack("<i", file.read(4))[0])
@@ -321,7 +322,10 @@ class Mesh:
                 tri = Tri(self.tri_seq_mat[-1])
                 tri.read(file)
                 self.tris.append(tri)
-        
+                # store the per-face-vertex loop index in each vertex used by the face
+                for vi in tri.vertices_id:
+                    self.vertices[vi].per_face_index = loop_offset
+                    loop_offset += 1
         if debug:
             self.dbg_print()
     
@@ -414,6 +418,8 @@ class Vertex:
         self.position = None
         self.normal = None
         self.uv = None
+        # not part of the data itself, used to identify the vertex in Blender's per-face-vertex arrays
+        self.per_face_index = None
 
     def __repr__(self):
         return "Vertex"

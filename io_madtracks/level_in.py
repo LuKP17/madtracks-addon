@@ -319,14 +319,16 @@ def import_world(world, lightmap, scene):
 
         # import the optional world mesh
         if 'mesh' in ini.as_dict()['base'].keys():
-            filename = ini.as_dict()['base']['mesh']
-            if is_lightmapped(lightmap, filename):
-                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene, lightmap)
+            for p in ini.sections[0].params:
+                if p.name.lower() == "mesh":
+                    ldoname = p.value
+            if is_lightmapped(lightmap, ldoname):
+                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname.split("/", 1)[1], scene, lightmap)
                 lightmap.read_instance(props.lightmap_debug_info)
                 obj = bpy.context.active_object
                 obj.name = "world_Mesh_lgt"
             else:
-                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + filename.split("/", 1)[1], scene)
+                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname.split("/", 1)[1], scene)
                 obj = bpy.context.active_object
                 obj.name = "world_Mesh"
 

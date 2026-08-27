@@ -36,7 +36,7 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     settings_madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
         default = "",
-        description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nNeeded for import/export"
+        description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nTrailing directory separator needed for import/export"
     )
 
     instance_mode = BoolProperty(
