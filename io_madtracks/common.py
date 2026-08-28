@@ -24,13 +24,14 @@ import platform
 import mathutils
 
 # Relative paths from the user's Mad Tracks data folder
-LDO_PATH =        os.path.join("Gfx", "models", "Geometry") + os.path.sep
-TEXTURE_PATH =    os.path.join("Graph", "maps", "High") + os.path.sep
-HUD_PATH =        os.path.join("Graph", "hud", "in") + os.path.sep
+LDO_PATH        = os.path.join("Gfx", "models", "Geometry") + os.path.sep
+TEXTURE_PATH    = os.path.join("Graph", "maps", "High") + os.path.sep
+HUD_PATH        = os.path.join("Graph", "hud", "in") + os.path.sep
 DESCRIPTOR_PATH = os.path.join("Bin", "Descriptors") + os.path.sep
-LEVEL_PATH =      os.path.join("Bin", "Levels") + os.path.sep
-WORLD_PATH =      os.path.join("Bin", "universes") + os.path.sep
-LDL_PATH =        os.path.join("Gfx", "Lightmaps") + os.path.sep
+LEVEL_PATH      = os.path.join("Bin", "Levels") + os.path.sep
+WORLD_PATH      = os.path.join("Bin", "universes") + os.path.sep
+LDL_PATH        = os.path.join("Gfx", "Lightmaps") + os.path.sep
+CACHE_PATH      = ".cache" + os.path.sep
 
 # Global dictionaries
 global ERRORS
@@ -216,19 +217,41 @@ def enable_texture_mode():
     return
 
 
+def find_reusable_ldo(ldo_filename):
+    """ Searches Blender objects for a reusable LDO level instance"""
+    for i in range(len(bpy.data.objects)):
+        obj = bpy.data.objects[i]
+        if obj.type == 'MESH' \
+            and not obj.madtracks.descriptor \
+            and obj.madtracks.ldo.lower() == ldo_filename.lower() \
+            and not "LightMap" in obj.data.uv_layers.keys():
+            return i
+    return -1
+
+
+def find_reusable_descriptor(descriptor):
+    """ Searches Blender objects for a reusable Descriptor level instance"""
+    for i in range(len(bpy.data.objects)):
+        obj = bpy.data.objects[i]
+        if obj.type == 'MESH' \
+            and obj.madtracks.descriptor.lower() == descriptor.lower() \
+            and not "LightMap" in obj.data.uv_layers.keys():
+            return i
+    return -1
+
+
 """
 Non-Blender helper functions
 """
 def filepath_insensitive(filepath):
     """
-    Mad Tracks heavily relies on insensitive casing for files.
+    Mad Tracks heavily relies on insensitive casing for files, which doesn't cut it in Linux.
     Doesn't guarantee that the filepath returned exists.
     """
-    if platform.system() == "Linux":
-        path, filename = os.path.split(filepath)
-        for filename_real in os.listdir(path):
-            if filename_real.lower() == filename.lower():
-                return os.path.join(path, filename_real)
+    path, filename = os.path.split(filepath)
+    for filename_real in os.listdir(path):
+        if filename_real.lower() == filename.lower():
+            return os.path.join(path, filename_real)
     return filepath
 
 

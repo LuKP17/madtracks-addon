@@ -36,10 +36,17 @@ from .common import *
 
 def import_file(filepath, scene, lightmap=None):
     props = scene.madtracks
-    filename = os.path.basename(filepath)
-    ldoname = filename.rsplit(".", 1)[0]
 
     filepath_real = filepath_insensitive(filepath)
+    filename = os.path.basename(filepath_real)
+    if not os.path.exists(filepath_real):
+        # try again with known suffixes
+        filepath_real = filepath_insensitive(os.path.dirname(filepath_real) + os.path.sep + filename.replace(".ldo", "_high.ldo"))
+        filename = os.path.basename(filepath_real)
+        if not os.path.exists(filepath_real):
+            set_error('importing LDO', "Couldn't find LDO from path {}".format(filepath))
+            return
+    meshname = filename.rsplit(".", 1)[0]
     with open(filepath_real, 'rb') as file:
         # read the file
         dprint("Reading LDO file %s..." % filename)
@@ -47,10 +54,10 @@ def import_file(filepath, scene, lightmap=None):
         ldo.read(file, props.ldo_debug_info)
         # check for EOF
         if len(file.read(1)) != 0:
-            dprint("End of file %s wasn't reached." % filename)
+            dprint("End of file %s wasn't reached." % filepath_real)
 
     # create Blender meshes from LDO atomics
-    meshes = ldo_to_meshes(ldo, ldoname, scene, props, lightmap)
+    meshes = ldo_to_meshes(ldo, meshname, scene, props, lightmap)
     
     # create Blender objects
     parent = None
@@ -58,21 +65,21 @@ def import_file(filepath, scene, lightmap=None):
         # create a parent object
         bpy.ops.object.empty_add(type='PLAIN_AXES')
         parent = bpy.context.active_object
-        parent.name = ldoname
+        parent.name = meshname
 
     for i in range(len(meshes)):
-        dprint("Creating Blender object for {}...".format(meshes[i].name))
-        obj = bpy.data.objects.new(ldoname, meshes[i])
+        obj = bpy.data.objects.new(meshes[i].name, meshes[i])
         scene.objects.link(obj)
         if lightmap:
-            # add lightmap suffixes to not be reused later
-            obj.name = obj.name + "_lgt"
-            obj.data.name = obj.data.name + "_lgt"
+            # add lightmap suffix in the mesh name for more clarity
+            obj.data.name += "_lgt"
+            obj.madtracks.is_lightmapped = True
         if parent:
             obj.parent = parent
             scene.objects.active = parent
         else:
             scene.objects.active = obj
+        obj.madtracks.ldo = filename
         obj.madtracks.is_instance = props.instance_mode
         for dummy in ldo.atomics[i].dummies:
             # store dummy data in the object
@@ -84,23 +91,22 @@ def import_file(filepath, scene, lightmap=None):
                 obj.madtracks.dummy_rot4 = dummy_rot[3]
             if (bool(dummy.flags & DUMMY_FLAG_POS) or bool(dummy.flags & DUMMY_FLAG_POSROT)):
                 obj.madtracks.dummy_pos = to_blender_axis(dummy.position)
+        dprint("Created object {} from mesh {}".format(obj.name, meshes[i].name))
     
     # the parent object could have been selected
     if parent:
         parent.select = False
 
-    cache_path = props.settings_madtracks_dir + ".cache"
-    if not os.path.exists(cache_path):
-        os.makedirs(cache_path)
-    lgt_filepath = cache_path + os.path.sep + ldoname + ".lgt"
+    # write LDO lightmap metadata in cache for lightmap export
+    lgt_filepath = props.madtracks_dir + CACHE_PATH + filename.replace(".ldo", ".lgt")
     if not os.path.exists(lgt_filepath):
-        dprint("Writing LDO light cache file %s..." % lgt_filepath)
-        write_cache_file(lgt_filepath, ldo)
-        
-    dprint("Imported {} ({} atomics)".format(filename, ldo.atomic_cnt))
+        if not os.path.exists(props.madtracks_dir + CACHE_PATH):
+            os.makedirs(props.madtracks_dir + CACHE_PATH)
+        write_lgt_file(lgt_filepath, filename, ldo)
+        dprint("Wrote LDO lightmap metadata file %s" % lgt_filepath)
 
 
-def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
+def ldo_to_meshes(ldo, meshname, scene, props, lightmap=None):
     """
     Create Blender meshes from a LDO and return them.
     All the meshes contained in one atomic will always be merged into a single Blender mesh.
@@ -113,11 +119,11 @@ def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
         for atomic in ldo.atomics:
             if atomic.is_empty:
                 continue
-            # atomic Blender mesh
+            
             if ldo.atomic_cnt > 1:
                 meshname = atomic.name
-            else:
-                meshname = ldoname
+
+            # atomic Blender mesh
             mesh = bpy.data.meshes.new(meshname)
 
             bm = bmesh.new()
@@ -134,12 +140,12 @@ def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
             bm.to_mesh(mesh)
             bm.free()
             
-            mesh_assign_materials(ldo.atomic_cnt, atomic, mesh, props)
+            mesh_assign_materials(atomic, mesh, props)
 
             meshes.append(mesh)
     else:
-        # merge all atomics into a single mesh
-        mesh = bpy.data.meshes.new(ldoname)
+        # merge all atomics into a single Blender mesh
+        mesh = bpy.data.meshes.new(meshname)
 
         bm = bmesh.new()
         bm.loops.layers.uv.new("UVMap")
@@ -166,7 +172,7 @@ def ldo_to_meshes(ldo, ldoname, scene, props, lightmap=None):
         bm.free()
 
         # FIXME currently only assigns the last atomic materials
-        mesh_assign_materials(ldo.atomic_cnt, atomic, mesh, props, lightmap)
+        mesh_assign_materials(atomic, mesh, props, lightmap)
 
         meshes.append(mesh)
 
@@ -212,7 +218,7 @@ def bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset=0, light
         # FIXME important but awfully handled
         material = atomic.materials[poly.material_id]
         if (bool(material.flags & MAT_FLAG_DIFFUSE)):
-            image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + material.diffuse_name, reuse=True)
+            image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + material.diffuse_name, reuse=True)
             face[tex_layer].image = image
 
         # Assigns the UV mapping, prevent UVs from leaving boundaries? (see Bistrot.ldo door)
@@ -236,14 +242,16 @@ def bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset=0, light
         #face.smooth = True
 
 
-def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
+def mesh_assign_materials(atomic, mesh, props, lightmap=None):
     # assign atomic materials to mesh
     for atomic_mat in atomic.materials:
-        # reuse already imported lightmapped materials
-        mat_index = bpy.data.materials.find(atomic_mat.name + "_lgt")
-        if mat_index >= 0 and lightmap:
-            material = bpy.data.materials[mat_index]
-        else:
+        material = None
+        if lightmap:
+            # reuse already imported lightmapped materials
+            mat_index = bpy.data.materials.find(atomic_mat.name + "_lgt")
+            if mat_index >= 0:
+                material = bpy.data.materials[mat_index]
+        if not material:
             # new Blender material
             material = bpy.data.materials.new(atomic_mat.name)
 
@@ -269,7 +277,7 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
                     image = None
                     filename = atomic_mat.diffuse_name
-                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -286,7 +294,7 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
                     image = None
                     filename = atomic_mat.envmap_name
-                    image = img_in.import_file(props.settings_madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -299,16 +307,15 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
                 texslot = material.texture_slots.add()
                 texture = None
                 # reuse lightmap texture
-                image_name = os.path.basename(lightmap.file.name)
-                image_name = image_name.rsplit(".", 1)[0] + "_lgt0000"
                 tex_index = bpy.data.textures.find("lightmap")
                 if tex_index >= 0:
                     texture = bpy.data.textures[tex_index]
                 if not texture:
                     # new Blender texture for lightmap
                     texture = bpy.data.textures.new("lightmap", "IMAGE")
-                    filename = image_name
-                    image = img_in.import_file(props.settings_madtracks_dir + LDL_PATH + filename, reuse=False)
+                    image_name = os.path.basename(lightmap.file.name)
+                    filename = image_name.rsplit(".", 1)[0] + "_lgt0000"
+                    image = img_in.import_file(props.madtracks_dir + LDL_PATH + filename, reuse=False)
                     texture.image = image
                 texslot.texture = texture
                 texslot.blend_type = "MULTIPLY"
@@ -329,22 +336,24 @@ def mesh_assign_materials(atomic_cnt, atomic, mesh, props, lightmap=None):
             tri_offset += sequence_len
 
 
-def write_cache_file(filepath, ldo):
+def write_lgt_file(lgt_filepath, ldo_filename, ldo):
     """
-    Writes one per-face-vertex index per LDO meshes vertices into a LGT file.
-    This file will then be read when writing the LDL file as it contains the LDO instance
-    lightmap data but with UV indices, to retrieve the actual UVs from Blender's lightmap layer arrays.
+    Write .lgt file to be read when writing the LDL file as it contains the LDO instance
+    lightmap data but with UV indices, used to retrieve the actual UVs from Blender's lightmap layer arrays
+    in constant time.
     """
-    ldoname = "geometry/" + os.path.basename(filepath).rsplit(".", 1)[0] + ".ldo"
-    with open(filepath, 'wb') as file:
+    with open(lgt_filepath, 'wb') as file:
         ldo_mesh_cnt = 0
         for atomic in ldo.atomics:
             # empty atomics have mesh count (wrongfully?) set to 1, but LDL doesn't count them
             if not atomic.is_empty:
                 ldo_mesh_cnt += atomic.mesh_cnt
         file.write(struct.pack("<i", ldo_mesh_cnt))
-        file.write(struct.pack("<b", len(ldoname)))
-        file.write(struct.pack("<%ds" % len(ldoname), bytes(ldoname.encode("utf-8"))))
+
+        # add universal prefix for lightmaps
+        ldo_filename = "geometry/" + ldo_filename
+        file.write(struct.pack("<b", len(ldo_filename)))
+        file.write(struct.pack("<%ds" % len(ldo_filename), bytes(ldo_filename.encode("utf-8"))))
         file.write(struct.pack("<b", 0))
 
         for atomic in ldo.atomics:

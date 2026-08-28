@@ -32,15 +32,30 @@ from ..common import *
 
 class MadObjectProperties(bpy.types.PropertyGroup):
     # Common
+    descriptor = StringProperty(
+        name = "Descriptor",
+        default = "",
+        description = "Filename of the object's descriptor"
+    )
+    ldo = StringProperty(
+        name = "LDO",
+        default = "",
+        description = "Filename of the object's LDO"
+    )
     is_instance = BoolProperty(
         name = "Is Instance",
         default = False,
         description = "Object is a level instance"
     )
-    descriptor = StringProperty(
-        name = "Descriptor",
-        default = "",
-        description = "Filename of the object's descriptor"
+    is_world = BoolProperty(
+        name = "Is World",
+        default = False,
+        description = "Object is part of the world"
+    )
+    is_lightmapped = BoolProperty(
+        name = "Is Lightmapped",
+        default = False,
+        description = "Object is present in the lightmap"
     )
 
     # Trackparts

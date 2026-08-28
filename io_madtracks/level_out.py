@@ -49,8 +49,8 @@ def export_file(filepath, scene):
         # loop thru scene objects by creation order
         for i in range(len(bpy.data.scenes[0].objects), 0, -1):
             obj = bpy.data.scenes[0].objects[i-1]
-            if obj.name in ["world_Skybox", "world_Mesh"]:
-                # skip world
+            if obj.madtracks.is_world:
+                # skip world elements
                 continue
             if obj.madtracks.is_trackpart and obj.parent:
                 # skip sequence trackpart
@@ -65,8 +65,6 @@ def export_file(filepath, scene):
     # reinstate old instance mode
     props.instance_mode = instance_mode_save
 
-    print("Exported {}".format(filename))
-
 
 def export_instance(fini, obj, location=None, matrix_world=None):
     """
@@ -74,13 +72,10 @@ def export_instance(fini, obj, location=None, matrix_world=None):
     Handles trackpart sequences, which are Object instances without position/rotation parameters,
     since they are automatically computed by Mad Tracks' engine.
     """
-    if obj.madtracks.descriptor != '':
+    if obj.madtracks.descriptor:
         name = obj.madtracks.descriptor
     else:
-        if "_lgt" in obj.name:
-            name = "geometry/" + obj.name.split("_lgt")[0] + ".ldo"
-        else:
-            name = "geometry/" + obj.name.split(".")[0] + ".ldo"
+        name = "geometry/" + obj.madtracks.ldo
 
     fini.write("[" + name + "]\n")
     if location:

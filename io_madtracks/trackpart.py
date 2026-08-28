@@ -105,7 +105,7 @@ def add_user(scene, descriptor):
     Used to handle trackparts selected by the user.
     """
     props = scene.madtracks
-    filepath = props.settings_madtracks_dir + DESCRIPTOR_PATH + descriptor
+    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
 
     # look for a selected trackpart to append to
     prev = None

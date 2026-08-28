@@ -45,7 +45,7 @@ class ImportMad(bpy.types.Operator):
 
         frmt = get_format(self.filepath)
 
-        if props.settings_madtracks_dir == "":
+        if props.madtracks_dir == "":
             msg_box("No data directory specified.")
             return {'CANCELLED'}
 
@@ -161,7 +161,7 @@ class ExportMad(bpy.types.Operator):
         
         frmt = get_format(self.filepath)
         
-        if props.settings_madtracks_dir == "":
+        if props.madtracks_dir == "":
             msg_box("No data directory specified.")
             return {'CANCELLED'}
 

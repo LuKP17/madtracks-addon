@@ -36,89 +36,71 @@ def import_file(filepath, scene, lightmap=None):
     """
     props = scene.madtracks
 
-    with open_insensitive(filepath, 'r') as file:
+    filepath_real = filepath_insensitive(filepath)
+    filename = os.path.basename(filepath_real)
+    with open(filepath_real, 'r') as file:
         # read the .ini file
+        dprint("Reading Descriptor file %s..." % filename)
         ini = INI(file)
         ini_dic = ini.as_dict()
-        obj = None
 
-        filename = None
-        if "filename" in ini_dic['object'].keys():
-            filename = ini_dic['object']['filename']
-            if ".ldo" in filename:
-                ldoname = None
-                for p in ini.sections[0].params:
-                    if p.name.lower() == "filename":
-                        ldoname = p.value.split("/", 1)[1] # strip "geometry/"
-                # Handle .ldo filenames that differ between the descriptor parameter and the actual filename
-                # TODO the "_High" suffix needs to be automatically searched by the .ldo importer
-                if ldoname.lower() == "ant_out_sea.ldo":
-                    ldoname = "ANT_Out_Sea_High.ldo"
-                elif ldoname.lower() == "ger_eau.ldo":
-                    ldoname = "GER_Eau_High.ldo"
-                elif ldoname.lower() == "ger_eau_puit.ldo":
-                    ldoname = "GER_Eau_Puit_High.ldo"
-                elif ldoname.lower() == "ant_eau.ldo":
-                    ldoname = "ANT_Eau_high.ldo"
-
-                # import LDO
-                ldo_in.import_file(props.settings_madtracks_dir + LDO_PATH + ldoname, scene, lightmap)
-                obj = bpy.context.active_object
-                if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in trackpart_types:
-                    # assign trackpart properties
-                    obj.madtracks.is_trackpart = True
-                    if "invert" in ini_dic['object'].keys():
-                        obj.madtracks.invert = ini_dic['object']['invert']
-
-        if not obj and "objecttype" in ini_dic['object'].keys():
-            # no LDO, create a Blender object matching the type
-            object_type = ini_dic['object']['objecttype']
-            if object_type == "minimap":
-                # Image Empty as Linux doesn't have Images as Planes
-                filename = ini_dic['object']['filename'].split("/")[-1]
-                bpy.ops.object.empty_add(type='IMAGE')
-                imagepath = filepath_insensitive(props.settings_madtracks_dir + HUD_PATH + filename)
-                filename = imagepath.rsplit(os.path.sep, 1)[-1]
-                bpy.ops.image.open(filepath=imagepath, directory=props.settings_madtracks_dir + HUD_PATH, files=[{"name":filename, "name":filename}])
-                obj = bpy.context.active_object
-                obj.data = bpy.data.images[filename]
-            elif object_type == "light":
-                # Lamp
-                bpy.ops.object.lamp_add(type='POINT')
-                import_light(ini_dic['object'], props)
-            elif object_type in ["gamearea", "cameraarea"]:
-                bpy.ops.object.empty_add(type='CUBE')
-            else:
-                # from primitive
-                if "primitivetype" in ini_dic['object'].keys():
-                    primitive_type = ini_dic['object']['primitivetype']
-                    if primitive_type == "box":
-                        bpy.ops.object.empty_add(type='CUBE')
-                    elif primitive_type == "sphere":
-                        bpy.ops.object.empty_add(type='SPHERE')
-                    elif primitive_type == "capsule":
-                        bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=1, depth=2)
-                        obj = bpy.context.active_object
-                        bpy.context.object.draw_type = 'WIRE'
-                    else:
-                        set_error('importing descriptor', "Unknown primitive type \"%s\" for %s" % (primitive_type, filepath))
-                        return False
-                else:
-                    bpy.ops.object.empty_add(type='PLAIN_AXES')
+    # create Descriptor Blender object
+    if "filename" in ini_dic['object'].keys() and ".ldo" in ini_dic['object']['filename']:
+        # import LDO as the descriptor object
+        ldo_filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
+        ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene, lightmap)
+        obj = bpy.context.active_object
+        if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in trackpart_types:
+            # assign trackpart properties
+            obj.madtracks.is_trackpart = True
+            if "invert" in ini_dic['object'].keys():
+                obj.madtracks.invert = ini_dic['object']['invert']
+    elif "objecttype" in ini_dic['object'].keys():
+        # create a base Blender object matching the type
+        object_type = ini_dic['object']['objecttype']
+        if object_type == "minimap":
+            # Image Empty
+            filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
+            bpy.ops.object.empty_add(type='IMAGE')
+            imagepath = filepath_insensitive(props.madtracks_dir + HUD_PATH + filename)
+            filename = imagepath.rsplit(os.path.sep, 1)[-1]
+            bpy.ops.image.open(filepath=imagepath, directory=props.madtracks_dir + HUD_PATH, files=[{"name":filename, "name":filename}])
             obj = bpy.context.active_object
-            obj.select = False
+            obj.data = bpy.data.images[filename]
+        elif object_type == "light":
+            # Lamp
+            bpy.ops.object.lamp_add(type='POINT')
+            import_light(ini_dic['object'], props)
+        elif object_type in ["gamearea", "cameraarea"]:
+            bpy.ops.object.empty_add(type='CUBE')
+        else:
+            # from primitive
+            if "primitivetype" in ini_dic['object'].keys():
+                primitive_type = ini_dic['object']['primitivetype']
+                if primitive_type == "box":
+                    bpy.ops.object.empty_add(type='CUBE')
+                elif primitive_type == "sphere":
+                    bpy.ops.object.empty_add(type='SPHERE')
+                elif primitive_type == "capsule":
+                    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=1, depth=2)
+                    obj = bpy.context.active_object
+                    bpy.context.object.draw_type = 'WIRE'
+                else:
+                    set_error('importing descriptor', "Unknown primitive type \"%s\" for %s" % (primitive_type, filepath))
+                    return False
+            else:
+                bpy.ops.object.empty_add(type='PLAIN_AXES')
+        obj = bpy.context.active_object
+        obj.select = False
+    else:
+        set_error('importing descriptor', "Descriptor %s doesn't have a filename nor an object type".format(filepath_real))
 
-        # parse remaining parameters
-        import_misc_params(ini_dic['object'], props)
+    # parse remaining parameters
+    import_misc_params(ini_dic['object'], props)
 
-        # set name and descriptor
-        obj.madtracks.descriptor = filepath.rsplit(os.path.sep, 1)[1]
-        obj.name = obj.madtracks.descriptor.split(".")[0]
-        if lightmap:
-            # reinstate lightmap suffix on the object to not be reused later
-            obj.name = obj.name + "_lgt"
-    
-    dprint("Imported {}".format(os.path.basename(filepath)))
+    # set object name and descriptor
+    obj.name = filename.split(".")[0]
+    obj.madtracks.descriptor = filename
 
     return True
 

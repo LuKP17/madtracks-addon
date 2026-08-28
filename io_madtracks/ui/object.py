@@ -36,8 +36,10 @@ class MadTracksObjectPanel(bpy.types.Panel):
         if DEBUG:
             box = layout.box()
             box.prop(objprops, "descriptor")
-        if objprops.is_trackpart:
-            box = layout.box()
-            box.label("Trackpart:")
-            if DEBUG:
+            box.prop(objprops, "ldo")
+            box.prop(objprops, "is_world")
+            box.prop(objprops, "is_lightmapped")
+            if objprops.is_trackpart:
+                box = layout.box()
+                box.label("Trackpart:")
                 box.prop(objprops, "invert")
