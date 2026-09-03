@@ -350,8 +350,10 @@ def write_lgt_file(lgt_filepath, ldo_filename, ldo):
                 ldo_mesh_cnt += atomic.mesh_cnt
         file.write(struct.pack("<i", ldo_mesh_cnt))
 
-        # add universal prefix for lightmaps
+        # add universal prefix for lightmaps, remove suffixes
         ldo_filename = "geometry/" + ldo_filename
+        if "_high" in ldo_filename.lower():
+            ldo_filename = ldo_filename[:-9] + ".ldo"
         file.write(struct.pack("<b", len(ldo_filename)))
         file.write(struct.pack("<%ds" % len(ldo_filename), bytes(ldo_filename.encode("utf-8"))))
         file.write(struct.pack("<b", 0))
