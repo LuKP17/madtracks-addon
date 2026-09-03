@@ -122,12 +122,16 @@ def import_file(filepath, scene):
             return
     
     if lightmap:
-        # make imported lightmap more visible over imported light objects
-        bpy.context.scene.world.light_settings.environment_color = 'PLAIN'
-        bpy.context.scene.world.light_settings.environment_energy = 1
         lightmap_file.close()
         if lightmap.instance_cnt > 0:
             set_error('importing a level', "Missed %d lightmap instances" % lightmap.instance_cnt)
+        # remove all influences on lightmap
+        bpy.context.scene.world.light_settings.environment_color = 'PLAIN'
+        bpy.context.scene.world.light_settings.environment_energy = 1
+        for obj in scene.objects:
+            if obj.type == 'LAMP':
+                obj.hide = True
+                obj.hide_render = True
 
     # reinstate old instance mode
     props.instance_mode = instance_mode_save
@@ -302,6 +306,8 @@ def import_world(world_num, lightmap, scene):
                 # other convenient material properties
                 material.specular_intensity = 0
                 obj.data.materials.append(material)
+                # world doesn't cast shadows
+                material.use_cast_shadows = False
                 # assign to faces
                 obj.data.polygons[side].material_index = side
             # fix skybox texture rotation
@@ -318,6 +324,9 @@ def import_world(world_num, lightmap, scene):
                 ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene)
             obj = bpy.context.active_object
             obj.madtracks.is_world = True
+            # world doesn't cast shadows
+            for mat in obj.data.materials:
+                mat.use_cast_shadows = False
 
 
 def place_instance_object(section, obj):
@@ -339,6 +348,11 @@ def place_instance_object(section, obj):
 
         bmat = to_blender_matrix(mat)
         obj.rotation_euler = bmat.to_euler()
+        if obj.type in ['CAMERA', 'LAMP']:
+            bpy.ops.object.select_all(action='DESELECT')
+            obj.select = True
+            bpy.ops.transform.rotate(value=1.5708, constraint_axis=(True, False, False), constraint_orientation='LOCAL')
+            obj.select = False
         obj.location = to_blender_coord(section_dic['position'])
 
 

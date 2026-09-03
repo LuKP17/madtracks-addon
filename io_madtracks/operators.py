@@ -85,6 +85,11 @@ class ImportMad(bpy.types.Operator):
         else:
             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
             return {'CANCELLED'}
+        
+        # ensure correct scene ligthing
+        scene.display_settings.display_device = "None"
+        scene.view_settings.use_curve_mapping = True
+        scene.view_settings.curve_mapping.white_level = (0.9, 0.9, 0.9)
 
         end_time = time.time() - start_time
 

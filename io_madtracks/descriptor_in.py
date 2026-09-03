@@ -29,6 +29,13 @@ from .common import *
 from .madini import *
 from .ldo_in import *
 
+from math import *
+
+LIGHT_SHAPE_DIRECTIONAL = 0
+LIGHT_SHAPE_AMBIENT     = 1
+LIGHT_SHAPE_POINT       = 2
+LIGHT_SHAPE_SPOT        = 3
+LIGHT_SHAPE_SPOTSOFT    = 4
 
 def import_file(filepath, scene, lightmap=None):
     """
@@ -69,8 +76,7 @@ def import_file(filepath, scene, lightmap=None):
             obj.data = bpy.data.images[filename]
         elif object_type == "light":
             # Lamp
-            bpy.ops.object.lamp_add(type='POINT')
-            import_light(ini_dic['object'], props)
+            import_light(ini_dic['object'], filename, scene)
         elif object_type in ["gamearea", "cameraarea"]:
             bpy.ops.object.empty_add(type='CUBE')
         else:
@@ -109,62 +115,82 @@ def import_misc_params(section, props):
     """
     Handle optional parameters and parameters shared between object types.
     """
+    obj = bpy.context.active_object
     for param in section.keys():
         if param == "lengths":
             lengths = section[param]
-            obj = bpy.context.active_object
             obj.dimensions[0] = to_blender_scale(lengths[0])
             obj.dimensions[1] = to_blender_scale(lengths[2])
             obj.dimensions[2] = to_blender_scale(lengths[1])
             # if not props.instance_mode:
                 # TODO also import as metadata
+        if param == "dontcastshadowonlightmap":
+            for mat in obj.data.materials:
+                mat.use_cast_shadows = True if section[param] == 0 else False
 
 
-LIGHT_SHAPE_DIRECTIONAL = 0
-LIGHT_SHAPE_AMBIENT     = 1
-LIGHT_SHAPE_POINT       = 2
-
-LIGHT_METHOD_LIGHTMAP   = 3
-def import_light(section, props):
+def import_light(section, filename, scene):
     """
     Handle light specific parameters.
     Expects required parameters to be present (see _tutorial.txt in Descriptors game data folder)
     """
-    obj = bpy.context.active_object
+    # reuse already imported lights
+    light_index = bpy.data.objects.find(filename.rsplit(".", 1)[0])
+    if light_index >= 0:
+        obj = bpy.data.objects[light_index]
+        obj = obj.copy()
+        scene.objects.link(obj)
+        scene.objects.active = obj
+        obj.select = False
+        return
 
-    # set Blender specific parameters
-    obj.data.use_specular = False
+    # new Blender light object
+    bpy.ops.object.lamp_add(type='POINT')
+    obj = bpy.context.object
 
-    # light color
+    # lamp color
     rgb = section['rgbcolor']
     rgb = to_blender_color(rgb)
 
-    # light type
+    # lamp type
     shape = section['lightshape']
     if shape == LIGHT_SHAPE_DIRECTIONAL:
         obj.data.type = 'SUN'
         obj.data.color = rgb
     elif shape == LIGHT_SHAPE_AMBIENT:
-        # ambient light objects shouldn't emit light themselves 
+        # use scene lighting instead 
         obj.data.energy = 0
-        bpy.context.scene.world.light_settings.use_environment_light = True
-        bpy.context.scene.world.light_settings.environment_color = 'SKY_COLOR'
-        # FIXME overwrites level world's sky color
-        bpy.context.scene.world.horizon_color = rgb
-        bpy.context.scene.world.zenith_color = rgb
+        scene.world.light_settings.use_environment_light = True
+        scene.world.light_settings.environment_color = 'SKY_COLOR'
+        # NOTE overwrites level world's sky color, okay if we won't export worlds
+        scene.world.horizon_color = rgb
+        scene.world.zenith_color = rgb
     elif shape == LIGHT_SHAPE_POINT:
         obj.data.type = 'POINT'
         obj.data.color = rgb
+        # FIXME higher distance = more intensity at the core which is not what Mad Tracks does
         obj.data.distance = float(section['radius'])
-    
-    # light method
-    method = section['lightingmethod']
-    if method == LIGHT_METHOD_LIGHTMAP:
-        # light only shows up in the lightmap image
-        bpy.context.object.hide_render = True
+        # Blender specific parameters
+        bpy.context.object.data.falloff_type = 'CUSTOM_CURVE'
+    elif shape in [LIGHT_SHAPE_SPOT, LIGHT_SHAPE_SPOTSOFT]:
+        obj.data.type = 'SPOT'
+        obj.data.color = rgb
+        # FIXME higher distance = more intensity at the core which is not what Mad Tracks does
+        obj.data.distance = float(section['radius'])
+        obj.data.spot_size = radians(section['coneangle']) * 2
+        # Blender specific parameters
+        bpy.context.object.data.falloff_type = 'CUSTOM_CURVE'
+        if shape == LIGHT_SHAPE_SPOTSOFT:
+            obj.data.energy = 0.8
+            obj.data.spot_blend = 0.3
 
     # optional light param
-    bpy.context.object.data.shadow_method = 'RAY_SHADOW' # default
-    if 'dontcastshadow' in section.keys():
-        if section['dontcastshadow'] == 1:
-            bpy.context.object.data.shadow_method = 'NOSHADOW'
+    obj.data.shadow_method = 'RAY_SHADOW' # default
+    if 'dontcastshadow' in section.keys() and section['dontcastshadow'] == 1:
+        obj.data.shadow_method = 'NOSHADOW'
+
+    # global Blender specific parameters
+    obj.data.use_specular = False
+
+    # set lamp name to be reused later
+    obj.data.name = filename.rsplit(".", 1)[0]

@@ -54,12 +54,12 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     level_import_raceline = BoolProperty(
         name = "Import Raceline",
         default = True,
-        description = "Import trackparts, pick-ups and other collectibles contained in the level"
+        description = "Import trackparts and collectibles"
     )
     level_import_lightmap = BoolProperty(
         name = "Import Lightmap",
-        default = True,
-        description = "Import the level lightmap (worse performance)"
+        default = False,
+        description = "Turn off level lights and import the level lightmap"
     )
     lightmap_debug_info = BoolProperty(
         name = "Lightmap Debug Info",
