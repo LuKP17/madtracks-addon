@@ -301,7 +301,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                 texslot.blend_type = "SOFT_LIGHT"
                 texslot.diffuse_color_factor = 0.5
             
-            if lightmap:
+            if lightmap and not lightmap.is_empty:
                 # add a lightmap suffix to be reused later
                 material.name = material.name + "_lgt"
                 texslot = material.texture_slots.add()
