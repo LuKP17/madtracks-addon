@@ -13,7 +13,7 @@
 
 import bpy
 
-class MadTracksTrackpartsPanel(bpy.types.Panel):
+class MadTracksTrackpartPanel(bpy.types.Panel):
     """
     Tool panel in the left sidebar of the viewport for editing trackpart sequences.
     """
@@ -24,7 +24,7 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
     bl_category = "Mad Tracks"
 
     def draw_header(self, context):
-        self.layout.label("", icon="OUTLINER_OB_SURFACE")
+        self.layout.label("", icon="PARTICLE_POINT")
 
     def draw(self, context):
         props = context.scene.madtracks
@@ -42,3 +42,7 @@ class MadTracksTrackpartsPanel(bpy.types.Panel):
         elif props.trackpart_category == "G":
             row.prop(props, "trackpart_golf", text="")
         row.operator("trackpart.add_dropdown", text="", icon='ZOOMIN')
+        layout.label("Copy existing:")
+        row = layout.row(align=True)
+        row.prop(props, "trackpart_ref", text="")
+        row.operator("trackpart.add_existing", text="", icon='ZOOMIN')

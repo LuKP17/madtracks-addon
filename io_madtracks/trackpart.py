@@ -100,11 +100,24 @@ def from_dropdown(scene):
         return props.trackpart_golf
 
 
+def from_reference(scene):
+    props = scene.madtracks
+    # use the descriptor of the reference field set in the trackpart editor
+    if not props.trackpart_ref:
+        set_error('adding trackpart', "No exiting trackpart referenced")
+        return None
+    return props.trackpart_ref.madtracks.descriptor
+
+
 def add_user(scene, descriptor):
     """
     Used to handle trackparts selected by the user.
     """
     props = scene.madtracks
+
+    if not descriptor:
+        set_error('adding trackpart', "No trackpart set")
+        return
     filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
 
     # look for a selected trackpart to append to

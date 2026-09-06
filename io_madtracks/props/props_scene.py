@@ -28,6 +28,7 @@ from bpy.props import (
     EnumProperty,
     IntProperty,
     StringProperty,
+    PointerProperty,
 )
 
 from ..trackpart import *
@@ -77,16 +78,21 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     )
     trackpart_small = EnumProperty(
         name = "Small",
-        description = "Select the trackpart",
+        description = "Select the trackpart to add",
         items = TRACKPARTS_SMALL
     )
     trackpart_medium = EnumProperty(
         name = "Medium",
-        description = "Select the trackpart",
+        description = "Select the trackpart to add",
         items = TRACKPARTS_MEDIUM
     )
     trackpart_golf = EnumProperty(
         name = "Golf",
-        description = "Select the trackpart",
+        description = "Select the trackpart to add",
         items = TRACKPARTS_GOLF
+    )
+    trackpart_ref = PointerProperty(
+        type = bpy.types.Object,
+        name = "Trackpart Reference",
+        description = "Trackpart to add as a copy"
     )

@@ -259,7 +259,7 @@ class ExportMad(bpy.types.Operator):
 TRACKPART EDITOR ------------------------------------------------------------------------
 """
 
-class ButtonNewTrackpartSequence(bpy.types.Operator):
+class ButtonTrackpartDropdown(bpy.types.Operator):
     bl_idname = "trackpart.add_dropdown"
     bl_label = "Add"
     bl_description = "Add the trackpart from the dropdown menu to a new sequence if no trackpart is selected, or appends it to the last selected one otherwise"
@@ -267,6 +267,26 @@ class ButtonNewTrackpartSequence(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         trackpart.add_user(scene, trackpart.from_dropdown(scene))
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+class ButtonTrackpartReference(bpy.types.Operator):
+    bl_idname = "trackpart.add_existing"
+    bl_label = "Add Existing"
+    bl_description = "Add the trackpart from the reference field to a new sequence if no trackpart is selected, or appends it to the last selected one otherwise"
+
+    def execute(self, context):
+        scene = context.scene
+        trackpart.add_user(scene, trackpart.from_reference(scene))
 
         # Gets any encountered errors
         errors = get_errors()
