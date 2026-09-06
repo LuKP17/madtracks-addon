@@ -238,6 +238,9 @@ def import_descriptor_instance(section, lightmap, scene):
         if len(section.params) > 1:
             # new trackpart sequence
             trackpart.add(scene, obj)
+            # reset trackpart links since it could have been reused
+            obj.madtracks.previous = None
+            obj.madtracks.nextt = None
             # keep the current trackpart selected to retrieve it at the next iteration
             bpy.ops.object.select_all(action='DESELECT')
             obj.select = True
@@ -245,12 +248,12 @@ def import_descriptor_instance(section, lightmap, scene):
             # add to trackpart sequence
             prev = bpy.context.selected_objects[0]
             trackpart.add(scene, obj, prev)
-            # set parent relation which requires operator not to break the placement
-            obj.select = True
-            scene.objects.active = prev
-            bpy.ops.object.parent_set(type='OBJECT', keep_transform=False)
+            obj.madtracks.previous = prev
+            # reset trackpart next links since it could have been reused and won't be updated it it's the last of the sequence
+            obj.madtracks.nextt = None
             # keep the current trackpart selected to retrieve it at the next iteration
-            prev.select = False
+            bpy.ops.object.select_all(action='DESELECT')
+            obj.select = True
 
     return True
 

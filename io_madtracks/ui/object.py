@@ -43,3 +43,5 @@ class MadTracksObjectPanel(bpy.types.Panel):
                 box = layout.box()
                 box.label("Trackpart:")
                 box.prop(objprops, "invert")
+                #box.prop(objprops, "nextt")
+                box.prop(objprops, "previous")

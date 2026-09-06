@@ -27,8 +27,15 @@ from bpy.props import (
     IntProperty,
     StringProperty,
     FloatVectorProperty,
+    PointerProperty
 )
 from ..common import *
+
+
+def set_next(self, context):
+    prev = context.active_object.madtracks.previous
+    prev.madtracks.nextt = context.active_object
+
 
 class MadObjectProperties(bpy.types.PropertyGroup):
     # Common
@@ -68,6 +75,17 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         name = "Invert",
         default = False,
         description = "Trackpart is inverted"
+    )
+    previous = PointerProperty(
+        type = bpy.types.Object,
+        name = "Previous",
+        description = "Previous trackpart in the sequence",
+        update = set_next
+    )
+    nextt = PointerProperty(
+        type = bpy.types.Object,
+        name = "Next",
+        description = "Next trackpart in the sequence"
     )
     dummy_pos = FloatVectorProperty(
         name = "Dummy position",

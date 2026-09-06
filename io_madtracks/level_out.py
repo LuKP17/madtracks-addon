@@ -52,14 +52,14 @@ def export_file(filepath, scene):
             if obj.madtracks.is_world:
                 # skip world elements
                 continue
-            if obj.madtracks.is_trackpart and obj.parent:
+            if obj.madtracks.is_trackpart and obj.madtracks.previous:
                 # skip sequence trackpart
                 continue
             export_instance(fini, obj, obj.location, obj.matrix_world)
-            if obj.madtracks.is_trackpart and obj.children:
+            if obj.madtracks.is_trackpart and obj.madtracks.nextt:
                 # loop thru trackpart sequence
-                while obj.children:
-                    obj = obj.children[0]
+                while obj.madtracks.nextt:
+                    obj = obj.madtracks.nextt
                     export_instance(fini, obj)
     
     # reinstate old instance mode
