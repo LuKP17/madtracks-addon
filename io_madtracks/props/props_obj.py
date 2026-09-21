@@ -25,6 +25,7 @@ import bpy
 from bpy.props import (
     BoolProperty,
     IntProperty,
+    FloatProperty,
     StringProperty,
     FloatVectorProperty,
     PointerProperty
@@ -32,9 +33,11 @@ from bpy.props import (
 from ..common import *
 
 
-def set_next(self, context):
-    prev = context.active_object.madtracks.previous
-    prev.madtracks.nextt = context.active_object
+def nextt_update_func(self, context):
+    scene = context.scene
+    nextt = context.active_object.madtracks.nextt
+    if nextt:
+        bpy.data.groups['Tracks'].objects.unlink(nextt)
 
 
 class MadObjectProperties(bpy.types.PropertyGroup):
@@ -52,17 +55,39 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     is_instance = BoolProperty(
         name = "Is Instance",
         default = False,
-        description = "Object is a level instance"
+        description = "Object is imported as an instance"
+    )
+    is_collectible = BoolProperty(
+        name = "Is Collectible",
+        default = False,
+        description = "Object is a collectible"
     )
     is_world = BoolProperty(
         name = "Is World",
         default = False,
         description = "Object is part of the world"
     )
-    is_lightmapped = BoolProperty(
-        name = "Is Lightmapped",
+
+    # Descriptor
+    physics = BoolProperty(
+        name = "Physics",
         default = False,
-        description = "Object is present in the lightmap"
+        description = "Object has physics"
+    )
+    animate = BoolProperty(
+        name = "Animation",
+        default = False,
+        description = "Object has animation"
+    )
+    mass = IntProperty(
+        name = "Mass",
+        default = 0,
+        description = "Object mass"
+    )
+    cast_shadows = BoolProperty(
+        name = "Cast car shadows",
+        default = False,
+        description = "Cast in-game shadows used by cars"
     )
 
     # Trackparts
@@ -76,16 +101,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = False,
         description = "Trackpart is inverted"
     )
-    previous = PointerProperty(
-        type = bpy.types.Object,
-        name = "Previous",
-        description = "Previous trackpart in the sequence",
-        update = set_next
-    )
     nextt = PointerProperty(
         type = bpy.types.Object,
         name = "Next",
-        description = "Next trackpart in the sequence"
+        description = "Next trackpart in the sequence",
+        update = nextt_update_func
     )
     dummy_pos = FloatVectorProperty(
         name = "Dummy position",
@@ -115,4 +135,24 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         size = 4,
         default = (0.0, 0.0, 0.0, 1.0),
         description = "Fourth row of dummy rotation matrix"
+    )
+
+    # AI Nodes
+    roadwidth = FloatProperty(
+        name = "Road Width",
+        default = 0.0,
+        min = 0.0,
+        description = "Exceeding this lateral distance from the node makes the car out of bounds (...Lost ?)"
+    )
+    motivboost = FloatProperty(
+        name = "Motiv Boost",
+        default = 0.0,
+        min = 0.0,
+        description = "30 is a good value to encourage AI to use a boost"
+    )
+    speedexpected = FloatProperty(
+        name = "Speed Expected",
+        default = 0.0,
+        min = 0.0,
+        description = "10 is a good value to encourage AI to slow down"
     )

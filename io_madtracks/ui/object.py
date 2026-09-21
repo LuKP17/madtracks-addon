@@ -37,11 +37,26 @@ class MadTracksObjectPanel(bpy.types.Panel):
             box = layout.box()
             box.prop(objprops, "descriptor")
             box.prop(objprops, "ldo")
+            box.prop(objprops, "is_collectible")
             box.prop(objprops, "is_world")
-            box.prop(objprops, "is_lightmapped")
+            if objprops.descriptor:
+                box = layout.box()
+                box.label("Object:")
+                box.prop(objprops, "animate")
+                box.prop(objprops, "physics")
+                if objprops.physics:
+                    box.prop(objprops, "mass")
+                if obj.type == 'LAMP':
+                    box.prop(objprops, "cast_shadows")
             if objprops.is_trackpart:
                 box = layout.box()
                 box.label("Trackpart:")
                 box.prop(objprops, "invert")
-                #box.prop(objprops, "nextt")
-                box.prop(objprops, "previous")
+            if len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']:
+                box = layout.box()
+                box.label("AI Node:")
+                box.prop(objprops, "roadwidth")
+                box.prop(objprops, "motivboost")
+                box.prop(objprops, "speedexpected")
+            if objprops.is_trackpart or (len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']):
+                box.prop(objprops, "nextt")

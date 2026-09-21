@@ -61,7 +61,6 @@ TRACKPARTS_SMALL = (
     ("S_raye_looping.ini", "Stripe Looping", ""),
 )
 TRACKPARTS_MEDIUM = (
-    ("M_gris_amorce_05_in.ini", "Amorce In 05", ""),
     ("M_gris_amorce_15_in.ini", "Amorce In 15", ""),
     ("M_gris_amorce_15_out.ini", "Amorce Out 15", ""),
     ("M_gris_amorce_30_in.ini", "Amorce In 30", ""),
@@ -73,6 +72,8 @@ TRACKPARTS_MEDIUM = (
     ("M_gris_virage_45_right.ini", "Right 45", ""),
     ("M_gris_rampe_30_up.ini", "Up 30", ""),
     ("M_gris_rampe_30_down.ini", "Down 30", ""),
+    ("M_raye_virage_90_kit_right_in.ini", "Stripe Right In", ""),
+    ("M_raye_virage_90_kit_right_out.ini", "Stripe Right Out", ""),
     ("M_none_start.ini", "Start", ""),
     ("M_none_startfinish.ini", "Start/Finish", ""),
     ("M_none_checkpoint.ini", "Checkpoint", ""),
@@ -126,7 +127,7 @@ def add_user(scene, descriptor):
     if len(sel) == 1 and sel[0].madtracks.is_trackpart:
         prev = sel[0]
     elif len(sel) > 1:
-        set_error('adding trackpart', "Please select one object at most")
+        set_error('adding trackpart', "Please select one existing trackpart at most")
         return
     # don't reuse already imported since it could be a custom modified version
     descriptor_in.import_file(filepath, scene)
@@ -136,21 +137,19 @@ def add_user(scene, descriptor):
     # move trackpart to 3D cursor if standalone
     if not prev:
         obj.location = bpy.context.scene.cursor_location
-    # update selection
-    if prev:
-        prev.select = False
-    obj.select = True
 
 
 def add(scene, obj, prev=None):
-    eps = 0.00001
+    # level importer could have reused an imported trackpart
+    obj.madtracks.nextt = None
     if not prev:
         # new trackpart sequence
-        sequence = bpy.data.groups.new("Sequence")
-        bpy.ops.object.group_link(group=sequence.name)
+        if bpy.data.groups.find("Tracks") == -1:
+            bpy.data.groups.new("Tracks")
+        bpy.ops.object.group_link(group="Tracks")
     else:
         # add to trackpart sequence
-        bpy.ops.object.group_link(group=prev.users_group[0].name)
+        prev.madtracks.nextt = obj
         # compute rotation
         dummy_rotmat = mathutils.Matrix([prev.madtracks.dummy_rot1, prev.madtracks.dummy_rot2, prev.madtracks.dummy_rot3, prev.madtracks.dummy_rot4])
         dummy_roteuler = dummy_rotmat.to_euler()
@@ -190,3 +189,29 @@ def add(scene, obj, prev=None):
         dummy_pos = obj.madtracks.dummy_pos
         dummy_pos = np.matmul(dummy_pos, np.transpose(obj_rot))
         obj.location = np.add(obj_pos, -dummy_pos)
+
+    # update selection for convenience
+    if prev:
+        prev.select = False
+    obj.select = True
+
+
+def select_linked(scene, trackparts):
+    for obj in trackparts:
+        if obj.madtracks.is_trackpart:
+            nextt = obj.madtracks.nextt
+            while nextt and scene.objects.find(nextt.name) != -1:
+                nextt.select = True
+                nextt = nextt.madtracks.nextt
+
+
+def delete(scene, trackparts):
+    for obj in trackparts:
+        if obj.madtracks.is_trackpart:
+            nextt = obj.madtracks.nextt
+            scene.objects.active = obj
+            bpy.ops.object.delete(use_global=False)
+            if nextt and scene.objects.find(nextt.name) != -1 and nextt not in trackparts:
+                # next trackpart becomes the beginning of a sequence
+                scene.objects.active = nextt
+                bpy.data.groups['Tracks'].objects.link(nextt)

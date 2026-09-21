@@ -45,7 +45,9 @@ from .props import (
 
 from .ui import (
     headers,
-    trackparts,
+    trackpart_panel,
+    ai_panel,
+    lightmap_panel,
     object,
     material
 )
@@ -57,7 +59,9 @@ imp.reload(props_obj)
 imp.reload(props_scene)
 imp.reload(props_mat)
 imp.reload(headers)
-imp.reload(trackparts)
+imp.reload(trackpart_panel)
+imp.reload(ai_panel)
+imp.reload(lightmap_panel)
 imp.reload(object)
 imp.reload(material)
 imp.reload(madini)
@@ -71,6 +75,8 @@ if "ldo_out" in locals():
     imp.reload(ldo_out)
 if "descriptor_in" in locals():
     imp.reload(descriptor_in)
+if "descriptor_out" in locals():
+    imp.reload(descriptor_out)
 if "level_in" in locals():
     imp.reload(level_in)
 if "level_out" in locals():
@@ -79,6 +85,14 @@ if "madini" in locals():
     imp.reload(madini)
 if "trackpart" in locals():
     imp.reload(trackpart)
+if "ai" in locals():
+    imp.reload(ai)
+if "ai_in" in locals():
+    imp.reload(ai_in)
+if "ai_out" in locals():
+    imp.reload(ai_out)
+if "lightmap" in locals():
+    imp.reload(lightmap)
 
 
 # Makes common variables and classes directly accessible

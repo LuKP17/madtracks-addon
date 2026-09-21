@@ -73,7 +73,6 @@ def import_file(filepath, scene, lightmap=None):
         if lightmap:
             # add lightmap suffix in the mesh name for more clarity
             obj.data.name += "_lgt"
-            obj.madtracks.is_lightmapped = True
         if parent:
             obj.parent = parent
             scene.objects.active = parent
@@ -102,7 +101,7 @@ def import_file(filepath, scene, lightmap=None):
     if not os.path.exists(lgt_filepath):
         if not os.path.exists(props.madtracks_dir + CACHE_PATH):
             os.makedirs(props.madtracks_dir + CACHE_PATH)
-        write_lgt_file(lgt_filepath, filename, ldo)
+        write_lgt_file(lgt_filepath, filename, obj, ldo)
         dprint("Wrote LDO lightmap metadata file %s" % lgt_filepath)
 
 
@@ -262,8 +261,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                 material.alpha = float(atomic_mat.RGBA[3] / 255)
             if (bool(atomic_mat.flags & MAT_FLAG_BRIGHTNESS)):
                 material.madtracks.has_brightness = True
-                # Blender's default diffuse_intensity is 0.8
-                material.diffuse_intensity = float((atomic_mat.brightness + 1) / 2)
+                material.emit = float((atomic_mat.brightness + 1) / 3)
 
             if atomic_mat.diffuse_name_len:
                 texslot = material.texture_slots.add()
@@ -323,6 +321,9 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
 
             # other convenient material properties
             material.specular_intensity = 0
+            material.diffuse_shader = 'OREN_NAYAR'
+            material.diffuse_intensity = 0.9
+            material.roughness = 0.6
 
         mesh.materials.append(material)
     
@@ -336,27 +337,22 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
             tri_offset += sequence_len
 
 
-def write_lgt_file(lgt_filepath, ldo_filename, ldo):
+def write_lgt_file(lgt_filepath, ldo_filename, obj, ldo):
     """
     Write .lgt file to be read when writing the LDL file as it contains the LDO instance
     lightmap data but with UV indices, used to retrieve the actual UVs from Blender's lightmap layer arrays
     in constant time.
     """
     with open(lgt_filepath, 'wb') as file:
+        # useful for 2.79b lightmap export because mesh order is reversed in LDL
+        file.write(struct.pack("<i", len(obj.data.loops)))
+
         ldo_mesh_cnt = 0
         for atomic in ldo.atomics:
-            # empty atomics have mesh count (wrongfully?) set to 1, but LDL doesn't count them
+            # empty atomics have mesh count (wrongfully?) set to 1 but LDL wants 0
             if not atomic.is_empty:
                 ldo_mesh_cnt += atomic.mesh_cnt
         file.write(struct.pack("<i", ldo_mesh_cnt))
-
-        # add universal prefix for lightmaps, remove suffixes
-        ldo_filename = "geometry/" + ldo_filename
-        if "_high" in ldo_filename.lower():
-            ldo_filename = ldo_filename[:-9] + ".ldo"
-        file.write(struct.pack("<b", len(ldo_filename)))
-        file.write(struct.pack("<%ds" % len(ldo_filename), bytes(ldo_filename.encode("utf-8"))))
-        file.write(struct.pack("<b", 0))
 
         for atomic in ldo.atomics:
             if atomic.is_empty:
@@ -364,12 +360,11 @@ def write_lgt_file(lgt_filepath, ldo_filename, ldo):
                 atomic_mesh_cnt = 0
             else:
                 atomic_mesh_cnt = atomic.mesh_cnt
-            # LDL files write LDO meshes in reverse order, do the same for consistency
+            # LDL files write LDO meshes in reverse order
             for i in range(atomic_mesh_cnt, 0, -1):
                 mesh = atomic.meshes[i-1]
-                loop_cnt = sum(mesh.tri_seq_len) * 3
                 file.write(struct.pack("<i", mesh.vertex_cnt))
+                loop_cnt = sum(mesh.tri_seq_len) * 3
                 file.write(struct.pack("<i", loop_cnt))
                 for vertex in mesh.vertices:
-                    file.write(struct.pack("<h", vertex.per_face_index))
-                
+                    file.write(struct.pack("<i", vertex.per_face_index))

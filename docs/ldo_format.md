@@ -75,7 +75,8 @@ It represents a 3D model made of meshes and materials.
 |                |                                                          |
 | `empty`        | 0x01 if the atomic is empty, 0x00 otherwise              |
 |                |                                                          |
-| `~anim`        | Maybe whether the atomic is animated                     |
+| `~anim`        | Maybe whether the atomic is animated, but there is a     |
+|                | descriptor parameter for this.                           |
 |                |                                                          |
 | `~visibility1` |                                                          |
 | `~visibility2` |                                                          |
@@ -118,7 +119,7 @@ It represents a 3D model made of meshes and materials.
 |                | Other bits are unclear or unused                   |
 |                |                                                    |
 | `shader-tech`  | Usually 0x0000                                     |
-|                | 0x00002: "Technique to use 1 max ranged light for  |
+|                | 0x0002: "Technique to use 1 max ranged light for  |
 |                | this shader is not implemented"                    |
 |                | Higher values: "Technique not found"               |
 |                |                                                    |
