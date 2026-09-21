@@ -25,6 +25,7 @@ import bpy
 from bpy.props import (
     BoolProperty,
     IntProperty,
+    FloatProperty,
     StringProperty,
     FloatVectorProperty,
     PointerProperty
@@ -34,7 +35,10 @@ from ..common import *
 
 def set_next(self, context):
     prev = context.active_object.madtracks.previous
-    prev.madtracks.nextt = context.active_object
+    if prev:
+        prev.madtracks.nextt = context.active_object
+    else:
+        context.active_object.madtracks.nextt = None
 
 
 class MadObjectProperties(bpy.types.PropertyGroup):
@@ -52,17 +56,40 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     is_instance = BoolProperty(
         name = "Is Instance",
         default = False,
-        description = "Object is a level instance"
+        description = "Object is imported as an instance"
+    )
+    is_collectible = BoolProperty(
+        name = "Is Collectible",
+        default = False,
+        description = "Object is a collectible"
     )
     is_world = BoolProperty(
         name = "Is World",
         default = False,
         description = "Object is part of the world"
     )
-    is_lightmapped = BoolProperty(
-        name = "Is Lightmapped",
+    # TODO remove this prop once I have detection completely automated
+    # is_lightmapped = BoolProperty(
+    #     name = "Is Lightmapped",
+    #     default = False,
+    #     description = "Object is present in the lightmap"
+    # )
+
+    # Descriptor
+    physics = BoolProperty(
+        name = "Physics",
         default = False,
-        description = "Object is present in the lightmap"
+        description = "Object has physics"
+    )
+    animate = BoolProperty(
+        name = "Animation",
+        default = False,
+        description = "Object has animation"
+    )
+    mass = IntProperty(
+        name = "Mass",
+        default = 0,
+        description = "Object mass"
     )
 
     # Trackparts
@@ -115,4 +142,24 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         size = 4,
         default = (0.0, 0.0, 0.0, 1.0),
         description = "Fourth row of dummy rotation matrix"
+    )
+
+    # AI Nodes
+    roadwidth = FloatProperty(
+        name = "Road Width",
+        default = 0.0,
+        min = 0.0,
+        description = "Exceeding this lateral distance from the node makes the car out of bounds (...Lost ?)"
+    )
+    motivboost = FloatProperty(
+        name = "Motiv Boost",
+        default = 0.0,
+        min = 0.0,
+        description = "30 is a good value to encourage AI to use a boost"
+    )
+    speedexpected = FloatProperty(
+        name = "Speed Expected",
+        default = 0.0,
+        min = 0.0,
+        description = "10 is a good value to encourage AI to slow down"
     )

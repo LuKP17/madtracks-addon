@@ -80,7 +80,7 @@ DUMMY_TYPE_ROOF =  10
 DUMMY_TYPE_BONUS = 11
 
 trackpart_types = {"trackpart", "start", "startfinish", "checkpoint", "looping", "finish"}
-collectible_types = {"pickupbonus", "achievement1", "achievement2"}
+collectible_types = {"pickupbonus", "defi", "achievement1", "achievement2"}
 
 
 """

@@ -18,16 +18,25 @@ Materials in Mad Tracks have toggleable properties and custom shader properties.
 import bpy
 
 from bpy.props import (
+    FloatVectorProperty,
     BoolProperty,
 )
 from ..common import *
 
 class MadMaterialProperties(bpy.types.PropertyGroup):
     has_rgba = BoolProperty(
-        name = "RGBA",
+        name = "Use RGBA",
         default = False,
-        description = "Use diffuse color and alpha of the material")
+        description = "Use diffuse color and alpha of the material"
+    )
     has_brightness = BoolProperty(
-        name = "Brightness",
+        name = "Use Brightness",
         default = False,
-        description = "Use diffuse intensity of the material")
+        description = "Use diffuse intensity of the material"
+    )
+    rgba_save = FloatVectorProperty(
+        name = "RGBA save",
+        size = 4,
+        default = (1.0, 1.0, 1.0, 1.0),
+        description = "Save of diffuse color and alpha to restore after baking the lightmap"
+    )

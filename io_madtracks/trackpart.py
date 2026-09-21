@@ -62,6 +62,7 @@ TRACKPARTS_SMALL = (
 )
 TRACKPARTS_MEDIUM = (
     ("M_gris_amorce_05_in.ini", "Amorce In 05", ""),
+    ("M_gris_amorce_05_out.ini", "Amorce Out 05", ""),
     ("M_gris_amorce_15_in.ini", "Amorce In 15", ""),
     ("M_gris_amorce_15_out.ini", "Amorce Out 15", ""),
     ("M_gris_amorce_30_in.ini", "Amorce In 30", ""),
@@ -73,6 +74,10 @@ TRACKPARTS_MEDIUM = (
     ("M_gris_virage_45_right.ini", "Right 45", ""),
     ("M_gris_rampe_30_up.ini", "Up 30", ""),
     ("M_gris_rampe_30_down.ini", "Down 30", ""),
+    ("M_raye_virage_90_kit_left_in.ini", "Stripe Left In", ""),
+    ("M_raye_virage_90_kit_left_out.ini", "Stripe Left Out", ""),
+    ("M_raye_virage_90_kit_right_in.ini", "Stripe Right In", ""),
+    ("M_raye_virage_90_kit_right_out.ini", "Stripe Right Out", ""),
     ("M_none_start.ini", "Start", ""),
     ("M_none_startfinish.ini", "Start/Finish", ""),
     ("M_none_checkpoint.ini", "Checkpoint", ""),

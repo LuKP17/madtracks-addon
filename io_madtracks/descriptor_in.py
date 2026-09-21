@@ -96,10 +96,14 @@ def import_file(filepath, scene, lightmap=None):
                     return False
             else:
                 bpy.ops.object.empty_add(type='PLAIN_AXES')
-        obj = bpy.context.active_object
-        obj.select = False
     else:
-        set_error('importing descriptor', "Descriptor %s doesn't have a filename nor an object type".format(filepath_real))
+        bpy.ops.object.empty_add(type='PLAIN_AXES')
+    
+    if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in collectible_types:
+        obj.madtracks.is_collectible = True
+
+    obj = bpy.context.active_object
+    obj.select = False
 
     # parse remaining parameters
     import_misc_params(ini_dic['object'], props)
@@ -117,6 +121,14 @@ def import_misc_params(section, props):
     """
     obj = bpy.context.active_object
     for param in section.keys():
+        if param == "animate":
+            obj.madtracks.animate = True if section[param] == 1 else False
+        if param == "mass":
+            obj.madtracks.physics = True
+            obj.madtracks.mass = section[param]
+        if param == "dontcastshadowonlightmap":
+            for mat in obj.data.materials:
+                mat.use_cast_shadows = True if section[param] == 0 else False
         if param == "lengths":
             lengths = section[param]
             obj.dimensions[0] = to_blender_scale(lengths[0])
@@ -124,9 +136,6 @@ def import_misc_params(section, props):
             obj.dimensions[2] = to_blender_scale(lengths[1])
             # if not props.instance_mode:
                 # TODO also import as metadata
-        if param == "dontcastshadowonlightmap":
-            for mat in obj.data.materials:
-                mat.use_cast_shadows = True if section[param] == 0 else False
 
 
 def import_light(section, filename, scene):
@@ -157,6 +166,7 @@ def import_light(section, filename, scene):
     if shape == LIGHT_SHAPE_DIRECTIONAL:
         obj.data.type = 'SUN'
         obj.data.color = rgb
+        obj.data.energy = 0.80
     elif shape == LIGHT_SHAPE_AMBIENT:
         # use scene lighting instead 
         obj.data.energy = 0
@@ -168,10 +178,11 @@ def import_light(section, filename, scene):
     elif shape == LIGHT_SHAPE_POINT:
         obj.data.type = 'POINT'
         obj.data.color = rgb
-        # FIXME higher distance = more intensity at the core which is not what Mad Tracks does
+        # FIXME Blender point lights are too bright with distances > 400
+        # There is no fix which works with the light placed close or far from a surface
         obj.data.distance = float(section['radius'])
         # Blender specific parameters
-        bpy.context.object.data.falloff_type = 'CUSTOM_CURVE'
+        obj.data.falloff_type = 'CUSTOM_CURVE'
     elif shape in [LIGHT_SHAPE_SPOT, LIGHT_SHAPE_SPOTSOFT]:
         obj.data.type = 'SPOT'
         obj.data.color = rgb
@@ -179,7 +190,7 @@ def import_light(section, filename, scene):
         obj.data.distance = float(section['radius'])
         obj.data.spot_size = radians(section['coneangle']) * 2
         # Blender specific parameters
-        bpy.context.object.data.falloff_type = 'CUSTOM_CURVE'
+        obj.data.falloff_type = 'CUSTOM_CURVE'
         if shape == LIGHT_SHAPE_SPOTSOFT:
             obj.data.energy = 0.8
             obj.data.spot_blend = 0.3

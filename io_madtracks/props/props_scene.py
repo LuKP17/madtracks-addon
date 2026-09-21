@@ -62,6 +62,11 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         default = False,
         description = "Turn off level lights and import the level lightmap"
     )
+    level_export_use_groups = BoolProperty(
+        name = "Use Trackpart Groups",
+        default = True,
+        description = "Export trackpart data groups in alphabetical order"
+    )
     lightmap_debug_info = BoolProperty(
         name = "Lightmap Debug Info",
         default = False,
@@ -69,8 +74,6 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     )
 
     # Trackpart editor
-    # PROPERTIES CAN TAKE A "update" PARAMETERS WHICH IS THE FUNCTION CALLED WHEN THE VALUE CHANGES
-    # CAN BE USEFUL
     trackpart_category = EnumProperty(
         name = "Category",
         description = "Select the trackpart category",
@@ -95,4 +98,21 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         type = bpy.types.Object,
         name = "Trackpart Reference",
         description = "Trackpart to add as a copy"
+    )
+
+    # AI paths editor
+    ai_startnode = PointerProperty(
+        type = bpy.types.Object,
+        name = "Start Node",
+        description = "Start node for level export"
+    )
+
+    # Lightmap editor
+    lightmap_bitdepth = IntProperty(
+        name = "Bit depth",
+        description = "Most lightmaps use 16-bit depth, with some using 32-bit",
+        default = 16,
+        min = 16,
+        max = 32,
+        step = 16 # not supported apparently
     )

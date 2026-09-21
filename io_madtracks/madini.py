@@ -85,9 +85,11 @@ class INI:
                         parameter.value.append(float(v))
                 else:
                     # one number
-                    if "f" in value:
+                    if "." in value:
                         value = value.replace('f', '0')
-                    parameter.value = float(value)
+                        parameter.value = float(value)
+                    else:
+                        parameter.value = int(value)
                 # add parameter to the last section added
                 self.sections[-1].params.append(parameter)
                 

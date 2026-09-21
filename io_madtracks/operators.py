@@ -22,6 +22,8 @@ import time
 
 from . import descriptor_in
 from . import trackpart
+from . import ai
+from . import lightmap
 
 from .common import *
 
@@ -297,3 +299,120 @@ class ButtonTrackpartReference(bpy.types.Operator):
             )
         context.window.cursor_set("DEFAULT")
         return {"FINISHED"}
+
+
+"""
+AI PATHS EDITOR ------------------------------------------------------------------------
+"""
+
+class ButtonAIAddNode(bpy.types.Operator):
+    bl_idname = "ai.add_node"
+    bl_label = "Add Node"
+    bl_description = "Add an AI node with properties"
+
+    def execute(self, context):
+        scene = context.scene
+
+        # call method shared with level importer
+        ai.add_node(scene)
+
+        # move node to 3D cursor
+        obj = scene.objects.active
+        obj.location = bpy.context.scene.cursor_location
+        return {"FINISHED"}
+
+
+class ButtonAILinkNodes(bpy.types.Operator):
+    bl_idname = "ai.link_nodes"
+    bl_label = "Link Nodes"
+    bl_description = "Rename AI nodes following edges naming convention for export"
+
+    def execute(self, context):
+        scene = context.scene
+        props = scene.madtracks
+
+        ai.link_nodes(props.ai_startnode)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+# class ButtonAIResetNodes(bpy.types.Operator):
+#     bl_idname = "ai.reset_nodes"
+#     bl_label = "Reset Nodes"
+#     bl_description = "Rename AI nodes to remove edges naming convention"
+
+#     def execute(self, context):
+#         scene = context.scene
+#         props = scene.madtracks
+
+#         ai.reset_nodes()
+#         return {"FINISHED"}
+
+
+"""
+LIGHTMAP EDITOR ------------------------------------------------------------------------
+"""
+
+class ButtonLightmapSetup(bpy.types.Operator):
+    bl_idname = "lightmap.setup_scene"
+    bl_label = "Setup Lightmap Scene"
+    bl_description = "DESTRUCTIVE scene setup, merges selected objects into a lightmap object and exports the LDL file"
+
+    def execute(self, context):
+        scene = context.scene
+       
+        lightmap.setup_scene(scene)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        row = self.layout.row()
+        row.label("Merging and unwrapping may take a few minutes.", icon="INFO")
+
+
+class ButtonLightmapBake(bpy.types.Operator):
+    bl_idname = "lightmap.bake_preview"
+    bl_label = "Bake Lightmap"
+    bl_description = "Generates the lightmap image and applies it to the lightmap object for preview"
+
+    def execute(self, context):
+        scene = context.scene
+        lightmap.bake_preview(scene)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        row = self.layout.row()
+        row.label("Baking may take a few minutes.", icon="INFO")

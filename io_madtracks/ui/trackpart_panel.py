@@ -24,7 +24,7 @@ class MadTracksTrackpartPanel(bpy.types.Panel):
     bl_category = "Mad Tracks"
 
     def draw_header(self, context):
-        self.layout.label("", icon="PARTICLE_POINT")
+        self.layout.label("", icon="PARTICLE_PATH")
 
     def draw(self, context):
         props = context.scene.madtracks
