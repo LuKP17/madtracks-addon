@@ -31,12 +31,6 @@ from .ldo_in import *
 
 from math import *
 
-LIGHT_SHAPE_DIRECTIONAL = 0
-LIGHT_SHAPE_AMBIENT     = 1
-LIGHT_SHAPE_POINT       = 2
-LIGHT_SHAPE_SPOT        = 3
-LIGHT_SHAPE_SPOTSOFT    = 4
-
 def import_file(filepath, scene, lightmap=None):
     """
     Imports a descriptor .ini file as a Blender object.
@@ -168,8 +162,9 @@ def import_light(section, filename, scene):
         obj.data.color = rgb
         obj.data.energy = 0.80
     elif shape == LIGHT_SHAPE_AMBIENT:
-        # use scene lighting instead 
+        obj.data.type = 'AREA'
         obj.data.energy = 0
+        # use scene lighting instead
         scene.world.light_settings.use_environment_light = True
         scene.world.light_settings.environment_color = 'SKY_COLOR'
         # NOTE overwrites level world's sky color, okay if we won't export worlds
@@ -196,9 +191,9 @@ def import_light(section, filename, scene):
             obj.data.spot_blend = 0.3
 
     # optional light param
-    obj.data.shadow_method = 'RAY_SHADOW' # default
-    if 'dontcastshadow' in section.keys() and section['dontcastshadow'] == 1:
-        obj.data.shadow_method = 'NOSHADOW'
+    obj.data.shadow_method = 'RAY_SHADOW' # almost always used for rendering
+    if 'dontcastshadow' not in section.keys() or section['dontcastshadow'] == 0:
+        obj.madtracks.cast_shadows = True
 
     # global Blender specific parameters
     obj.data.use_specular = False

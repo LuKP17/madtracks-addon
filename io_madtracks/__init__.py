@@ -75,6 +75,8 @@ if "ldo_out" in locals():
     imp.reload(ldo_out)
 if "descriptor_in" in locals():
     imp.reload(descriptor_in)
+if "descriptor_out" in locals():
+    imp.reload(descriptor_out)
 if "level_in" in locals():
     imp.reload(level_in)
 if "level_out" in locals():
@@ -85,6 +87,10 @@ if "trackpart" in locals():
     imp.reload(trackpart)
 if "ai" in locals():
     imp.reload(ai)
+if "ai_in" in locals():
+    imp.reload(ai_in)
+if "ai_out" in locals():
+    imp.reload(ai_out)
 if "lightmap" in locals():
     imp.reload(lightmap)
 

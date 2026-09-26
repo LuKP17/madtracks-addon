@@ -57,12 +57,14 @@ FORMAT_LDO = 0
 FORMAT_INI = 2
 FORMAT_DESCRIPTOR = 3
 FORMAT_LEVEL_INI = 4
+FORMAT_GRA = 5
 
 FORMATS = {
     FORMAT_LDO: "LDO (.ldo)",
     FORMAT_INI: "Unsupported (.ini)",
     FORMAT_DESCRIPTOR: "Descriptor (.ini)",
     FORMAT_LEVEL_INI: "Level (.ini)",
+    FORMAT_GRA: "AI Paths (.gra)"
 }
 
 
@@ -73,11 +75,17 @@ DUMMY_FLAG_POS    =  64
 DUMMY_FLAG_POSROT = 128
 DUMMY_MASK_TYPE = 15
 
-DUMMY_TYPE_WORLD =  5
-DUMMY_TYPE_NUM =    6
-DUMMY_TYPE_OUT =    9
+DUMMY_TYPE_WORLD =  5  # atomic offset (in local space?)
+DUMMY_TYPE_NUM =    6  # atomic mesh offset in local space, the number is the one at the end of the targeted mesh name
+DUMMY_TYPE_OUT =    9  # trackpart offset in local space
 DUMMY_TYPE_ROOF =  10
 DUMMY_TYPE_BONUS = 11
+
+LIGHT_SHAPE_DIRECTIONAL = 0
+LIGHT_SHAPE_AMBIENT     = 1
+LIGHT_SHAPE_POINT       = 2
+LIGHT_SHAPE_SPOT        = 3
+LIGHT_SHAPE_SPOTSOFT    = 4
 
 trackpart_types = {"trackpart", "start", "startfinish", "checkpoint", "looping", "finish"}
 collectible_types = {"pickupbonus", "defi", "achievement1", "achievement2"}
@@ -132,6 +140,11 @@ def to_madtracks_matrix(matrix):
         (-matrix[0][2], matrix[2][2], matrix[1][2]),
         (matrix[0][0], -matrix[2][0], -matrix[1][0])
     ]
+
+def to_madtracks_color(color):
+    return (int(color[0] * 255),
+            int(color[1] * 255),
+            int(color[2] * 255))
 
 
 class DialogOperator(bpy.types.Operator):
@@ -284,6 +297,8 @@ def get_format(fstr):
         return FORMAT_LDO
     elif ext == "ini":
         return FORMAT_INI
+    elif ext == "gra":
+        return FORMAT_GRA
     else:
         return FORMAT_UNK
 
@@ -294,3 +309,6 @@ def float_format(value):
         # remove minus sign in front of zeroes, useful for export fidelity
         value = 0.000000
     return '{:f}'.format(value)
+
+def vector_format(vector):
+    return "{},{},{}".format(vector[0], vector[1], vector[2])

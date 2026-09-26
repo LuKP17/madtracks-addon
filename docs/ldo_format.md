@@ -75,7 +75,8 @@ It represents a 3D model made of meshes and materials.
 |                |                                                          |
 | `empty`        | 0x01 if the atomic is empty, 0x00 otherwise              |
 |                |                                                          |
-| `~anim`        | Maybe whether the atomic is animated                     |
+| `~anim`        | Maybe whether the atomic is animated, but there is a     |
+|                | descriptor parameter for this.                           |
 |                |                                                          |
 | `~visibility1` |                                                          |
 | `~visibility2` |                                                          |

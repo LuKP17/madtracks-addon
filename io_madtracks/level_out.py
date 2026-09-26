@@ -41,70 +41,52 @@ def export_file(filepath, scene):
     instance_mode_save = props.instance_mode
     props.instance_mode = True
 
-    with open_insensitive(filepath, 'w') as fini:
+    with open(filepath, 'w') as fini:
         # empty line like the original levels
         fini.write("\n")
 
         if props.level_export_use_groups:
-            # export objects from groups last
-            for i in range(len(bpy.data.scenes[0].objects), 0, -1):
-                obj = bpy.data.scenes[0].objects[i-1]
+            # export trackparts from group last
+            for i in range(len(scene.objects), 0, -1):
+                obj = scene.objects[i-1]
                 if obj.madtracks.is_world:
                     # skip world elements
                     continue
-                if len(obj.users_group) > 0:
-                    # skip group objects
+                if obj.madtracks.is_trackpart:
                     continue
-                export_instance(fini, obj, obj.location, obj.matrix_world) 
-            for group in bpy.data.groups:
-                for name in sorted(group.objects.keys()):
-                    obj = bpy.data.objects[name]
-                    if obj.madtracks.is_trackpart and obj.madtracks.previous:
-                        # skip sequence trackpart
-                        continue
-                    export_instance(fini, obj, obj.location, obj.matrix_world)
-                    if obj.madtracks.is_trackpart and obj.madtracks.nextt:
-                        # loop thru trackpart sequence
-                        while obj.madtracks.nextt:
-                            obj = obj.madtracks.nextt
-                            export_instance(fini, obj)
-        else:
-            # loop thru objects by creation order
-            for i in range(len(bpy.data.scenes[0].objects), 0, -1):
-                obj = bpy.data.scenes[0].objects[i-1]
-                if obj.madtracks.is_world:
-                    # skip world elements
-                    continue
-                if obj.madtracks.is_trackpart and obj.madtracks.previous:
-                    # skip sequence trackpart
-                    continue
+                export_instance(fini, obj, obj.location, obj.matrix_world)
+            # export trackparts sequences in the alphabetical group order (for checkpoints ordering)
+            for name in sorted(bpy.data.groups['Tracks'].objects.keys()):
+                obj = bpy.data.objects[name]
                 export_instance(fini, obj, obj.location, obj.matrix_world)
                 if obj.madtracks.is_trackpart and obj.madtracks.nextt:
                     # loop thru trackpart sequence
                     while obj.madtracks.nextt:
+                        if scene.objects.find(obj.madtracks.nextt.name) == -1:
+                            # trackpart points to a deleted object
+                            obj.madtracks.nextt = None
+                            break
                         obj = obj.madtracks.nextt
+                        # object location/rotation calculated by the game engine
                         export_instance(fini, obj)
-    
-    with open_insensitive(filepath.replace(".ini", ".gra"), 'w') as fgra:
-        # empty line like the original levels
-        fgra.write("\n")
-        start_node = props.ai_startnode
-        # export nodes
-        if not start_node.parent and start_node.children[0]:
-            export_ai_node(fgra, start_node)
-            node = start_node.children[0]
-            while node:
-                export_ai_node(fgra, node)
-                node = node.children[0] if node.children else None
         else:
-            set_error('linking nodes', "Invalid start node")
-
-        # export edges
-        export_ai_edges(fgra, start_node)
-        node = start_node.children[0]
-        while node:
-            export_ai_edges(fgra, node)
-            node = node.children[0] if node.children else None
+            # loop thru objects by creation order
+            in_sequence = False
+            for i in range(len(scene.objects), 0, -1):
+                obj = scene.objects[i-1]
+                if obj.madtracks.is_world:
+                    # skip world elements
+                    continue
+                if in_sequence:
+                    # object location/rotation calculated by the game engine
+                    export_instance(fini, obj)
+                else:
+                    export_instance(fini, obj, obj.location, obj.matrix_world)
+                if obj.madtracks.is_trackpart:
+                    if obj.madtracks.nextt:
+                        in_sequence = True
+                    else:
+                        in_sequence = False
     
     # reinstate old instance mode
     props.instance_mode = instance_mode_save
@@ -144,29 +126,3 @@ def export_instance(fini, obj, location=None, matrix_world=None):
     fini.write("Filename = \"" + name + "\"\n\n")
 
     print("Exported {}".format(obj.name))
-
-
-def export_ai_node(fgra, node):
-    """ Writes a Blender empty object as a node in the level AI file. """
-    fgra.write("[Node]\n")
-    fgra.write("ID = " + node.name.split('-', 1)[0] + "\n")
-    position = to_madtracks_axis(node.location)
-    fgra.write("Position = " + float_format(position[0]) + "," + float_format(position[1]) + "," + float_format(position[2]) + "\n")
-    if node.madtracks.roadwidth > 0.0:
-        fgra.write("RoadWidth = " + float_format(node.madtracks.roadwidth) + "\n")
-    if node.madtracks.motivboost > 0.0:
-        fgra.write("MotivBoost = " + float_format(node.madtracks.motivboost) + "\n")
-    fgra.write("\n")
-
-
-def export_ai_edges(fgra, obj):
-    """ Writes a Blender empty object as edges in the level AI file. """
-    if '-' in obj.name and obj.name[-1] != '-':
-        in_node = obj.name.split('-', 1)[0]
-        if obj.name[-1] == ',':
-            obj.name = obj.name[:-1]
-        out_nodes = obj.name.split('-', 1)[1].split(',')
-        for out_node in out_nodes:
-            fgra.write("[Edge]\n")
-            fgra.write("In = " + in_node + "\n")
-            fgra.write("Out = " + out_node + "\n\n")

@@ -176,7 +176,10 @@ class Atomic:
     
     def dbg_print(self):
         print("------------------ ATOMIC DEBUG INFO -------------------")
-        print("is_empty: {}  mesh_cnt: {}  material_cnt: {}\n".format(self.is_empty, self.mesh_cnt, self.material_cnt))
+        print("is_empty: {}  mesh_cnt: {}  material_cnt: {}  dummy_cnt: {}".format(self.is_empty, self.mesh_cnt, self.material_cnt, self.dummy_cnt))
+        if self.name:
+            print("  name: {}".format(self.name))
+        print("\n")
 
 
 class Material:

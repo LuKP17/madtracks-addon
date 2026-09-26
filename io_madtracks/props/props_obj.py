@@ -33,12 +33,11 @@ from bpy.props import (
 from ..common import *
 
 
-def set_next(self, context):
-    prev = context.active_object.madtracks.previous
-    if prev:
-        prev.madtracks.nextt = context.active_object
-    else:
-        context.active_object.madtracks.nextt = None
+def nextt_update_func(self, context):
+    scene = context.scene
+    nextt = context.active_object.madtracks.nextt
+    if nextt:
+        bpy.data.groups['Tracks'].objects.unlink(nextt)
 
 
 class MadObjectProperties(bpy.types.PropertyGroup):
@@ -68,12 +67,6 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = False,
         description = "Object is part of the world"
     )
-    # TODO remove this prop once I have detection completely automated
-    # is_lightmapped = BoolProperty(
-    #     name = "Is Lightmapped",
-    #     default = False,
-    #     description = "Object is present in the lightmap"
-    # )
 
     # Descriptor
     physics = BoolProperty(
@@ -91,6 +84,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = 0,
         description = "Object mass"
     )
+    cast_shadows = BoolProperty(
+        name = "Cast car shadows",
+        default = False,
+        description = "Cast in-game shadows used by cars"
+    )
 
     # Trackparts
     is_trackpart = BoolProperty(
@@ -103,16 +101,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = False,
         description = "Trackpart is inverted"
     )
-    previous = PointerProperty(
-        type = bpy.types.Object,
-        name = "Previous",
-        description = "Previous trackpart in the sequence",
-        update = set_next
-    )
     nextt = PointerProperty(
         type = bpy.types.Object,
         name = "Next",
-        description = "Next trackpart in the sequence"
+        description = "Next trackpart in the sequence",
+        update = nextt_update_func
     )
     dummy_pos = FloatVectorProperty(
         name = "Dummy position",

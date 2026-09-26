@@ -126,21 +126,40 @@ def setup_scene(scene):
     bpy.ops.object.select_all(action='DESELECT')
 
     light_instances = []
-    for i in range(len(scene.objects), 0, -1):
-        obj = scene.objects[i-1]
-        if obj.madtracks.is_world and obj.madtracks.ldo:
-            # world mesh is always first
-            light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
-            continue
-        if obj.madtracks.is_trackpart and obj.madtracks.previous:
-            # skip sequence trackpart
-            continue
-        if obj.madtracks.ldo and not obj.madtracks.is_collectible:
-            light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
-        if obj.madtracks.is_trackpart and obj.madtracks.nextt:
-            # loop thru trackpart sequence
-            while obj.madtracks.nextt:
-                obj = obj.madtracks.nextt
+    if props.level_export_use_groups:
+        # add trackparts from group last
+        for i in range(len(scene.objects), 0, -1):
+            obj = scene.objects[i-1]
+            if obj.madtracks.is_world and obj.madtracks.ldo:
+                # world mesh is always first
+                light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+                continue
+            if obj.madtracks.is_trackpart:
+                continue
+            if obj.madtracks.ldo and not obj.madtracks.is_collectible:
+                light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+        # export trackparts sequences in the alphabetical group order
+        for name in sorted(bpy.data.groups['Tracks'].objects.keys()):
+            obj = bpy.data.objects[name]
+            light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, True))
+            if obj.madtracks.is_trackpart and obj.madtracks.nextt:
+                # loop thru trackpart sequence
+                while obj.madtracks.nextt:
+                    if scene.objects.find(obj.madtracks.nextt.name) == -1:
+                        # trackpart points to a deleted object
+                        obj.madtracks.nextt = None
+                        break
+                    obj = obj.madtracks.nextt
+                    light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, True))
+    else:
+        # add objects by creation order
+        for i in range(len(scene.objects), 0, -1):
+            obj = scene.objects[i-1]
+            if obj.madtracks.is_world and obj.madtracks.ldo:
+                # world mesh is always first
+                light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+                continue
+            if obj.madtracks.ldo and not obj.madtracks.is_collectible:
                 light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
     
     for instance in light_instances:
@@ -174,8 +193,8 @@ def setup_scene(scene):
     bpy.ops.object.editmode_toggle()
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.select_all(action='SELECT')
-    bpy.ops.uv.unwrap()
-    bpy.ops.uv.pack_islands(margin=0.00025)
+    bpy.ops.uv.unwrap(margin=0.0005)
+    #bpy.ops.uv.pack_islands(margin=0.0005)
     bpy.ops.object.editmode_toggle()
 
     # write LDL
@@ -215,7 +234,7 @@ def bake_preview(scene):
     bpy.ops.object.select_all(action='DESELECT')
     lightmesh.select = True
 
-    # ensure lighting is correct
+    # ensure lighting is correct (objects excluded by the user is likely to work around artifacts, let them be in the scene)
     for obj in scene.objects:
         if obj != lightmesh and obj.type == 'MESH' and (obj.madtracks.animate or obj.madtracks.physics):
             obj.hide_render = True
@@ -235,7 +254,7 @@ def bake_preview(scene):
     # set up bake context
     lightmesh.data.uv_textures.active = lightmesh.data.uv_textures["LightMap"]
     lightmesh.data.uv_textures["LightMap"].active_render = True
-    scene.render.bake_margin = 12
+    scene.render.bake_margin = 4
     scene.render.use_bake_clear = False
 
     # generate a new active image each time to be able to compare with previous ones
@@ -243,7 +262,8 @@ def bake_preview(scene):
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.select_all(action='SELECT')
     bpy.context.area.type = 'IMAGE_EDITOR'
-    bpy.ops.image.new(name="LevelName_lgt0000", width=8192, height=8192, color=(0.5, 0.5, 0.5, 1.0), alpha=False, generated_type='BLANK', float=False, gen_context='NONE', use_stereo_3d=False)
+    bg_col = scene.world.horizon_color
+    bpy.ops.image.new(name="LevelName_lgt0000", width=2048, height=2048, color=(bg_col[0], bg_col[1], bg_col[2], 1.0), alpha=False, generated_type='BLANK', float=False, gen_context='NONE', use_stereo_3d=False)
     lightmap_img = bpy.context.space_data.image
     bpy.ops.object.bake_image()
     bpy.context.area.type = 'VIEW_3D'
@@ -272,81 +292,3 @@ def bake_preview(scene):
     for obj in scene.objects:
         if obj != lightmesh and obj.type == 'MESH':
             obj.hide_render = False
-
-# def export_uvs(lgt_filepath, fldl, lightmesh, loop_instance_offset, scene):
-#     with open(lgt_filepath, 'rb') as flgt:
-#         # allows to export LDO meshes in the correct order
-#         loop_count = struct.unpack("<i", flgt.read(4))[0]
-#         loop_index = loop_count
-#         print("instance loop count: {}".format(loop_index))
-#         # read mesh count for HACK below
-#         bmeshcnt = flgt.read(4)
-#         mesh_cnt = struct.unpack("<i", bmeshcnt)[0]
-#         name_len = flgt.read(1)[0]
-#         flgt.seek(name_len + 1, 1) # account for null character
-#         vertex_cnt = flgt.read(4)
-#         while vertex_cnt != b'':
-#             # HACK read inside the loop to bail or make code still correct if no bail, brain completely fried for hours, no work no more
-#             # read vertex count from LDL in addition to LGT as it can become 0 if not eligible for lightmap
-#             ldl_vertex_cnt = struct.unpack("<i", fldl.read(4))[0]
-#             if ldl_vertex_cnt == 0:
-#                 # FIXME skip all meshes, ignores potential non-empty LDO meshes after this mesh
-#                 for _ in range(mesh_cnt - 1):
-#                     fldl.seek(4, 1)
-#                 return 0 # we read an instance which was potentially uneligible, so not present in the lightmesh global
-#             mesh_loop_cnt = struct.unpack("<i", flgt.read(4))[0]
-#             loop_index -= mesh_loop_cnt
-#             for _ in range(struct.unpack("<i", vertex_cnt)[0]):
-#                 per_face_index = struct.unpack("<h", flgt.read(2))[0]
-#                 light_uv = lightmesh.data.uv_layers['LightMap'].data[loop_instance_offset + loop_index + per_face_index].uv # Affiches: 5550 + (342 - 6 - 24) = 5862 + per_face_index
-#                 light_uv = [light_uv[0], 1 - light_uv[1]]
-#                 # 16-bit, TODO add support for 32-bit
-#                 light_uv = np.array(light_uv, dtype='<f2')
-#                 fldl.write(light_uv.tobytes())
-#             vertex_cnt = flgt.read(4)
-#     return loop_count
-
-
-# def export_metadata(obj, fldl, props, export_uvs=True):
-#     loop_index = len(obj.data.loops)
-#     ldo_filename = obj.madtracks.ldo
-#     lgt_filepath = props.madtracks_dir + ".cache" + os.path.sep + ldo_filename.replace(".ldo", ".lgt")
-#     with open(lgt_filepath, 'rb') as flgt:
-#         print("reading LGT")
-#         # skip total loop count which is only for export_uvs function to work
-#         flgt.seek(4, 1)
-#         # transfer LDO light cache bytes
-#         bmeshcnt = flgt.read(4)
-#         mesh_cnt = struct.unpack("<i", bmeshcnt)[0]
-#         fldl.write(bmeshcnt) # LDO mesh count
-#         name_len = flgt.read(1)[0]
-#         bmeshname = flgt.read(name_len)
-#         mesh_name = struct.unpack("<%ds" % name_len, bmeshname)[0].decode("utf-8")
-#         if mesh_name.lower() == "geometry/rampe_30_up.ldo":
-#             # this trackpart has its old name in original lightmaps
-#             fldl.write(struct.pack("<b", 21))
-#             fldl.write(struct.pack("<21s", "geometry/rampe_30.ldo".encode("utf-8")))
-#         else:
-#             fldl.write(struct.pack("<b", name_len))
-#             fldl.write(bmeshname)
-#         fldl.write(flgt.read(1))
-#         if not export_uvs:
-#             # signify this LDO shouldn't be lightmapped
-#             for _ in range(mesh_cnt):
-#                 fldl.write(struct.pack("<i", 0))
-#             return
-#         vertex_cnt = flgt.read(4)
-#         while vertex_cnt != b'':
-#             print("reading mesh metadata")
-#             fldl.write(vertex_cnt)
-#             flgt.seek(4, 1) # skip loop count
-#             for _ in range(struct.unpack("<i", vertex_cnt)[0]):
-#                 flgt.seek(2, 1) # skip vertex loop index
-#                 # write zeroes to replace with UV coords of unwrapped lightmesh
-#                 if props.lightmap_bitdepth == 16:
-#                     print("writing mesh metadata")
-#                     fldl.write(struct.pack("<4b", 0, 0, 0, 0))
-#                 elif props.lightmap_bitdepth == 32:
-#                     print("writing mesh metadata")
-#                     fldl.write(struct.pack("<8b", 0, 0, 0, 0, 0, 0, 0, 0))
-#             vertex_cnt = flgt.read(4)

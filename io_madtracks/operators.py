@@ -20,7 +20,6 @@ providing the functions behind the UI buttons.
 import bpy
 import time
 
-from . import descriptor_in
 from . import trackpart
 from . import ai
 from . import lightmap
@@ -57,11 +56,11 @@ class ImportMad(bpy.types.Operator):
         dprint("Importing {}".format(self.filepath))
 
         if frmt == FORMAT_INI:
-            # differentiate between .ini files based on filepath
-            if DESCRIPTOR_PATH.split(os.path.sep)[-2] in self.filepath:
-                frmt = FORMAT_DESCRIPTOR
-            elif LEVEL_PATH.split(os.path.sep)[-2] in self.filepath:
+            # INI category determined by scene property
+            if props.ini_io_type == "Level":
                 frmt = FORMAT_LEVEL_INI
+            else:
+                frmt = FORMAT_DESCRIPTOR
 
         if frmt == FORMAT_UNK:
             msg_box("Unknown format.")
@@ -76,6 +75,7 @@ class ImportMad(bpy.types.Operator):
             props.ldo_debug_info = False
         
         elif frmt == FORMAT_DESCRIPTOR:
+            from . import descriptor_in
             if not descriptor_in.import_file(self.filepath, scene):
                 msg_box("Descriptor not supported.")
                 return {'CANCELLED'}
@@ -83,6 +83,10 @@ class ImportMad(bpy.types.Operator):
         elif frmt == FORMAT_LEVEL_INI:
             from . import level_in
             level_in.import_file(self.filepath, scene)
+        
+        elif frmt == FORMAT_GRA:
+            from . import ai_in
+            ai_in.import_file(self.filepath, scene)
         
         else:
             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
@@ -130,11 +134,13 @@ class ImportMad(bpy.types.Operator):
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
             if frmt == FORMAT_INI:
-                # differentiate between .ini files based on filepath
-                if DESCRIPTOR_PATH.split(os.path.sep)[-2] in space.params.directory:
-                    frmt = FORMAT_DESCRIPTOR
-                elif LEVEL_PATH.split(os.path.sep)[-2] in space.params.directory:
+                # INI category determined by scene property
+                box = layout.box()
+                box.prop(props, "ini_io_type")
+                if props.ini_io_type == "Level":
                     frmt = FORMAT_LEVEL_INI
+                else:
+                    frmt = FORMAT_DESCRIPTOR
             layout.label("Import {}:".format(FORMATS[frmt]))
 
         if frmt == FORMAT_LDO:
@@ -178,8 +184,11 @@ class ExportMad(bpy.types.Operator):
         dprint("Exporting {}".format(self.filepath))
         
         if frmt == FORMAT_INI:
-            # for now don't differentiate between .ini files
-            frmt = FORMAT_LEVEL_INI
+            # INI category determined by scene property
+            if props.ini_io_type == "Level":
+                frmt = FORMAT_LEVEL_INI
+            else:
+                frmt = FORMAT_DESCRIPTOR
 
         if frmt == FORMAT_UNK:
             msg_box("Unknown format.")
@@ -199,13 +208,22 @@ class ExportMad(bpy.types.Operator):
 
                 # Disable debug info if user then exports a level for instance.
                 props.ldo_debug_info = False
+            
+            elif frmt == FORMAT_DESCRIPTOR:
+                from . import descriptor_out
+                descriptor_out.export_file(self.filepath, context)
 
             elif frmt == FORMAT_LEVEL_INI:
                 from . import level_out
                 level_out.export_file(self.filepath, scene)
             
+            elif frmt == FORMAT_GRA:
+                from . import ai_out
+                ai_out.export_file(self.filepath, scene)
+            
             else:
                 msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
+                return {'CANCELLED'}
 
             # Re-enables undo
             bpy.context.user_preferences.edit.use_global_undo = use_global_undo
@@ -241,16 +259,25 @@ class ExportMad(bpy.types.Operator):
         frmt = get_format(space.params.filename)
 
         if frmt == -1 and not space.params.filename == "":
-            if frmt == FORMAT_INI:
-                # for now don't differentiate between .ini files
-                frmt = FORMAT_LEVEL_INI
             layout.label("Format not supported", icon="ERROR")
         elif frmt != -1:
+            if frmt == FORMAT_INI:
+                # INI category determined by scene property
+                box = layout.box()
+                box.prop(props, "ini_io_type")
+                if props.ini_io_type == "Level":
+                    frmt = FORMAT_LEVEL_INI
+                else:
+                    frmt = FORMAT_DESCRIPTOR
             layout.label("Export {}:".format(FORMATS[frmt]))
             
         if frmt == FORMAT_LDO:
             box = layout.box()
             box.prop(props, "ldo_debug_info")
+        
+        if frmt == FORMAT_LEVEL_INI:
+            box = layout.box()
+            box.prop(props, "level_export_use_groups")
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -264,7 +291,7 @@ TRACKPART EDITOR ---------------------------------------------------------------
 class ButtonTrackpartDropdown(bpy.types.Operator):
     bl_idname = "trackpart.add_dropdown"
     bl_label = "Add"
-    bl_description = "Add the trackpart from the dropdown menu to a new sequence if no trackpart is selected, or appends it to the last selected one otherwise"
+    bl_description = "Add the trackpart from the dropdown menu at the 3D cursor if no trackpart is selected, append it to the selected one otherwise"
 
     def execute(self, context):
         scene = context.scene
@@ -284,11 +311,51 @@ class ButtonTrackpartDropdown(bpy.types.Operator):
 class ButtonTrackpartReference(bpy.types.Operator):
     bl_idname = "trackpart.add_existing"
     bl_label = "Add Existing"
-    bl_description = "Add the trackpart from the reference field to a new sequence if no trackpart is selected, or appends it to the last selected one otherwise"
+    bl_description = "Add the trackpart from the reference field at the 3D cursor if no trackpart is selected, append it to the selected one otherwise"
 
     def execute(self, context):
         scene = context.scene
         trackpart.add_user(scene, trackpart.from_reference(scene))
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+class ButtonTrackpartSelectLinked(bpy.types.Operator):
+    bl_idname = "trackpart.select_linked"
+    bl_label = "Select Linked"
+    bl_description = "Extend the selection to the end of the track(s)"
+
+    def execute(self, context):
+        scene = context.scene
+        trackpart.select_linked(scene, context.selected_objects)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+class ButtonTrackpartDelete(bpy.types.Operator):
+    bl_idname = "trackpart.delete"
+    bl_label = "Delete Selected"
+    bl_description = "Delete the selected trackpart(s) taking care of updating existing Tracks and linking"
+
+    def execute(self, context):
+        scene = context.scene
+        trackpart.delete(scene, context.selected_objects)
 
         # Gets any encountered errors
         errors = get_errors()
@@ -344,16 +411,25 @@ class ButtonAILinkNodes(bpy.types.Operator):
         return {"FINISHED"}
 
 
-# class ButtonAIResetNodes(bpy.types.Operator):
-#     bl_idname = "ai.reset_nodes"
-#     bl_label = "Reset Nodes"
-#     bl_description = "Rename AI nodes to remove edges naming convention"
+# class ButtonAIDrawPaths(bpy.types.Operator):
+#     bl_idname = "ai.draw_paths"
+#     bl_label = "Draw Paths"
+#     bl_description = "Create curves following the linked nodes for visualization"
 
 #     def execute(self, context):
 #         scene = context.scene
 #         props = scene.madtracks
 
-#         ai.reset_nodes()
+#         ai.draw_paths(scene, props.ai_startnode)
+        
+#         # Gets any encountered errors
+#         errors = get_errors()
+#         if "uccess" not in errors:
+#             msg_box(
+#                 "{}\n".format(errors),
+#                 icon="ERROR"
+#             )
+#         context.window.cursor_set("DEFAULT")
 #         return {"FINISHED"}
 
 

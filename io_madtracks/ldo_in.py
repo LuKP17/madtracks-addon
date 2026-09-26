@@ -73,7 +73,6 @@ def import_file(filepath, scene, lightmap=None):
         if lightmap:
             # add lightmap suffix in the mesh name for more clarity
             obj.data.name += "_lgt"
-            #obj.madtracks.is_lightmapped = True
         if parent:
             obj.parent = parent
             scene.objects.active = parent

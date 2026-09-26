@@ -33,6 +33,12 @@ from bpy.props import (
 
 from ..trackpart import *
 
+# needed to allow exporting files outside of the extracted game folder
+INI_CATEGORIES = (
+    ("Level", "Level instances", "", 0),
+    ("Desciptor", "Object descriptor", "", 1),
+)
+
 class MadSceneProperties(bpy.types.PropertyGroup):
     madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
@@ -52,6 +58,12 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Enable all LDO debug info"
     )
 
+    ini_io_type = EnumProperty(
+        name = "INI Type",
+        description = "Select the INI category",
+        items = INI_CATEGORIES
+    )
+
     level_import_raceline = BoolProperty(
         name = "Import Raceline",
         default = True,
@@ -65,7 +77,7 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     level_export_use_groups = BoolProperty(
         name = "Use Trackpart Groups",
         default = True,
-        description = "Export trackpart data groups in alphabetical order"
+        description = "Export trackpart sequences following \"Tracks\" group objects in alphabetical order (recommended)"
     )
     lightmap_debug_info = BoolProperty(
         name = "Lightmap Debug Info",

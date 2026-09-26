@@ -32,6 +32,6 @@ class MadTracksAIPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(props, "ai_startnode", text="")
         row = layout.row()
-        row.operator("ai.link_nodes", text="Link Nodes")
+        row.operator("ai.link_nodes", text="Link Nodes", icon="LINKED")
         # row = layout.row()
-        # row.operator("ai.reset_nodes", text="Reset Nodes")
+        # row.operator("ai.draw_paths", text="Draw Paths", icon="CURVE_PATH")

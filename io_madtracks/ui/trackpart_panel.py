@@ -46,3 +46,7 @@ class MadTracksTrackpartPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(props, "trackpart_ref", text="")
         row.operator("trackpart.add_existing", text="", icon='ZOOMIN')
+        row = layout.row()
+        row.operator("trackpart.select_linked", text="Select Linked", icon='LINKED')
+        row = layout.row()
+        row.operator("trackpart.delete", text="Delete Selection", icon='ZOOMOUT')

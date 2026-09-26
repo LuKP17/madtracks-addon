@@ -23,8 +23,7 @@ from .common import *
 
 
 def add_node(scene):
-    group_idx = bpy.data.groups.find("Paths")
-    if group_idx == -1:
+    if bpy.data.groups.find("Paths") == -1:
         bpy.data.groups.new("Paths")
     
     sel = bpy.context.selected_objects
@@ -36,30 +35,39 @@ def add_node(scene):
     node = scene.objects.active
     node.name = "AINode"
     if prev:
-        scene.objects.active = prev
-        prev.select = True
-        bpy.ops.object.parent_set(type='OBJECT', keep_transform=False)
-        prev.select = False
-        scene.objects.active = node
+        prev.madtracks.nextt = node
 
 
 def link_nodes(start_node):
     node_id = 0
     reset_nodes()
-    if not start_node.parent and start_node.children[0]:
-        start_node.name = str(node_id) + '-'
+    if start_node.madtracks.nextt:
+        start_node.name = "{}-{}".format(str(node_id), str(node_id + 1))
         node_id += 1
-        nextt = start_node.children[0]
+        nextt = start_node.madtracks.nextt
         while nextt:
             nextt.name = str(node_id) + '-'
-            nextt.parent.name = nextt.parent.name.split('.', 1)[0] + str(node_id)
+            if nextt.madtracks.nextt:
+                if nextt.madtracks.nextt == start_node:
+                    # closed loop
+                    nextt.name = nextt.name + str(0)
+                    break
+                else:
+                    nextt.name = nextt.name + str(node_id + 1)
             node_id += 1
-            nextt = nextt.children[0] if nextt.children else None
+            nextt = nextt.madtracks.nextt
     else:
-        set_error('linking nodes', "Invalid start node")
+        set_error('linking nodes', "Start node doesn't point to a next node")
 
 
 def reset_nodes():
     """ Sometimes necessary when relinking nodes """
     for node in bpy.data.groups['Paths'].objects:
         node.name = "AINode"
+
+
+# def draw_paths(scene, start_node):
+#     bpy.ops.curve.primitive_bezier_curve_add(radius=1, location=start_node.location)
+#     curve = scene.objects.active
+#     curve.data.resolution_u = 1
+#     # curve.data.splines[0].bezier_points[0].co is a local coordinate, use the curve object position to feed the node position in local coords 

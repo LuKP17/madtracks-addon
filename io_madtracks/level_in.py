@@ -138,11 +138,7 @@ def import_file(filepath, scene):
                 obj.hide = True
                 obj.hide_render = True
     
-    # import level .gra file
-    gra_filepath = filepath.replace(".ini", ".gra")
-    with open_insensitive(gra_filepath, 'r') as ai_file:
-        ini = INI(ai_file)
-    import_ai_paths(ini, scene)
+    bpy.ops.object.select_all(action='DESELECT')
 
     # reinstate old instance mode
     props.instance_mode = instance_mode_save
@@ -169,7 +165,6 @@ def import_LDO_instance(section, lightmap, scene):
             scene.objects.active = obj
             obj.select = False
             if lightmapped:
-                #obj.madtracks.is_lightmapped = True
                 # skip empty lightmap instance
                 lightmap.read_instance(props.lightmap_debug_info)
     if not obj:
@@ -228,7 +223,6 @@ def import_descriptor_instance(section, lightmap, scene):
                 scene.objects.active = obj
                 obj.select = False
                 if lightmapped:
-                    #obj.madtracks.is_lightmapped = True
                     # skip empty lightmap instance
                     lightmap.read_instance(props.lightmap_debug_info)
     if not obj:
@@ -246,30 +240,18 @@ def import_descriptor_instance(section, lightmap, scene):
         for mat in obj.data.materials:
             mat.use_shadeless = True
         
-    # edit location and rotation of Blender object
-    place_instance_object(section, obj)
-
     if is_trackpart:
         if len(section.params) > 1:
-            # new trackpart sequence
             trackpart.add(scene, obj)
-            # reset trackpart links since it could have been reused
-            obj.madtracks.previous = None
-            obj.madtracks.nextt = None
-            # keep the current trackpart selected to retrieve it at the next iteration
-            bpy.ops.object.select_all(action='DESELECT')
-            obj.select = True
         elif len(section.params) == 1:
-            # add to trackpart sequence
+            # part of a trackpart sequence
             prev = bpy.context.selected_objects[0]
             trackpart.add(scene, obj, prev)
-            obj.madtracks.previous = prev
-            # reset trackpart next links since it could have been reused and won't be updated it it's the last of the sequence
-            obj.madtracks.nextt = None
-            # keep the current trackpart selected to retrieve it at the next iteration
-            bpy.ops.object.select_all(action='DESELECT')
-            obj.select = True
+            # object was already placed by trackpart function
+            return True
 
+    # edit location and rotation of Blender object
+    place_instance_object(section, obj)
     return True
 
 
@@ -435,33 +417,6 @@ def setup_spectator_camera(cam, settings, scene):
     bpy.context.area.type = 'VIEW_3D'
 
 
-def import_ai_paths(ini, scene):
-    # use empty spheres with custom attributes, their name use the convention for IDs and edges:
-    # X-U,V,W,... means node has ID X and links to nodes U, V and W
-    for section in ini.sections:
-        if section.name.lower() == "node":
-            ai.add_node(scene)
-            node = scene.objects.active
-            for param in section.params:
-                if param.name.lower() == "id":
-                    node.name = str(param.value) + '-'
-                elif param.name.lower() == "position":
-                    node.location = to_blender_axis(param.value)
-                elif param.name.lower() == "motivboost":
-                    node.madtracks.motivboost = param.value
-                elif param.name.lower() == "roadwidth":
-                    node.madtracks.roadwidth = param.value
-                elif param.name.lower() == "speedexpected":
-                    node.madtracks.speedexpected = param.value
-        elif section.name.lower() == "edge":
-            for param in section.params:
-                if param.name.lower() == "in":
-                    bpy.ops.object.select_pattern(pattern="{}-*".format(param.value), extend=False)
-                elif param.name.lower() == "out":
-                    node = bpy.context.selected_objects[0]
-                    node.name = node.name + str(param.value) + ','
-
-
 def place_instance_object(section, obj):
     """
     Edit an instance object's location and rotation by reading a level .ini section's parameters.
@@ -502,5 +457,3 @@ def is_lightmapped(lightmap, filename, props):
     if props.lightmap_debug_info:
         print("Comparing LDO filename {} with LDL instance name {}...".format(filename.lower(), lightmap.current_name.lower()))
     return lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo"
-
-
