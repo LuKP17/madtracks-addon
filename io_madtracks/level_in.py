@@ -215,13 +215,19 @@ def import_descriptor_instance(section, lightmap, scene):
             if obj_index >= 0:
                 obj = bpy.data.objects[obj_index]
                 dprint("Copying Blender object {}...".format(obj.name))
-                obj = obj.copy()
-                scene.objects.link(obj)
-                scene.objects.active = obj
-                obj.select = False
+                obj_copy = obj.copy()
+                scene.objects.link(obj_copy)
+                scene.objects.active = obj_copy
                 if lightmapped:
                     # skip empty lightmap instance
                     lightmap.read_instance(props.lightmap_debug_info)
+                # don't forget about potential children (like validation box)
+                for child in obj.children:
+                    child_copy = child.copy()
+                    scene.objects.link(child_copy)
+                    child_copy.parent = obj_copy
+                obj = obj_copy
+                obj.select = False
     if not obj:
         # import descriptor
         if lightmapped:

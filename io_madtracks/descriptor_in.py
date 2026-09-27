@@ -100,7 +100,7 @@ def import_file(filepath, scene, lightmap=None):
     obj.select = False
 
     # parse remaining parameters
-    import_misc_params(ini_dic['object'], props)
+    import_misc_params(ini_dic['object'], scene, props)
 
     # set object name and descriptor
     obj.name = filename.split(".")[0]
@@ -109,11 +109,13 @@ def import_file(filepath, scene, lightmap=None):
     return True
 
 
-def import_misc_params(section, props):
+def import_misc_params(section, scene, props):
     """
     Handle optional parameters and parameters shared between object types.
     """
-    obj = bpy.context.active_object
+    obj = scene.objects.active
+    box_downpoint = None
+    box_uppoint = None
     for param in section.keys():
         if param == "animate":
             obj.madtracks.animate = True if section[param] == 1 else False
@@ -130,6 +132,32 @@ def import_misc_params(section, props):
             obj.scale[2] = to_blender_scale(lengths[1]) / 2
             # if not props.instance_mode:
                 # TODO also import as metadata
+        if param == "validationboxdownpoint":
+            box_downpoint = section[param]
+        if param == "validationboxuppoint":
+            box_uppoint = section[param]
+
+    if box_downpoint and box_uppoint:
+        # create validation box as child
+        bpy.ops.mesh.primitive_cube_add()
+        box = scene.objects.active
+        box.draw_type = 'BOUNDS'
+        box.name = "validation_box"
+        box.data.name = "cube_wire"
+        box.parent = obj
+        # set box origin to its own down point
+        box.location = (0,0,0)
+        cursor_location_save = bpy.context.scene.cursor_location.copy()
+        bpy.context.scene.cursor_location = (-1,-1,-1)
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        bpy.context.scene.cursor_location = cursor_location_save
+        # move box to descriptor down point (always refers to all negative coords)
+        box.location = (box_downpoint[0], box_downpoint[2], box_downpoint[1])
+        # scale box to descriptor up point (always refers to all positive coords)
+        box.scale[0] = (box_uppoint[0] - box_downpoint[0]) / 2
+        box.scale[1] = (box_uppoint[2] - box_downpoint[2]) / 2
+        box.scale[2] = (box_uppoint[1] - box_downpoint[1]) / 2
+        scene.objects.active = obj
 
 
 def import_light(section, filename, scene):
