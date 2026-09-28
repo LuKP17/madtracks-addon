@@ -6,7 +6,7 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 
 ## Requirements
 
-* Mad Tracks Steam version
+* Mad Tracks Steam version (older versions not supported)
 * Blender 2.79b (Windows and Linux, macOS version is not tested)
 
 ## Setting up
@@ -18,25 +18,21 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 
 ## Features
 
-Import:
+Import/Export:
 * LDO files
-  * Visualize game geometry
-  * Doesn't support old file versions
-  * Lots of attributes are ignored because of lack of knowledge
-* Descriptors (objects)
-  * Lots of parameters are ignored
+  * Import game models with materials
+* INI descriptor files
+  * Import game objects (movable props, lights, force fields, game zones...)
+  * Only lights can be exported for now
 * Levels
-  * Visualize entire levels with or without lightmap
+  * Import levels with game object instances, intro/outro cameras, optional lightmap
+  * Import level AI paths
+  * Export is supported, lightmap export is limited
 
-Trackpart editor:
-* Edit trackpart sequences in a level using a light UI panel
-* The UI trackpart list will grow rapidly to support all of them
-* Based on Blender groups and optional parent relations to quickly iterate or finalize a raceline
-
-Export:
-* Levels
-  * Generate INI files to overwrite original levels with your own
-  * AI nodes and level settings files are not supported yet
+Level editor UI:
+* Edit road tracks of a level (the trackpart list will grow rapidly to support all of them)
+* Edit AI paths of a level
+* Generate lightmap files (won't work with breakable objects, some stock models produce artifacts)
 
 ## License
 
