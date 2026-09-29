@@ -31,8 +31,8 @@ class MadTracksIOToolPanel(bpy.types.Panel):
         # i/o buttons
         props = context.scene.madtracks
 
-        self.layout.label("Mad Tracks Data Directory:")
         box = self.layout.box()
+        box.label("Mad Tracks Data Path:")
         box.prop(props, "madtracks_dir", text="")
         if props.madtracks_dir == "":
             box.label("No directory specified", icon="ERROR")

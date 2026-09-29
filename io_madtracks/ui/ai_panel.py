@@ -26,11 +26,11 @@ class MadTracksAIPanel(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
-        row.operator("ai.add_node", text="Add Node", icon="ZOOMIN")
-        row = layout.row()
         row.label("Start Node:")
         row = layout.row()
         row.prop(props, "ai_startnode", text="")
+        row = layout.row()
+        row.operator("ai.add_node", text="Add Node", icon="ZOOMIN")
         row = layout.row()
         row.operator("ai.link_nodes", text="Link Nodes", icon="LINKED")
         # row = layout.row()

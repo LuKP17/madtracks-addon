@@ -9,13 +9,6 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 * Mad Tracks Steam version (older versions not supported)
 * Blender 2.79b (Windows and Linux, macOS version is not tested)
 
-## Setting up
-
-* Paste the io_madtracks folder in Blender's add-ons folder (<blender_path>/scripts/addons)
-* Extract Mad Tracks' data.zip file anywhere and copy the absolute path of the extracted folder
-* Open Blender, go to "File > User Preferences > Add-ons" and check "Import-Export: Mad Tracks"
-* A new tab in 3D view tools panel called "Mad Tracks" should appear, paste the extracted folder path there
-
 ## Features
 
 Import/Export:
@@ -33,6 +26,16 @@ Level editor UI:
 * Edit road tracks of a level (the trackpart list will grow rapidly to support all of them)
 * Edit AI paths of a level
 * Generate lightmap files (won't work with breakable objects, some stock models produce artifacts)
+
+## Setting up
+
+* Paste the io_madtracks folder in Blender's add-ons folder (<blender_path>/scripts/addons)
+* Open Blender, go to "File > User Preferences > Add-ons" and check "Import-Export: Mad Tracks"
+* A new tab in 3D view left panel called "Mad Tracks" should appear
+* Extract the Steam game data.zip file anywhere and paste the path of the extracted folder in the "Mad Tracks" panel
+* For convenience, go to "File > User Preferences > Input" to switch to LMB for selecting objects and go to "Interface" tab to make sure "Cursor Depth" is on
+* Also for convenience, go to "File > Save Startup File" to avoid pasting the game data folder path at every new project
+* Read the [add-on guide](docs/ADDON_GUIDE.md) to get started
 
 ## License
 

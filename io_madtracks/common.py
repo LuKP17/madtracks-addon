@@ -24,14 +24,14 @@ import platform
 import mathutils
 
 # Relative paths from the user's Mad Tracks data folder
-LDO_PATH        = os.path.join("Gfx", "models", "Geometry") + os.path.sep
-TEXTURE_PATH    = os.path.join("Graph", "maps", "High") + os.path.sep
-HUD_PATH        = os.path.join("Graph", "hud", "in") + os.path.sep
-DESCRIPTOR_PATH = os.path.join("Bin", "Descriptors") + os.path.sep
-LEVEL_PATH      = os.path.join("Bin", "Levels") + os.path.sep
-WORLD_PATH      = os.path.join("Bin", "universes") + os.path.sep
-LDL_PATH        = os.path.join("Gfx", "Lightmaps") + os.path.sep
-CACHE_PATH      = ".cache" + os.path.sep
+LDO_PATH        = os.path.sep + os.path.join("Gfx", "models", "Geometry") + os.path.sep
+TEXTURE_PATH    = os.path.sep + os.path.join("Graph", "maps", "High") + os.path.sep
+HUD_PATH        = os.path.sep + os.path.join("Graph", "hud", "in") + os.path.sep
+DESCRIPTOR_PATH = os.path.sep + os.path.join("Bin", "Descriptors") + os.path.sep
+LEVEL_PATH      = os.path.sep + os.path.join("Bin", "Levels") + os.path.sep
+WORLD_PATH      = os.path.sep + os.path.join("Bin", "universes") + os.path.sep
+LDL_PATH        = os.path.sep + os.path.join("Gfx", "Lightmaps") + os.path.sep
+CACHE_PATH      = os.path.sep + ".cache" + os.path.sep
 
 # Global dictionaries
 global ERRORS

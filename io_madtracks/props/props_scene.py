@@ -43,13 +43,13 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
         default = "",
-        description = "Manually define a folder containing extracted Mad Tracks data.zip files.\nTrailing directory separator needed for import/export"
+        description = "Extracted Mad Tracks data.zip folder path"
     )
 
     instance_mode = BoolProperty(
-        name = "Instance Mode",
+        name = "Instance mode",
         default = False,
-        description = "Import files in a simplified way, marginally useful when importing levels."
+        description = "Import only necessary properties for level editing"
     )
 
     ldo_debug_info = BoolProperty(
@@ -88,28 +88,28 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     # Trackpart editor
     trackpart_category = EnumProperty(
         name = "Category",
-        description = "Select the trackpart category",
+        description = "Choose a trackpart category",
         items = TRACKPART_CATEGORIES
     )
     trackpart_small = EnumProperty(
         name = "Small",
-        description = "Select the trackpart to add",
+        description = "Choose a trackpart",
         items = TRACKPARTS_SMALL
     )
     trackpart_medium = EnumProperty(
         name = "Medium",
-        description = "Select the trackpart to add",
+        description = "Choose a trackpart",
         items = TRACKPARTS_MEDIUM
     )
     trackpart_golf = EnumProperty(
         name = "Golf",
-        description = "Select the trackpart to add",
+        description = "Choose a trackpart",
         items = TRACKPARTS_GOLF
     )
     trackpart_ref = PointerProperty(
         type = bpy.types.Object,
         name = "Trackpart Reference",
-        description = "Trackpart to add as a copy"
+        description = "Reference an existing trackpart in the scene"
     )
 
     # AI paths editor

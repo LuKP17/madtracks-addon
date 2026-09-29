@@ -291,7 +291,7 @@ TRACKPART EDITOR ---------------------------------------------------------------
 class ButtonTrackpartDropdown(bpy.types.Operator):
     bl_idname = "trackpart.add_dropdown"
     bl_label = "Add"
-    bl_description = "Add the trackpart from the dropdown menu at the 3D cursor if no trackpart is selected, append it to the selected one otherwise"
+    bl_description = "Import the dropdown trackpart at the 3D cursor or after the trackpart selected in the 3D view"
 
     def execute(self, context):
         scene = context.scene
@@ -311,7 +311,7 @@ class ButtonTrackpartDropdown(bpy.types.Operator):
 class ButtonTrackpartReference(bpy.types.Operator):
     bl_idname = "trackpart.add_existing"
     bl_label = "Add Existing"
-    bl_description = "Add the trackpart from the reference field at the 3D cursor if no trackpart is selected, append it to the selected one otherwise"
+    bl_description = "Import the referenced trackpart at the 3D cursor or after the trackpart selected in the 3D view"
 
     def execute(self, context):
         scene = context.scene
@@ -331,7 +331,7 @@ class ButtonTrackpartReference(bpy.types.Operator):
 class ButtonTrackpartSelectLinked(bpy.types.Operator):
     bl_idname = "trackpart.select_linked"
     bl_label = "Select Linked"
-    bl_description = "Extend the selection to the end of the track(s)"
+    bl_description = "Extend the 3D view selection to the end of the track(s)"
 
     def execute(self, context):
         scene = context.scene
@@ -351,7 +351,7 @@ class ButtonTrackpartSelectLinked(bpy.types.Operator):
 class ButtonTrackpartDelete(bpy.types.Operator):
     bl_idname = "trackpart.delete"
     bl_label = "Delete Selected"
-    bl_description = "Delete the selected trackpart(s) taking care of updating existing Tracks and linking"
+    bl_description = "Delete the selected trackpart(s) and update track(s) linking"
 
     def execute(self, context):
         scene = context.scene
@@ -375,7 +375,7 @@ AI PATHS EDITOR ----------------------------------------------------------------
 class ButtonAIAddNode(bpy.types.Operator):
     bl_idname = "ai.add_node"
     bl_label = "Add Node"
-    bl_description = "Add an AI node with properties"
+    bl_description = "Add an AI node at the 3D cursor and link it to the selected node in the 3D view"
 
     def execute(self, context):
         scene = context.scene
@@ -392,7 +392,7 @@ class ButtonAIAddNode(bpy.types.Operator):
 class ButtonAILinkNodes(bpy.types.Operator):
     bl_idname = "ai.link_nodes"
     bl_label = "Link Nodes"
-    bl_description = "Rename AI nodes following edges naming convention for export"
+    bl_description = "Rename all AI nodes following edges naming convention for export"
 
     def execute(self, context):
         scene = context.scene
@@ -440,7 +440,7 @@ LIGHTMAP EDITOR ----------------------------------------------------------------
 class ButtonLightmapSetup(bpy.types.Operator):
     bl_idname = "lightmap.setup_scene"
     bl_label = "Setup Lightmap Scene"
-    bl_description = "DESTRUCTIVE scene setup, merges selected objects into a lightmap object and exports the LDL file"
+    bl_description = "Merge selected objects into a lightmap object and export the LDL file (DESTRUCTIVE)"
 
     def execute(self, context):
         scene = context.scene
@@ -463,13 +463,13 @@ class ButtonLightmapSetup(bpy.types.Operator):
 
     def draw(self, context):
         row = self.layout.row()
-        row.label("Merging and unwrapping may take a few minutes.", icon="INFO")
+        row.label("Level instances will be merged into a single object.", icon="INFO")
 
 
 class ButtonLightmapBake(bpy.types.Operator):
     bl_idname = "lightmap.bake_preview"
     bl_label = "Bake Lightmap"
-    bl_description = "Generates the lightmap image and applies it to the lightmap object for preview"
+    bl_description = "Generate the lightmap image and apply it to the scene for preview"
 
     def execute(self, context):
         scene = context.scene
@@ -491,4 +491,4 @@ class ButtonLightmapBake(bpy.types.Operator):
 
     def draw(self, context):
         row = self.layout.row()
-        row.label("Baking may take a few minutes.", icon="INFO")
+        row.label("Baking may take a few seconds.", icon="INFO")
