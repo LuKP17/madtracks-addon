@@ -84,6 +84,10 @@ class ImportMad(bpy.types.Operator):
             from . import level_in
             level_in.import_file(self.filepath, scene)
         
+        elif frmt == FORMAT_DAM:
+            from . import dam_in
+            dam_in.import_file(self.filepath, scene)
+        
         elif frmt == FORMAT_GRA:
             from . import ai_in
             ai_in.import_file(self.filepath, scene)

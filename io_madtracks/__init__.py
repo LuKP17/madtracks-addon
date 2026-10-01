@@ -81,6 +81,8 @@ if "level_in" in locals():
     imp.reload(level_in)
 if "level_out" in locals():
     imp.reload(level_out)
+if "dam_in" in locals():
+    imp.reload(dam_in)
 if "madini" in locals():
     imp.reload(madini)
 if "trackpart" in locals():

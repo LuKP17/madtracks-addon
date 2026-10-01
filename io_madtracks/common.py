@@ -57,13 +57,15 @@ FORMAT_LDO = 0
 FORMAT_INI = 2
 FORMAT_DESCRIPTOR = 3
 FORMAT_LEVEL_INI = 4
-FORMAT_GRA = 5
+FORMAT_DAM = 5
+FORMAT_GRA = 6
 
 FORMATS = {
     FORMAT_LDO: "LDO (.ldo)",
     FORMAT_INI: "Unsupported (.ini)",
     FORMAT_DESCRIPTOR: "Descriptor (.ini)",
-    FORMAT_LEVEL_INI: "Level (.ini)",
+    FORMAT_LEVEL_INI: "Level instances (.ini)",
+    FORMAT_DAM: "Level settings (.dam)",
     FORMAT_GRA: "AI Paths (.gra)"
 }
 
@@ -87,9 +89,37 @@ LIGHT_SHAPE_POINT       = 2
 LIGHT_SHAPE_SPOT        = 3
 LIGHT_SHAPE_SPOTSOFT    = 4
 
+# world numbers in game's files
+WORLD_FRA_BISTRO    = 0
+WORLD_DEV_ONE       = 1  # dev test world
+WORLD_DEV_TWO       = 2  # dev test world
+WORLD_UK_MINIGOLF   = 3
+WORLD_GER_BAL       = 4
+WORLD_UK_STAIRS     = 5
+WORLD_USA_ROOF      = 6
+WORLD_GER_REMP      = 7
+WORLD_USA_TOY       = 8
+WORLD_FRA_MUSEE     = 9
+WORLD_ANT           = 10
+WORLD_DEV_LABO      = 11  # dev test world
+
+world_filenames = [
+    "FrBistrot.ini",
+    "WorldTest.ini",
+    "WorldTest.ini",
+    "UkMiniGolf.ini",
+    "GerBal.ini",
+    "UkStairs.ini",
+    "UsRoofs.ini",
+    "GerRamparts.ini",
+    "US_ToyStore.ini",
+    "FR_Musee.ini",
+    "Antartique.ini",
+    "Labo.ini"
+]
+
 trackpart_types = {"trackpart", "start", "startfinish", "checkpoint", "looping", "finish"}
 collectible_types = {"pickupbonus", "defi", "achievement1", "achievement2", "treasure"}
-
 
 """
 Conversion functions for Mad Tracks structures.
@@ -297,6 +327,8 @@ def get_format(fstr):
         return FORMAT_LDO
     elif ext == "ini":
         return FORMAT_INI
+    elif ext == "dam":
+        return FORMAT_DAM
     elif ext == "gra":
         return FORMAT_GRA
     else:
