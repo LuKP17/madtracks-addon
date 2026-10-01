@@ -138,6 +138,10 @@ def import_misc_params(section, scene, props):
             box_uppoint = section[param]
 
     if box_downpoint and box_uppoint:
+        # save selection if we import a checkpoint part of a sequence
+        sel_obj = None
+        if len(bpy.context.selected_objects) > 0:
+            sel_obj = bpy.context.selected_objects[0]
         # create validation box as child
         bpy.ops.mesh.primitive_cube_add()
         box = scene.objects.active
@@ -158,6 +162,9 @@ def import_misc_params(section, scene, props):
         box.scale[1] = (box_uppoint[2] - box_downpoint[2]) / 2
         box.scale[2] = (box_uppoint[1] - box_downpoint[1]) / 2
         scene.objects.active = obj
+        box.select = False
+        if sel_obj:
+            sel_obj.select = True
 
 
 def import_light(section, filename, scene):
@@ -195,7 +202,6 @@ def import_light(section, filename, scene):
         # use scene lighting instead
         scene.world.light_settings.use_environment_light = True
         scene.world.light_settings.environment_color = 'SKY_COLOR'
-        # NOTE overwrites level world's sky color, okay if we won't export worlds
         scene.world.horizon_color = rgb
         scene.world.zenith_color = rgb
     elif shape == LIGHT_SHAPE_POINT:
