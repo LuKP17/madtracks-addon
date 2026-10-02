@@ -225,6 +225,7 @@ def setup_scene(scene):
         texslot.blend_type = "MULTIPLY"
         texslot.uv_layer = "LightMap"
         texslot.use = False
+        mat.name = mat.name + "_lgt"
 
 
 def bake_preview(scene):
@@ -245,13 +246,10 @@ def bake_preview(scene):
     bpy.ops.object.select_all(action='DESELECT')
     lightmesh.select = True
 
-    # ensure lighting is correct (objects excluded by the user is likely to work around artifacts, let them be in the scene)
+    # ensure lighting is correct
     for obj in scene.objects:
         if obj != lightmesh and obj.type == 'MESH' and (obj.madtracks.animate or obj.madtracks.physics):
             obj.hide_render = True
-    for lamp in bpy.data.lamps:
-        lamp.use_diffuse = True
-    scene.world.light_settings.environment_color = 'SKY_COLOR'
 
     # set up materials for baking
     for mat in lightmesh.data.materials:
@@ -294,11 +292,7 @@ def bake_preview(scene):
             mat.alpha = mat.madtracks.rgba_save[3]
         for i in range(len(mat.texture_slots)):
             mat.use_textures[i] = True
-    
-    # setup lighting for preview
-    for lamp in bpy.data.lamps:
-        lamp.use_diffuse = False
-    scene.world.light_settings.environment_color = 'PLAIN'
+        mat.use_shadeless = True
 
     for obj in scene.objects:
         if obj != lightmesh and obj.type == 'MESH':

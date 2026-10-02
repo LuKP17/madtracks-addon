@@ -70,19 +70,14 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Import trackparts and collectibles"
     )
     level_import_lightmap = BoolProperty(
-        name = "Import Lightmap",
+        name = "Cross-import Lightmap",
         default = False,
-        description = "Turn off level lights and import the level lightmap"
+        description = "Import the associated LDL file at the same time, matching the instances from both files"
     )
     level_export_use_groups = BoolProperty(
         name = "Use Trackpart Groups",
         default = True,
         description = "Export trackpart sequences following \"Tracks\" group objects in alphabetical order (recommended)"
-    )
-    lightmap_debug_info = BoolProperty(
-        name = "Lightmap Debug Info",
-        default = False,
-        description = "Enable lightmap instances debug info"
     )
 
     # Trackpart editor

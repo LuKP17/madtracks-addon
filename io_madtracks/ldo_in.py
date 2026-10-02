@@ -318,6 +318,8 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                 texslot.texture = texture
                 texslot.blend_type = "MULTIPLY"
                 texslot.uv_layer = "LightMap"
+                # disable shading
+                material.use_shadeless = True
 
             # other convenient material properties
             material.specular_intensity = 0

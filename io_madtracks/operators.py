@@ -92,6 +92,10 @@ class ImportMad(bpy.types.Operator):
             from . import ai_in
             ai_in.import_file(self.filepath, scene)
         
+        elif frmt == FORMAT_LDL:
+            from . import ldl_in
+            ldl_in.import_file(self.filepath, scene)
+        
         else:
             msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
             return {'CANCELLED'}
@@ -151,11 +155,10 @@ class ImportMad(bpy.types.Operator):
             box = layout.box()
             box.prop(props, "ldo_debug_info")
         
-        if frmt == FORMAT_LEVEL_INI:
+        elif frmt == FORMAT_LEVEL_INI:
             box = layout.box()
             box.prop(props, "level_import_raceline")
             box.prop(props, "level_import_lightmap")
-            box.prop(props, "lightmap_debug_info")
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

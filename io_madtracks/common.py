@@ -59,6 +59,7 @@ FORMAT_DESCRIPTOR = 3
 FORMAT_LEVEL_INI = 4
 FORMAT_DAM = 5
 FORMAT_GRA = 6
+FORMAT_LDL = 7
 
 FORMATS = {
     FORMAT_LDO: "LDO (.ldo)",
@@ -66,7 +67,8 @@ FORMATS = {
     FORMAT_DESCRIPTOR: "Descriptor (.ini)",
     FORMAT_LEVEL_INI: "Level instances (.ini)",
     FORMAT_DAM: "Level settings (.dam)",
-    FORMAT_GRA: "AI Paths (.gra)"
+    FORMAT_GRA: "AI Paths (.gra)",
+    FORMAT_LDL: "Lightmap (.ldl)"
 }
 
 
@@ -331,6 +333,8 @@ def get_format(fstr):
         return FORMAT_DAM
     elif ext == "gra":
         return FORMAT_GRA
+    elif ext == "ldl":
+        return FORMAT_LDL
     else:
         return FORMAT_UNK
 

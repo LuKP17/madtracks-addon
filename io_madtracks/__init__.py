@@ -93,6 +93,8 @@ if "ai_in" in locals():
     imp.reload(ai_in)
 if "ai_out" in locals():
     imp.reload(ai_out)
+if "ldl_in" in locals():
+    imp.reload(ldl_in)
 if "lightmap" in locals():
     imp.reload(lightmap)
 

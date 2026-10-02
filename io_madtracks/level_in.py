@@ -65,11 +65,17 @@ def import_file(filepath, scene):
         success = lightmap.read_header()
         if success:
             props.lightmap_bitdepth = lightmap.bit_depth
-            lightmap.read_instance(props.lightmap_debug_info)
+            lightmap.read_instance()
         else:
             # give up on the lightmap
             lightmap_file.close()
             lightmap = None
+        # world base mesh is a lightmap instance
+        dam_filepath = filepath.replace(".ini", ".dam")
+        with open_insensitive(dam_filepath, 'r') as settings_file:
+            ini = INI(settings_file)
+        world = int(ini.as_dict()['base']['world'])
+        import_base_mesh(world, lightmap, scene)
 
     # import level .ini file
     with open_insensitive(filepath, 'r') as instance_file:
@@ -90,13 +96,6 @@ def import_file(filepath, scene):
         lightmap_file.close()
         if lightmap.instance_cnt > 0:
             set_error('importing a level', "Missed %d lightmap instances" % lightmap.instance_cnt)
-        # remove all influences on lightmap
-        bpy.context.scene.world.light_settings.environment_color = 'PLAIN'
-        bpy.context.scene.world.light_settings.environment_energy = 1
-        for obj in scene.objects:
-            if obj.type == 'LAMP':
-                obj.hide = True
-                obj.hide_render = True
     
     bpy.ops.object.select_all(action='DESELECT')
 
@@ -126,12 +125,12 @@ def import_LDO_instance(section, lightmap, scene):
             obj.select = False
             if lightmapped:
                 # skip empty lightmap instance
-                lightmap.read_instance(props.lightmap_debug_info)
+                lightmap.read_instance()
     if not obj:
         # import LDO
         if lightmapped:
             ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene, lightmap)
-            lightmap.read_instance(props.lightmap_debug_info)
+            lightmap.read_instance()
         else:
             ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene)
         obj = bpy.context.active_object
@@ -183,7 +182,7 @@ def import_descriptor_instance(section, lightmap, scene):
                 scene.objects.active = obj_copy
                 if lightmapped:
                     # skip empty lightmap instance
-                    lightmap.read_instance(props.lightmap_debug_info)
+                    lightmap.read_instance()
                 # don't forget about potential children (like validation box)
                 for child in obj.children:
                     child_copy = child.copy()
@@ -196,7 +195,7 @@ def import_descriptor_instance(section, lightmap, scene):
         if lightmapped:
             if not descriptor_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + filename, scene, lightmap):
                 return False
-            lightmap.read_instance(props.lightmap_debug_info)
+            lightmap.read_instance()
         else:
             if not descriptor_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + filename, scene):
                 return False
@@ -252,11 +251,32 @@ def is_lightmapped(lightmap, filename, props):
     """
     Return True if the LDO to import is present in the LDL file, although it can have no UV data to import
     """
-    if not lightmap:
+    if not props.level_import_lightmap or not lightmap:
         return False
 
     # add universal prefix for lightmaps
     filename = "geometry/" + filename
-    if props.lightmap_debug_info:
-        print("Comparing LDO filename {} with LDL instance name {}...".format(filename.lower(), lightmap.current_name.lower()))
+    print("Comparing LDO filename {} with LDL instance name {}...".format(filename.lower(), lightmap.current_name.lower()))
     return lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo"
+
+
+def import_base_mesh(world_num, lightmap, scene):
+    props = scene.madtracks
+    filename = world_filenames[world_num]
+    filepath = props.madtracks_dir + WORLD_PATH + filename
+
+    with open_insensitive(filepath, 'r') as file:
+        ini = INI(file)
+        ini_dic = ini.as_dict()
+
+    # import the world mesh with lightmap data
+    if 'mesh' in ini_dic['base'].keys():
+        ldo_filename = ini_dic['base']['mesh'].rsplit("/", 1)[1] # strip partial dirpath
+        ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene, lightmap)
+        lightmap.read_instance()
+        obj = bpy.context.active_object
+        # world doesn't cast shadows
+        for mat in obj.data.materials:
+            mat.use_cast_shadows = False
+        # mark as world
+        obj.madtracks.is_world = True
