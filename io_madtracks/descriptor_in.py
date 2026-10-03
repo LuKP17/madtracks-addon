@@ -11,7 +11,7 @@ Name:    descriptor_in
 Purpose: Imports Descriptor INI files
 
 Description:
-Descriptors include a LDO with a separate collision mesh, lights, cameras, pickups, game zones...
+Descriptors often include a LDO, lights, cameras, pickups, game zones...
 
 """
 
@@ -130,8 +130,6 @@ def import_misc_params(section, scene, props):
             obj.scale[0] = to_blender_scale(lengths[0]) / 2
             obj.scale[1] = to_blender_scale(lengths[2]) / 2
             obj.scale[2] = to_blender_scale(lengths[1]) / 2
-            # if not props.instance_mode:
-                # TODO also import as metadata
         if param == "validationboxdownpoint":
             box_downpoint = section[param]
         if param == "validationboxuppoint":
@@ -200,7 +198,6 @@ def import_light(section, filename, scene):
         obj.data.type = 'AREA'
         obj.data.energy = 0
         # use scene lighting instead
-        scene.world.light_settings.use_environment_light = True
         scene.world.light_settings.environment_color = 'SKY_COLOR'
         scene.world.horizon_color = rgb
         scene.world.zenith_color = rgb
@@ -225,8 +222,11 @@ def import_light(section, filename, scene):
             obj.data.spot_blend = 0.3
 
     # optional light param
-    obj.data.shadow_method = 'RAY_SHADOW' # almost always used for rendering
-    if 'dontcastshadow' not in section.keys() or section['dontcastshadow'] == 0:
+    # light shadows dictated by car shadow parameter
+    if 'dontcastshadow' in section.keys() and section['dontcastshadow'] == 1:
+        obj.data.shadow_method = 'NOSHADOW'
+    else:
+        obj.data.shadow_method = 'RAY_SHADOW'
         obj.madtracks.cast_shadows = True
 
     # global Blender specific parameters

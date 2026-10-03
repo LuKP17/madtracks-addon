@@ -46,10 +46,6 @@ class ImportMad(bpy.types.Operator):
 
         frmt = get_format(self.filepath)
 
-        if props.madtracks_dir == "":
-            msg_box("No data directory specified.")
-            return {'CANCELLED'}
-
         start_time = time.time()
         context.window.cursor_set("WAIT")
 
@@ -69,16 +65,24 @@ class ImportMad(bpy.types.Operator):
         elif frmt == FORMAT_LDO:
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
+            # for convenience
+            scene.objects.active.location = bpy.context.scene.cursor_location
+            bpy.ops.object.select_all(action='DESELECT')
+            scene.objects.active.select = True
 
             # Disable debug info if user then imports a level for instance.
             # If user wants debug info when importing a level, check the LDO import option before selecting a level.
             props.ldo_debug_info = False
-        
+
         elif frmt == FORMAT_DESCRIPTOR:
             from . import descriptor_in
             if not descriptor_in.import_file(self.filepath, scene):
                 msg_box("Descriptor not supported.")
                 return {'CANCELLED'}
+            # for convenience
+            scene.objects.active.location = bpy.context.scene.cursor_location
+            bpy.ops.object.select_all(action='DESELECT')
+            scene.objects.active.select = True
         
         elif frmt == FORMAT_LEVEL_INI:
             from . import level_in
@@ -123,8 +127,10 @@ class ImportMad(bpy.types.Operator):
             icon=ico
         )
 
-        # Enable backface culling for a closer in-game preview
+        # Visibility in viewport
+        bpy.context.space_data.clip_end = 7000
         bpy.context.space_data.show_backface_culling = True
+        scene.world.light_settings.use_environment_light = True
 
         context.window.cursor_set("DEFAULT")
 
@@ -140,6 +146,7 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == -1 and not space.params.filename == "":
             layout.label("Format not supported", icon="ERROR")
+            return
         elif frmt != -1:
             if frmt == FORMAT_INI:
                 # INI category determined by scene property
@@ -159,9 +166,16 @@ class ImportMad(bpy.types.Operator):
             box = layout.box()
             box.prop(props, "level_import_raceline")
             box.prop(props, "level_import_lightmap")
+        
+        else:
+            box = layout.box()
+            box.label("No options available.")
 
     def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
+        if context.scene.madtracks.madtracks_dir == "":
+            msg_box("No data directory specified.", icon="ERROR")
+        else:
+            context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
 
@@ -267,6 +281,7 @@ class ExportMad(bpy.types.Operator):
 
         if frmt == -1 and not space.params.filename == "":
             layout.label("Format not supported", icon="ERROR")
+            return
         elif frmt != -1:
             if frmt == FORMAT_INI:
                 # INI category determined by scene property
@@ -285,9 +300,16 @@ class ExportMad(bpy.types.Operator):
         if frmt == FORMAT_LEVEL_INI:
             box = layout.box()
             box.prop(props, "level_export_use_groups")
+        
+        else:
+            box = layout.box()
+            box.label("No options available.")
     
     def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
+        if context.scene.madtracks.madtracks_dir == "":
+            msg_box("No data directory specified.", icon="ERROR")
+        else:
+            context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
 

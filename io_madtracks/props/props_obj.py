@@ -70,14 +70,14 @@ class MadObjectProperties(bpy.types.PropertyGroup):
 
     # Descriptor
     physics = BoolProperty(
-        name = "Physics",
+        name = "Has Physics",
         default = False,
         description = "Object has physics"
     )
     animate = BoolProperty(
-        name = "Animation",
+        name = "Is Animated",
         default = False,
-        description = "Object has animation"
+        description = "Object is animated"
     )
     mass = IntProperty(
         name = "Mass",
@@ -85,7 +85,7 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         description = "Object mass"
     )
     cast_shadows = BoolProperty(
-        name = "Cast car shadows",
+        name = "Casts car shadows",
         default = False,
         description = "Cast in-game shadows used by cars"
     )
@@ -97,7 +97,7 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         description = "Object is a trackpart"
     )
     invert = BoolProperty(
-        name = "Invert",
+        name = "Is Inverted",
         default = False,
         description = "Trackpart is inverted"
     )
