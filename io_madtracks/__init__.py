@@ -142,8 +142,8 @@ def register():
         type=MadMaterialProperties
     )
 
-    bpy.types.INFO_MT_file_import.prepend(menu_func_import)
-    bpy.types.INFO_MT_file_export.prepend(menu_func_export)
+    #bpy.types.INFO_MT_file_import.prepend(menu_func_import)
+    #bpy.types.INFO_MT_file_export.prepend(menu_func_export)
 
 
 def unregister():
@@ -153,8 +153,8 @@ def unregister():
     del bpy.types.Object.madtracks
     del bpy.types.Material.madtracks
 
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    #bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":
     register()
