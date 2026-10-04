@@ -122,7 +122,7 @@ def import_world(world_num, scene):
 
 def import_cameras(ini_dic, scene):
     # create camera to be used for the intro/outro
-    bpy.ops.object.camera_add(rotation=(0, 0, -1.570))
+    bpy.ops.object.camera_add(location=(0, 0, 0), rotation=(0, 0, -1.570))
     cam_intro = scene.objects.active
     cam_intro.name = "Camera_Intro"
     cam_intro.data.lens_unit = 'FOV'
