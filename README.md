@@ -26,7 +26,7 @@ Import/Export:
 Level editor UI:
 * Edit road tracks of a level (the trackpart list will grow rapidly to support all of them)
 * Edit AI paths of a level
-* Generate lightmap files (won't work with breakable objects, some stock models produce artifacts)
+* Generate lightmap files (some stock models produce artifacts)
 
 ## Setting up
 
