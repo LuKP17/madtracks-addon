@@ -40,30 +40,34 @@ INI_CATEGORIES = (
 )
 
 class MadSceneProperties(bpy.types.PropertyGroup):
+    # General
     madtracks_dir = StringProperty(
         name = "Mad Tracks Directory",
         default = "",
-        description = "Extracted Mad Tracks data.zip folder path"
+        description = "Extracted Mad Tracks data.zip folder path. Needed for import/export"
     )
 
-    instance_mode = BoolProperty(
-        name = "Instance mode",
-        default = False,
-        description = "Import only necessary properties for level editing"
-    )
-
-    ldo_debug_info = BoolProperty(
-        name = "LDO Debug Info",
-        default = False,
-        description = "Enable all LDO debug info"
-    )
-
+    # Import/Export
     ini_io_type = EnumProperty(
         name = "INI Type",
         description = "Select the INI category",
         items = INI_CATEGORIES
     )
-
+    as_instance = BoolProperty(
+        name = "As Level Instance",
+        default = False,
+        description = "Import objects in a lightmappable way, reusable by level importer and convenient for level editing"
+    )
+    reuse_data = BoolProperty(
+        name = "Reuse Blender data",
+        default = False,
+        description = "Reuse already imported data to save on resources and improve performance"
+    )
+    ldo_debug_info = BoolProperty(
+        name = "LDO Debug Info",
+        default = False,
+        description = "Enable all LDO debug info"
+    )
     level_import_raceline = BoolProperty(
         name = "Import Raceline",
         default = True,
@@ -122,4 +126,11 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         min = 16,
         max = 32,
         step = 16 # not supported apparently
+    )
+
+    # Object properties
+    edit_props = BoolProperty(
+        name = "Edit Object Properties",
+        default = False,
+        description = "Display all object properties and allow editing for object export"
     )

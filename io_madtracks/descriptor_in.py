@@ -121,7 +121,6 @@ def import_misc_params(section, scene, props):
             obj.madtracks.animate = True if section[param] == 1 else False
         if param == "mass":
             obj.madtracks.physics = True
-            obj.madtracks.mass = section[param]
         if param == "dontcastshadowonlightmap":
             for mat in obj.data.materials:
                 mat.use_cast_shadows = True if section[param] == 0 else False
@@ -161,6 +160,8 @@ def import_misc_params(section, scene, props):
         box.scale[2] = (box_uppoint[1] - box_downpoint[1]) / 2
         scene.objects.active = obj
         box.select = False
+        if props.as_instance:
+            box.hide_select = True
         if sel_obj:
             sel_obj.select = True
 

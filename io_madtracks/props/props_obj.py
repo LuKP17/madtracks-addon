@@ -52,11 +52,6 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = "",
         description = "Filename of the object's LDO"
     )
-    is_instance = BoolProperty(
-        name = "Is Instance",
-        default = False,
-        description = "Object is imported as an instance"
-    )
     is_collectible = BoolProperty(
         name = "Is Collectible",
         default = False,
@@ -79,13 +74,8 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = False,
         description = "Object is animated"
     )
-    mass = IntProperty(
-        name = "Mass",
-        default = 0,
-        description = "Object mass"
-    )
     cast_shadows = BoolProperty(
-        name = "Casts car shadows",
+        name = "Casts in-game shadows",
         default = False,
         description = "Cast in-game shadows used by cars"
     )
@@ -100,12 +90,6 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         name = "Is Inverted",
         default = False,
         description = "Trackpart is inverted"
-    )
-    nextt = PointerProperty(
-        type = bpy.types.Object,
-        name = "Next",
-        description = "Next trackpart in the sequence",
-        update = nextt_update_func
     )
     dummy_pos = FloatVectorProperty(
         name = "Dummy position",
@@ -155,4 +139,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         default = 0.0,
         min = 0.0,
         description = "10 is a good value to encourage AI to slow down"
+    )
+
+    nextt = PointerProperty(
+        type = bpy.types.Object,
+        name = "Next",
+        description = "Next object in the sequence",
+        update = nextt_update_func
     )

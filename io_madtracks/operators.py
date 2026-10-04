@@ -160,7 +160,14 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_LDO:
             box = layout.box()
+            box.prop(props, "as_instance")
+            box.prop(props, "reuse_data")
             box.prop(props, "ldo_debug_info")
+        
+        elif frmt == FORMAT_DESCRIPTOR:
+            box = layout.box()
+            box.prop(props, "as_instance")
+            box.prop(props, "reuse_data")
         
         elif frmt == FORMAT_LEVEL_INI:
             box = layout.box()

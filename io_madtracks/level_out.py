@@ -37,10 +37,6 @@ def export_file(filepath, scene):
     """
     props = scene.madtracks
 
-    # enable instance mode
-    instance_mode_save = props.instance_mode
-    props.instance_mode = True
-
     with open(filepath, 'w') as fini:
         # empty line like the original levels
         fini.write("\n")
@@ -51,6 +47,9 @@ def export_file(filepath, scene):
                 obj = scene.objects[i-1]
                 if obj.madtracks.is_world:
                     # skip world elements
+                    continue
+                if obj.parent:
+                    # skip, can be pieces of a breakable object for example
                     continue
                 if obj.madtracks.is_trackpart:
                     continue
@@ -78,6 +77,9 @@ def export_file(filepath, scene):
                 if obj.madtracks.is_world:
                     # skip world elements
                     continue
+                if obj.parent:
+                    # skip, can be pieces of a breakable object for example
+                    continue
                 if in_sequence:
                     # object location/rotation calculated by the game engine
                     export_instance(fini, obj)
@@ -88,9 +90,6 @@ def export_file(filepath, scene):
                         in_sequence = True
                     else:
                         in_sequence = False
-    
-    # reinstate old instance mode
-    props.instance_mode = instance_mode_save
 
 
 def export_instance(fini, obj, location=None, matrix_world=None):

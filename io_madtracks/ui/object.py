@@ -18,45 +18,39 @@ class MadTracksObjectPanel(bpy.types.Panel):
     """
     Panel in the Object Properties tab to view object properties.
     """
-    bl_label = "Mad Tracks Object Properties"
+    bl_label = "Mad Tracks Properties"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
-    bl_options = {"HIDE_HEADER"}
-
 
     def draw(self, context):
         layout = self.layout
         obj = context.object
         objprops = obj.madtracks
+        sceneprops = context.scene.madtracks
 
-        layout.label("Mad Tracks Properties")
-
-        # Debug properties
-        if DEBUG:
+        # level instance properties, naturally shows if there was an impact after editing object props
+        layout.label("Level Instance Properties:")
+        box = layout.box()
+        # read-only properties
+        box.label("Descriptor: {}".format(objprops.descriptor))
+        box.label("LDO: {}".format(objprops.ldo))
+        if objprops.is_trackpart:
+            box.label("Trackpart Properties", icon="PARTICLE_PATH")
+            box.prop(objprops, "nextt")
+        if len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']:
+            box.label("AI node Properties", icon="PARTICLE_POINT")
+            box.prop(objprops, "roadwidth")
+            box.prop(objprops, "motivboost")
+            box.prop(objprops, "speedexpected")
+            box.prop(objprops, "nextt")
+        # all properties for object editing
+        col = layout.column()
+        col.prop(sceneprops, "edit_props")
+        if sceneprops.edit_props:
             box = layout.box()
             box.prop(objprops, "descriptor")
             box.prop(objprops, "ldo")
-            box.prop(objprops, "is_collectible")
-            box.prop(objprops, "is_world")
-            if objprops.descriptor:
-                box = layout.box()
-                box.label("Object:")
-                box.prop(objprops, "animate")
-                box.prop(objprops, "physics")
-                if objprops.physics:
-                    box.prop(objprops, "mass")
-                if obj.type == 'LAMP':
-                    box.prop(objprops, "cast_shadows")
-            if objprops.is_trackpart:
-                box = layout.box()
-                box.label("Trackpart:")
-                box.prop(objprops, "invert")
-            if len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']:
-                box = layout.box()
-                box.label("AI Node:")
-                box.prop(objprops, "roadwidth")
-                box.prop(objprops, "motivboost")
-                box.prop(objprops, "speedexpected")
-            if objprops.is_trackpart or (len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']):
-                box.prop(objprops, "nextt")
+            if objprops.descriptor and obj.type == 'LAMP':
+                box.label("Light Properties", icon="LAMP_SPOT")
+                box.prop(objprops, "cast_shadows")

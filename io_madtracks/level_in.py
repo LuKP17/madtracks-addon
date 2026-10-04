@@ -51,9 +51,8 @@ def import_file(filepath, scene):
     """
     props = scene.madtracks
 
-    # enable instance mode
-    instance_mode_save = props.instance_mode
-    props.instance_mode = True
+    props.as_instance = True
+    props.reuse_data = True
 
     lightmap = None
     if props.level_import_lightmap:
@@ -98,9 +97,6 @@ def import_file(filepath, scene):
             set_error('importing a level', "Missed %d lightmap instances" % lightmap.instance_cnt)
     
     bpy.ops.object.select_all(action='DESELECT')
-
-    # reinstate old instance mode
-    props.instance_mode = instance_mode_save
 
 
 def import_LDO_instance(section, lightmap, scene):

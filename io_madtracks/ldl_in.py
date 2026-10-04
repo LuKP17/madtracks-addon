@@ -41,9 +41,8 @@ def import_file(filepath, scene):
     """
     props = scene.madtracks
 
-    # enable instance mode
-    instance_mode_save = props.instance_mode
-    props.instance_mode = True
+    props.as_instance = True
+    props.reuse_data = True
 
     # open lightmap file and read instances
     filename = os.path.basename(filepath)
@@ -67,6 +66,3 @@ def import_file(filepath, scene):
             obj.data.uv_textures.active = obj.data.uv_textures["LightMap"]
     
     bpy.ops.object.select_all(action='DESELECT')
-
-    # reinstate old instance mode
-    props.instance_mode = instance_mode_save

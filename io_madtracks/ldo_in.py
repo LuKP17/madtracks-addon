@@ -61,25 +61,24 @@ def import_file(filepath, scene, lightmap=None):
     
     # create Blender objects
     parent = None
-    if len(meshes) > 1:
+    if len(meshes) > 1 and not props.as_instance:
         # create a parent object
         bpy.ops.object.empty_add(type='PLAIN_AXES')
         parent = bpy.context.active_object
         parent.name = meshname
 
     for i in range(len(meshes)):
+        if i >= 1 and props.as_instance:
+            # only import the first atomic for lightmapping
+            break
         obj = bpy.data.objects.new(meshes[i].name, meshes[i])
         scene.objects.link(obj)
-        if lightmap:
-            # add lightmap suffix in the mesh name for more clarity
-            obj.data.name += "_lgt"
         if parent:
             obj.parent = parent
             scene.objects.active = parent
         else:
             scene.objects.active = obj
         obj.madtracks.ldo = filename
-        obj.madtracks.is_instance = props.instance_mode
         for dummy in ldo.atomics[i].dummies:
             # store dummy data in the object
             if (bool(dummy.flags & DUMMY_FLAG_POSROT)):
@@ -101,76 +100,50 @@ def import_file(filepath, scene, lightmap=None):
     if not os.path.exists(lgt_filepath):
         if not os.path.exists(props.madtracks_dir + CACHE_PATH):
             os.makedirs(props.madtracks_dir + CACHE_PATH)
-        write_lgt_file(lgt_filepath, filename, obj, ldo)
+        if props.as_instance:
+            # write metadata for lightmap operators
+            write_lgt_file(lgt_filepath, filename, obj, ldo)
         dprint("Wrote LDO lightmap metadata file %s" % lgt_filepath)
 
 
 def ldo_to_meshes(ldo, meshname, scene, props, lightmap=None):
     """
-    Create Blender meshes from a LDO and return them.
+    Create Blender objects from a LDO and return them.
     All the meshes contained in one atomic will always be merged into a single Blender mesh.
-    All the atomics will be merged into a single Blender mesh if instance mode is enabled.
+    Each atomic is imported as one Blender object.
     """
     meshes = []
     
-    if not props.instance_mode:
-        # separate atomics in separate meshes
-        for atomic in ldo.atomics:
-            if atomic.is_empty:
-                continue
-            
-            if ldo.atomic_cnt > 1:
-                meshname = atomic.name
-
-            # atomic Blender mesh
-            mesh = bpy.data.meshes.new(meshname)
-
-            bm = bmesh.new()
-            bm.loops.layers.uv.new("UVMap")
-            bm.faces.layers.tex.new("UVMap")
-            
-            # fill bmesh with atomic meshes
-            vertex_offset = 0
-            for atomic_mesh in atomic.meshes:
-                bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset)
-                vertex_offset += atomic_mesh.vertex_cnt
-
-            # fill Blender mesh with bmesh
-            bm.to_mesh(mesh)
-            bm.free()
-            
-            mesh_assign_materials(atomic, mesh, props)
-
-            meshes.append(mesh)
-    else:
-        # merge all atomics into a single Blender mesh
+    for atomic in ldo.atomics:
+        # atomic Blender mesh
         mesh = bpy.data.meshes.new(meshname)
+        
+        if ldo.atomic_cnt > 1:
+            meshname = atomic.name
 
         bm = bmesh.new()
         bm.loops.layers.uv.new("UVMap")
         if lightmap and not lightmap.is_empty:
             bm.loops.layers.uv.new("LightMap")
         bm.faces.layers.tex.new("UVMap")
-
-        # fill bmesh with all atomics meshes
+        
+        # fill bmesh with atomic meshes
         vertex_offset = 0
-        for atomic in ldo.atomics:
+        i = atomic.mesh_cnt - 1 # meshes are stored in reverse order in the LDO, thanks for the rage Load xoxo
+        for atomic_mesh in atomic.meshes:
             if atomic.is_empty:
                 continue
-            i = atomic.mesh_cnt - 1 # meshes are stored in reverse order in the LDO, thanks for the rage Load xoxo
-            for atomic_mesh in atomic.meshes:
-                if lightmap and not lightmap.is_empty:
-                    bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset, lightmap.current_uvs[i])
-                else:
-                    bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset)
-                vertex_offset += atomic_mesh.vertex_cnt
-                i -= 1
+            if lightmap and not lightmap.is_empty:
+                bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset, lightmap.current_uvs[i])
+            else:
+                bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset)
+            vertex_offset += atomic_mesh.vertex_cnt
+            i -= 1
 
         # fill Blender mesh with bmesh
         bm.to_mesh(mesh)
         bm.free()
-
-        # FIXME currently only assigns the last atomic materials
+        
         mesh_assign_materials(atomic, mesh, props, lightmap)
 
         meshes.append(mesh)
@@ -266,7 +239,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
             if atomic_mat.diffuse_name_len:
                 texslot = material.texture_slots.add()
                 texture = None
-                if props.instance_mode:
+                if props.reuse_data:
                     tex_index = bpy.data.textures.find(atomic_mat.diffuse_name)
                     if tex_index >= 0:
                         texture = bpy.data.textures[tex_index]
@@ -275,7 +248,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
                     image = None
                     filename = atomic_mat.diffuse_name
-                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -283,7 +256,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
             if atomic_mat.envmap_name_len:
                 texslot = material.texture_slots.add()
                 texture = None
-                if props.instance_mode:
+                if props.reuse_data:
                     tex_index = bpy.data.textures.find(atomic_mat.envmap_name)
                     if tex_index >= 0:
                         texture = bpy.data.textures[tex_index]
@@ -292,7 +265,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
                     image = None
                     filename = atomic_mat.envmap_name
-                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.instance_mode)
+                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -350,23 +323,23 @@ def write_lgt_file(lgt_filepath, ldo_filename, obj, ldo):
         file.write(struct.pack("<i", len(obj.data.loops)))
 
         ldo_mesh_cnt = 0
-        for atomic in ldo.atomics:
-            # empty atomics have mesh count (wrongfully?) set to 1 but LDL wants 0
-            if not atomic.is_empty:
-                ldo_mesh_cnt += atomic.mesh_cnt
+        # lightmaps should skip atomics that are pieces of a breakable model
+        atomic = ldo.atomics[0]
+        # empty atomics have mesh count (wrongfully?) set to 1 but LDL wants 0
+        if not atomic.is_empty:
+            ldo_mesh_cnt += atomic.mesh_cnt
         file.write(struct.pack("<i", ldo_mesh_cnt))
 
-        for atomic in ldo.atomics:
-            if atomic.is_empty:
-                # empty atomics have mesh count (wrongfully?) set to 1
-                atomic_mesh_cnt = 0
-            else:
-                atomic_mesh_cnt = atomic.mesh_cnt
-            # LDL files write LDO meshes in reverse order
-            for i in range(atomic_mesh_cnt, 0, -1):
-                mesh = atomic.meshes[i-1]
-                file.write(struct.pack("<i", mesh.vertex_cnt))
-                loop_cnt = sum(mesh.tri_seq_len) * 3
-                file.write(struct.pack("<i", loop_cnt))
-                for vertex in mesh.vertices:
-                    file.write(struct.pack("<i", vertex.per_face_index))
+        if atomic.is_empty:
+            # empty atomics have mesh count (wrongfully?) set to 1
+            atomic_mesh_cnt = 0
+        else:
+            atomic_mesh_cnt = atomic.mesh_cnt
+        # LDL files write LDO meshes in reverse order
+        for i in range(atomic_mesh_cnt, 0, -1):
+            mesh = atomic.meshes[i-1]
+            file.write(struct.pack("<i", mesh.vertex_cnt))
+            loop_cnt = sum(mesh.tri_seq_len) * 3
+            file.write(struct.pack("<i", loop_cnt))
+            for vertex in mesh.vertices:
+                file.write(struct.pack("<i", vertex.per_face_index))
