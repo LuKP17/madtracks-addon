@@ -252,7 +252,7 @@ def is_lightmapped(lightmap, filename, props):
 
     # add universal prefix for lightmaps
     filename = "geometry/" + filename
-    print("Comparing LDO filename {} with LDL instance name {}...".format(filename.lower(), lightmap.current_name.lower()))
+    dprint("Comparing LDO filename {} with LDL instance name {}...".format(filename.lower(), lightmap.current_name.lower()))
     return lightmap.current_name.lower() == filename.lower() or lightmap.current_name.lower() == "geometry/rampe_30.ldo"
 
 

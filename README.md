@@ -14,6 +14,7 @@ Since Mad Tracks has been released on Steam, the game data files are located in 
 Import/Export:
 * LDO files
   * Import game models with materials
+  * Collision models are not supported
 * INI descriptor files
   * Import game objects (movable props, lights, force fields, game zones...)
   * Only lights can be exported for now
