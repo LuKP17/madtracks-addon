@@ -34,7 +34,8 @@ import imp
 from . import (
     common,
     operators,
-    madini
+    madini,
+    trackpart
 )
 
 from .props import (
@@ -65,6 +66,7 @@ imp.reload(lightmap_panel)
 imp.reload(object)
 imp.reload(material)
 imp.reload(madini)
+imp.reload(trackpart)
 
 # Reloaded here because it's used in a class which is instanced here
 if "img_in" in locals():

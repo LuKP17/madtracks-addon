@@ -51,11 +51,15 @@ def import_file(filepath, scene, lightmap=None):
         ldo_filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
         ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene, lightmap)
         obj = bpy.context.active_object
-        if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in trackpart_types:
-            # assign trackpart properties
-            obj.madtracks.is_trackpart = True
-            if "invert" in ini_dic['object'].keys():
-                obj.madtracks.invert = ini_dic['object']['invert']
+        if "objecttype" in ini_dic['object'].keys():
+            obj.madtracks.object_type = ini_dic['object']['objecttype']
+            if obj.madtracks.object_type in trackpart_types:
+                # assign trackpart properties
+                obj.madtracks.is_trackpart = True
+                if "invert" in ini_dic['object'].keys():
+                    obj.madtracks.invert = ini_dic['object']['invert']
+            if obj.madtracks.object_type in collectible_types:
+                obj.madtracks.is_collectible = True
     elif "objecttype" in ini_dic['object'].keys():
         # create a base Blender object matching the type
         object_type = ini_dic['object']['objecttype']
@@ -90,12 +94,11 @@ def import_file(filepath, scene, lightmap=None):
                     return False
             else:
                 bpy.ops.object.empty_add(type='PLAIN_AXES')
+        obj = bpy.context.active_object
+        obj.madtracks.object_type = object_type
     else:
         bpy.ops.object.empty_add(type='PLAIN_AXES')
     
-    if "objecttype" in ini_dic['object'].keys() and ini_dic['object']['objecttype'] in collectible_types:
-        obj.madtracks.is_collectible = True
-
     obj = bpy.context.active_object
     obj.select = False
 
@@ -189,6 +192,7 @@ def import_light(section, filename, scene):
     rgb = section['rgbcolor']
     rgb = to_blender_color(rgb)
 
+    # FIXME lighting really isn't accurate
     # lamp type
     shape = section['lightshape']
     if shape == LIGHT_SHAPE_DIRECTIONAL:

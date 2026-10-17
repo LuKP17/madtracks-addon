@@ -306,7 +306,7 @@ class ExportMad(bpy.types.Operator):
         
         if frmt == FORMAT_LEVEL_INI:
             box = layout.box()
-            box.prop(props, "level_export_use_groups")
+            box.prop(props, "level_use_checkpoint_names")
         
         else:
             box = layout.box()
@@ -324,10 +324,10 @@ class ExportMad(bpy.types.Operator):
 TRACKPART EDITOR ------------------------------------------------------------------------
 """
 
-class ButtonTrackpartDropdown(bpy.types.Operator):
+class ButtonTrackpartAddDropdown(bpy.types.Operator):
     bl_idname = "trackpart.add_dropdown"
-    bl_label = "Add"
-    bl_description = "Import the dropdown trackpart at the 3D cursor or after the trackpart selected in the 3D view"
+    bl_label = "Add Dropdown"
+    bl_description = "Import the dropdown trackpart at the 3D cursor or link it after the trackpart selected in the 3D view"
 
     def execute(self, context):
         scene = context.scene
@@ -347,7 +347,7 @@ class ButtonTrackpartDropdown(bpy.types.Operator):
 class ButtonTrackpartReference(bpy.types.Operator):
     bl_idname = "trackpart.add_existing"
     bl_label = "Add Existing"
-    bl_description = "Import the referenced trackpart at the 3D cursor or after the trackpart selected in the 3D view"
+    bl_description = "Import the referenced trackpart at the 3D cursor or link it after the trackpart selected in the 3D view"
 
     def execute(self, context):
         scene = context.scene
@@ -367,7 +367,7 @@ class ButtonTrackpartReference(bpy.types.Operator):
 class ButtonTrackpartSelectLinked(bpy.types.Operator):
     bl_idname = "trackpart.select_linked"
     bl_label = "Select Linked"
-    bl_description = "Extend the 3D view selection to the end of the track(s)"
+    bl_description = "Extend the selection to the end of the tracks"
 
     def execute(self, context):
         scene = context.scene
@@ -384,14 +384,14 @@ class ButtonTrackpartSelectLinked(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class ButtonTrackpartDelete(bpy.types.Operator):
-    bl_idname = "trackpart.delete"
-    bl_label = "Delete Selected"
-    bl_description = "Delete the selected trackpart(s) and update track(s) linking"
+class ButtonTrackpartRecalculate(bpy.types.Operator):
+    bl_idname = "trackpart.recalculate"
+    bl_label = "Recalculate All"
+    bl_description = "Clean up trackpart links and recalculate all trackparts placement"
 
     def execute(self, context):
         scene = context.scene
-        trackpart.delete(scene, context.selected_objects)
+        trackpart.recalculate(scene)
 
         # Gets any encountered errors
         errors = get_errors()

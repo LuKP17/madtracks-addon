@@ -39,6 +39,14 @@ INI_CATEGORIES = (
     ("Desciptor", "Object descriptor", "", 1),
 )
 
+def check_ref(self, context):
+    scene = context.scene
+    obj = scene.madtracks.trackpart_ref
+    if obj and not obj.madtracks.is_trackpart:
+        scene.madtracks.trackpart_ref = None
+        msg_box("Object isn't a trackpart", icon='ERROR')
+
+
 class MadSceneProperties(bpy.types.PropertyGroup):
     # General
     madtracks_dir = StringProperty(
@@ -76,12 +84,12 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     level_import_lightmap = BoolProperty(
         name = "Cross-import Lightmap",
         default = False,
-        description = "Import the associated LDL file at the same time, matching the instances from both files"
+        description = "For visualization only. Import the associated LDL file at the same time, matching the instances from both files"
     )
-    level_export_use_groups = BoolProperty(
-        name = "Use Trackpart Groups",
+    level_use_checkpoint_names = BoolProperty(
+        name = "Use Checkpoint Names",
         default = True,
-        description = "Export trackpart sequences following \"Tracks\" group objects in alphabetical order (recommended)"
+        description = "Checkpoints order is based on their names in alphanumerical order instead of creation date"
     )
 
     # Trackpart editor
@@ -90,25 +98,31 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Choose a trackpart category",
         items = TRACKPART_CATEGORIES
     )
-    trackpart_small = EnumProperty(
-        name = "Small",
+    trackpart_control = EnumProperty(
+        name = "Control",
         description = "Choose a trackpart",
-        items = TRACKPARTS_SMALL
+        items = TRACKPARTS_CONTROL
     )
     trackpart_medium = EnumProperty(
         name = "Medium",
         description = "Choose a trackpart",
         items = TRACKPARTS_MEDIUM
     )
-    trackpart_golf = EnumProperty(
-        name = "Golf",
+    trackpart_small = EnumProperty(
+        name = "Small",
         description = "Choose a trackpart",
-        items = TRACKPARTS_GOLF
+        items = TRACKPARTS_SMALL
+    )
+    trackpart_wood = EnumProperty(
+        name = "Wood",
+        description = "Choose a trackpart",
+        items = TRACKPARTS_WOOD
     )
     trackpart_ref = PointerProperty(
         type = bpy.types.Object,
         name = "Trackpart Reference",
-        description = "Reference an existing trackpart in the scene"
+        description = "Reference an existing trackpart in the scene",
+        update = check_ref
     )
 
     # AI paths editor

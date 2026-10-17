@@ -127,46 +127,45 @@ def setup_scene(scene):
     - instances
     """
     props = scene.madtracks
+
+    bit_depth = props.lightmap_bitdepth
+    if bit_depth not in [16, 32]:
+        set_error('writing LDL header', "Bit depth %d unsupported" % bit_depth)
+        return
     
     bpy.ops.object.select_all(action='DESELECT')
 
     light_instances = []
-    if props.level_export_use_groups:
-        # add trackparts from group last
-        for i in range(len(scene.objects), 0, -1):
-            obj = scene.objects[i-1]
-            if obj.madtracks.is_world and obj.madtracks.ldo:
-                # world mesh is always first
-                light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
-                continue
-            if obj.madtracks.is_trackpart:
-                continue
-            if obj.madtracks.ldo and not obj.madtracks.is_collectible:
+    checkpoint_names = []
+    # loop through objects matching the level INI order
+    for i in range(len(scene.objects), 0, -1):
+        obj = scene.objects[i-1]
+        if obj.madtracks.is_world and obj.madtracks.ldo:
+            # world mesh is always first
+            light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+            continue
+        if obj.parent:
+            # skip, can be pieces of a breakable object for example
+            continue
+        if obj.madtracks.object_type == "checkpoint" and props.level_use_checkpoint_names:
+            # add in alphanumerical order in last
+            checkpoint_names.append(obj.name)
+            continue
+        if obj.madtracks.prev:
+            # skip, is part of a sequence
+            continue
+        if obj.madtracks.ldo and not obj.madtracks.is_collectible:
+            light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+        if obj.madtracks.is_trackpart:
+            # loop thru trackpart sequence
+            while obj.madtracks.nextt:
+                obj = obj.madtracks.nextt
                 light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
-        # export trackparts sequences in the alphabetical group order
-        if "Tracks" in bpy.data.groups.keys():
-            for name in sorted(bpy.data.groups['Tracks'].objects.keys()):
-                obj = bpy.data.objects[name]
-                light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, True))
-                if obj.madtracks.is_trackpart and obj.madtracks.nextt:
-                    # loop thru trackpart sequence
-                    while obj.madtracks.nextt:
-                        if scene.objects.find(obj.madtracks.nextt.name) == -1:
-                            # trackpart points to a deleted object
-                            obj.madtracks.nextt = None
-                            break
-                        obj = obj.madtracks.nextt
-                        light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, True))
-    else:
-        # add objects by creation order
-        for i in range(len(scene.objects), 0, -1):
-            obj = scene.objects[i-1]
-            if obj.madtracks.is_world and obj.madtracks.ldo:
-                # world mesh is always first
-                light_instances.insert(0, LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
-                continue
-            if obj.madtracks.ldo and not obj.madtracks.is_collectible:
-                light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
+    if props.level_use_checkpoint_names:
+        # loop through checkpoints
+        for name in sorted(checkpoint_names):
+            obj = scene.objects[name]
+            light_instances.append(LightInstance(obj.name, obj.madtracks.ldo, bakeable(obj)))
     
     for instance in light_instances:
         dprint("Instance: {} {} bake: {}".format(instance.name, instance.ldo, instance.bake))
@@ -206,10 +205,6 @@ def setup_scene(scene):
     # write LDL
     ldl_filepath = props.madtracks_dir + LDL_PATH + "LevelName.ldl"
     with open(ldl_filepath, 'wb') as fldl:
-        bit_depth = props.lightmap_bitdepth
-        if bit_depth not in [16, 32]:
-            set_error('writing LDL header', "Bit depth %d unsupported" % bit_depth)
-            return
         fldl.write(struct.pack("<4b", bit_depth, 0, 0, 0))
         fldl.write(struct.pack("<i", len(light_instances)))
         # fetch UVs from lightmesh data using an offset into its global array
@@ -257,6 +252,8 @@ def bake_preview(scene):
             mat.madtracks.rgba_save = (mat.diffuse_color[0], mat.diffuse_color[1], mat.diffuse_color[2], mat.alpha)
         mat.diffuse_color = (1.0, 1.0, 1.0)
         mat.alpha = 1.0
+        # no point in saving emit since lightmapped materials are shadeless
+        mat.emit = 0.0
         for i in range(len(mat.texture_slots)):
             mat.use_textures[i] = False
     

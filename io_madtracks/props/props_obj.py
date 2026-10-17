@@ -32,12 +32,39 @@ from bpy.props import (
 )
 from ..common import *
 
-
 def nextt_update_func(self, context):
     scene = context.scene
-    nextt = context.active_object.madtracks.nextt
-    if nextt:
-        bpy.data.groups['Tracks'].objects.unlink(nextt)
+    # objects can either be trackparts or AI nodes
+    obj = context.active_object
+    nextt = obj.madtracks.nextt
+    if not nextt:
+        return
+    if nextt == obj:
+        obj.madtracks.nextt = None
+        msg_box("Can't link an object with itself", icon='ERROR')
+        return
+    # TODO add similar check for AI nodes
+    if obj.type == 'MESH' and not nextt.madtracks.is_trackpart:
+        # trackparts always point to other trackparts
+        obj.madtracks.nextt = None
+        msg_box("Object isn't a trackpart", icon='ERROR')
+        return
+    # check for sequence loop
+    iterator = nextt
+    while iterator:
+        if iterator == obj:
+            obj.madtracks.nextt = None
+            msg_box("Sequence loops are not allowed", icon='ERROR')
+            return
+        iterator = iterator.madtracks.nextt
+    # check for multiple links
+    for scene_obj in scene.objects:
+        if scene_obj != obj and scene_obj.madtracks.nextt == nextt:
+            obj.madtracks.nextt = None
+            msg_box("Object is already linked", icon='ERROR')
+            return
+    # update other end of the link
+    nextt.madtracks.prev = obj
 
 
 class MadObjectProperties(bpy.types.PropertyGroup):
@@ -51,6 +78,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         name = "LDO",
         default = "",
         description = "Filename of the object's LDO"
+    )
+    object_type = StringProperty(
+        name = "Type",
+        default = "",
+        description = "Game object type"
     )
     is_collectible = BoolProperty(
         name = "Is Collectible",
@@ -146,4 +178,9 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         name = "Next",
         description = "Next object in the sequence",
         update = nextt_update_func
+    )
+    prev = PointerProperty(
+        type = bpy.types.Object,
+        name = "Prev",
+        description = "Previous object in the sequence"
     )

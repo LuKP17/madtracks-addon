@@ -40,56 +40,40 @@ def export_file(filepath, scene):
     with open(filepath, 'w') as fini:
         # empty line like the original levels
         fini.write("\n")
-
-        if props.level_export_use_groups:
-            # export trackparts from group last
-            for i in range(len(scene.objects), 0, -1):
-                obj = scene.objects[i-1]
-                if obj.madtracks.is_world:
-                    # skip world elements
-                    continue
-                if obj.parent:
-                    # skip, can be pieces of a breakable object for example
-                    continue
-                if obj.madtracks.is_trackpart:
-                    continue
-                export_instance(fini, obj, obj.location, obj.matrix_world)
-            # export trackparts sequences in the alphabetical group order (for checkpoints ordering)
-            if "Tracks" in bpy.data.groups.keys():
-                for name in sorted(bpy.data.groups['Tracks'].objects.keys()):
-                    obj = bpy.data.objects[name]
-                    export_instance(fini, obj, obj.location, obj.matrix_world)
-                    if obj.madtracks.is_trackpart and obj.madtracks.nextt:
-                        # loop thru trackpart sequence
-                        while obj.madtracks.nextt:
-                            if scene.objects.find(obj.madtracks.nextt.name) == -1:
-                                # trackpart points to a deleted object
-                                obj.madtracks.nextt = None
-                                break
-                            obj = obj.madtracks.nextt
-                            # object location/rotation calculated by the game engine
-                            export_instance(fini, obj)
-        else:
-            # loop thru objects by creation order
-            in_sequence = False
-            for i in range(len(scene.objects), 0, -1):
-                obj = scene.objects[i-1]
-                if obj.madtracks.is_world:
-                    # skip world elements
-                    continue
-                if obj.parent:
-                    # skip, can be pieces of a breakable object for example
-                    continue
-                if in_sequence:
+        # loop thru objects by creation order
+        checkpoint_names = []
+        for i in range(len(scene.objects), 0, -1):
+            obj = scene.objects[i-1]
+            if obj.madtracks.is_world:
+                # skip world elements
+                continue
+            if obj.parent:
+                # skip, can be pieces of a breakable object for example
+                continue
+            if obj.madtracks.object_type == "checkpoint" and props.level_use_checkpoint_names:
+                # export in alphanumerical order instead
+                checkpoint_names.append(obj.name)
+                continue
+            if obj.madtracks.prev:
+                # skip, is part of a sequence
+                continue
+            export_instance(fini, obj, obj.location, obj.matrix_world)
+            if obj.madtracks.is_trackpart:
+                # loop thru trackpart sequence, protect from infinite loops in any case
+                head = obj
+                while obj.madtracks.nextt:
+                    obj = obj.madtracks.nextt
+                    if obj == head:
+                        set_error('exporting trackpart sequences', "Infinite loop detected")
+                        return
                     # object location/rotation calculated by the game engine
                     export_instance(fini, obj)
-                else:
-                    export_instance(fini, obj, obj.location, obj.matrix_world)
-                if obj.madtracks.is_trackpart:
-                    if obj.madtracks.nextt:
-                        in_sequence = True
-                    else:
-                        in_sequence = False
+
+        if props.level_use_checkpoint_names:
+            # export checkpoints in alphanumerical order
+            for name in sorted(checkpoint_names):
+                obj = scene.objects[name]
+                export_instance(fini, obj, obj.location, obj.matrix_world)
 
 
 def export_instance(fini, obj, location=None, matrix_world=None):
@@ -109,6 +93,13 @@ def export_instance(fini, obj, location=None, matrix_world=None):
     fini.write("[" + name + "]\n")
     if location:
         pos = to_madtracks_axis(location)
+        if obj.madtracks.invert:
+            # undo inverted translation
+            obj_pos = np.array(obj.location)
+            obj_rot = np.array(obj.rotation_euler.to_matrix())
+            dummy_pos = obj.madtracks.dummy_pos
+            dummy_pos = np.matmul(dummy_pos, np.transpose(obj_rot))
+            pos = to_madtracks_axis(np.add(obj_pos, dummy_pos))
         fini.write("Position = " + float_format(pos[0]) + "," + float_format(pos[1]) + "," + float_format(pos[2]) + "\n")
     if matrix_world:
         if obj.type in ['CAMERA', 'LAMP']:
@@ -121,6 +112,20 @@ def export_instance(fini, obj, location=None, matrix_world=None):
             obj.select = False
         else:
             rot = to_madtracks_matrix(matrix_world)
+            if obj.madtracks.invert:
+                # temporarily undo inverted rotation
+                dummy_rotmat = mathutils.Matrix([obj.madtracks.dummy_rot1, obj.madtracks.dummy_rot2, obj.madtracks.dummy_rot3, obj.madtracks.dummy_rot4])
+                dummy_roteuler = dummy_rotmat.to_euler()
+                if dummy_roteuler[2] > 0:
+                    # left turn
+                    obj.rotation_euler.rotate_axis("Z", -ANGLE_180 + dummy_roteuler[2])
+                    rot = to_madtracks_matrix(obj.rotation_euler.to_matrix())
+                    obj.rotation_euler.rotate_axis("Z", ANGLE_180 - dummy_roteuler[2])
+                else:
+                    # right turn
+                    obj.rotation_euler.rotate_axis("Z", ANGLE_180 - dummy_roteuler[2])
+                    rot = to_madtracks_matrix(obj.rotation_euler.to_matrix())
+                    obj.rotation_euler.rotate_axis("Z", -ANGLE_180 + dummy_roteuler[2])
         fini.write("DirectionAT = " + float_format(rot[0][0]) + "," + float_format(rot[0][1]) + "," + float_format(rot[0][2]) + "\n")
         fini.write("DirectionUp = " + float_format(rot[1][0]) + "," + float_format(rot[1][1]) + "," + float_format(rot[1][2]) + "\n")
     fini.write("Filename = \"" + name + "\"\n\n")

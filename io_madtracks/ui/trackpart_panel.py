@@ -35,12 +35,14 @@ class MadTracksTrackpartPanel(bpy.types.Panel):
         row.prop(props, "trackpart_category", text="")
         layout.label("Trackpart:")
         row = layout.row(align=True)
-        if props.trackpart_category == "S":
-            row.prop(props, "trackpart_small", text="")
+        if props.trackpart_category == "C":
+            row.prop(props, "trackpart_control", text="")
         elif props.trackpart_category == "M":
             row.prop(props, "trackpart_medium", text="")
-        elif props.trackpart_category == "G":
-            row.prop(props, "trackpart_golf", text="")
+        elif props.trackpart_category == "S":
+            row.prop(props, "trackpart_small", text="")
+        elif props.trackpart_category == "W":
+            row.prop(props, "trackpart_wood", text="")
         row.operator("trackpart.add_dropdown", text="", icon='ZOOMIN')
         layout.label("Copy existing:")
         row = layout.row(align=True)
@@ -49,4 +51,4 @@ class MadTracksTrackpartPanel(bpy.types.Panel):
         row = layout.row()
         row.operator("trackpart.select_linked", text="Select Linked", icon='LINKED')
         row = layout.row()
-        row.operator("trackpart.delete", text="Delete Selection", icon='ZOOMOUT')
+        row.operator("trackpart.recalculate", text="Recalculate All", icon='FILE_REFRESH')

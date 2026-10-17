@@ -147,6 +147,7 @@ def import_descriptor_instance(section, lightmap, scene):
 
     ldo_filename = None
     is_trackpart = False
+    is_control = False
     is_collectible = False
     with open_insensitive(props.madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
         descriptor = INI(file).as_dict()
@@ -155,14 +156,16 @@ def import_descriptor_instance(section, lightmap, scene):
         if "objecttype" in descriptor['object'].keys():
             if descriptor['object']['objecttype'] in trackpart_types:
                 is_trackpart = True
-            if descriptor['object']['objecttype'] in collectible_types:
+            elif descriptor['object']['objecttype'] in control_types:
+                is_control = True
+            elif descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
 
     obj = None
     lightmapped = False
     if ldo_filename:
         lightmapped = is_lightmapped(lightmap, ldo_filename, props)
-        if not props.level_import_raceline and (is_trackpart or is_collectible):
+        if not props.level_import_raceline and (is_trackpart or is_control or is_collectible):
             # don't import descriptor
             if lightmapped:
                 lightmap.read_instance()
@@ -204,13 +207,18 @@ def import_descriptor_instance(section, lightmap, scene):
     # edit location and rotation of Blender object
     place_instance_object(section, obj)
 
-    if is_trackpart:
+    if is_trackpart or is_control:
+        # level importer could have reused an imported trackpart
+        obj.madtracks.nextt = None
+        obj.madtracks.prev = None
         if len(section.params) > 1:
-            trackpart.add(scene, obj)
+            obj.select = True
         elif len(section.params) == 1:
             # part of a trackpart sequence
             prev = bpy.context.selected_objects[0]
-            trackpart.add(scene, obj, prev)
+            trackpart.append(scene, obj, prev, skip_link=is_control)
+        if obj.madtracks.invert:
+            trackpart.invert(scene, obj)
 
     return True
 
