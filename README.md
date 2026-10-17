@@ -32,10 +32,10 @@ Level editor UI:
 
 * Paste the io_madtracks folder in Blender's add-ons folder (<blender_path>/scripts/addons)
 * Open Blender, go to "File > User Preferences > Add-ons" and check "Import-Export: Mad Tracks"
-* A new tab in 3D view left panel called "Mad Tracks" should appear
-* Extract the Steam game data.zip file anywhere and paste the path of the extracted folder in the "Mad Tracks" panel
-* For convenience, go to "File > User Preferences > Input" to switch to LMB for selecting objects and go to "Interface" tab to make sure "Cursor Depth" is on
-* Also for convenience, go to "File > Save Startup File" to avoid pasting the game data folder path at every new project
+* A new tab in left panel of the 3D View called "Mad Tracks" appeared
+* Extract the Steam game data.zip file anywhere and paste the path of the extracted folder at the top of the "Mad Tracks" panel
+* For convenience, go to "File > User Preferences > Input" to switch to LMB for selecting objects and go to "Interface" tab to make sure "Cursor Depth" is on, click on "Save User Settings"
+* Also for convenience, remove the default objects in the scene and go to "File > Save Startup File" to also avoid pasting the game data folder path at every new project
 * Read the [add-on guide](docs/ADDON_GUIDE.md) to get started
 
 ## License
