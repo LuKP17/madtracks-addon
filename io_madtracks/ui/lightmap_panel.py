@@ -25,8 +25,4 @@ class MadTracksLightmapPanel(bpy.types.Panel):
         props = context.scene.madtracks
         layout = self.layout
         row = layout.row()
-        row.prop(props, "lightmap_bitdepth", text="Bit Depth")
-        row = layout.row()
-        row.operator("lightmap.setup_scene", text="Setup Scene", icon="SCENE_DATA")
-        row = layout.row()
         row.operator("lightmap.bake_preview", text="Bake Lightmap", icon="RENDER_STILL")

@@ -481,35 +481,6 @@ class ButtonAIDrawPaths(bpy.types.Operator):
 LIGHTMAP EDITOR ------------------------------------------------------------------------
 """
 
-class ButtonLightmapSetup(bpy.types.Operator):
-    bl_idname = "lightmap.setup_scene"
-    bl_label = "Setup Lightmap Scene"
-    bl_description = "Merge selected objects into a lightmap object and export the LDL file (DESTRUCTIVE)"
-
-    def execute(self, context):
-        scene = context.scene
-       
-        lightmap.setup_scene(scene)
-
-        # Gets any encountered errors
-        errors = get_errors()
-        if "uccess" not in errors:
-            msg_box(
-                "{}\n".format(errors),
-                icon="ERROR"
-            )
-        context.window.cursor_set("DEFAULT")
-        return {"FINISHED"}
-    
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-
-    def draw(self, context):
-        row = self.layout.row()
-        row.label("Level instances will be merged into a single object.", icon="INFO")
-
-
 class ButtonLightmapBake(bpy.types.Operator):
     bl_idname = "lightmap.bake_preview"
     bl_label = "Bake Lightmap"
@@ -517,6 +488,10 @@ class ButtonLightmapBake(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+        
+        obj_idx = scene.objects.find("Lightmesh")
+        if obj_idx == -1:
+            lightmap.setup_scene(scene)
         lightmap.bake_preview(scene)
 
         # Gets any encountered errors
@@ -535,4 +510,4 @@ class ButtonLightmapBake(bpy.types.Operator):
 
     def draw(self, context):
         row = self.layout.row()
-        row.label("Baking may take a few seconds.", icon="INFO")
+        row.label("Baking may take a minute.", icon="INFO")

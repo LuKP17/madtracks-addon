@@ -233,12 +233,12 @@ def bake_preview(scene):
 
     obj_index = scene.objects.find("Lightmesh")
     if obj_index == -1:
-        set_error('baking lightmap', "No lightmesh object found, was the scene set up?")
+        set_error('baking lightmap', "No \"Lightmesh\" object found")
         return
     lightmesh = scene.objects[obj_index]
 
-    # FIXME doesn't prevent preview from breaking if a different object was selected beforehand
     bpy.ops.object.select_all(action='DESELECT')
+    scene.objects.active = lightmesh
     lightmesh.select = True
 
     # ensure lighting is correct
@@ -256,6 +256,7 @@ def bake_preview(scene):
         mat.emit = 0.0
         for i in range(len(mat.texture_slots)):
             mat.use_textures[i] = False
+            mat.use_shadeless = False
     
     # set up bake context
     lightmesh.data.uv_textures.active = lightmesh.data.uv_textures["LightMap"]
@@ -278,7 +279,7 @@ def bake_preview(scene):
     # update lightmap texture with baked image
     tex_idx = bpy.data.textures.find("lightmap")
     if tex_idx == -1:
-        set_error('previewing lightmap', "No lightmap texture found, was the scene set up?")
+        set_error('previewing lightmap', "No lightmap texture found")
     lightex = bpy.data.textures[tex_idx]
     lightex.image = lightmap_img
 
