@@ -20,7 +20,7 @@ From top to bottom:
 **1. Import/Export subpanel** buttons will open the file browser to import/export assets from/to the extracted data.zip file. The extracted gama data folder path pasted in this subpanel is needed to automatically import other necessary files from the folder (like texture files if a model is imported).  
 **2. Trackparts subpanel** buttons will add/select/delete trackparts and help to organize level trackpart sequences in a way the game can understand.  
 **3. AI Paths subpanel** buttons will add/link AI nodes and help to organize level AI paths in a way the game can understand.  
-**4. Lightmap subpanel** buttons will destructively setup the scene for lightmap baking and allow to (re)generate a lightmap image applied to the scene for preview.
+**4. Lightmap subpanel** buttons will destructively setup the scene for lightmap baking and allow to (re)generate a lightmap texture applied to the scene for preview.
 
 ### Importing game assets
 
@@ -128,3 +128,33 @@ AI opponents immediately respawn when they are too far from the path, meaning th
 * Level .dam files have a line called "RoadWidth", which is usually set between 25 and 28. This allows to set the base track boundaries. Edit the "Road Width" AI node object property to override the base width at that node, useful when the track surface is wider or smaller than trackparts.
 
 * Don't worry about ".00x" suffixes to AI node names when adding or renaming them, this is accounted for by the exporter. It happens when a node with the same name was previously deleted from the scene.
+
+### 4) Creating a lightmap
+
+Disclaimer: this feature is experimental. If you can't or don't want to use a lightmap in your level, leaving the original lightmap as-is should make the game abort loading the lightmap and use its own lighting engine instead, which provides okay lighting without shadows.  
+
+A lightmap is a texture containing the world lighting that is applied to the level instances in-game, for detailed lighting effects at low cost.  
+In a level editing context, the world lighting comes from the level's light instances, meaning all original lightmaps can be recreated after importing the level. You still need to enable ray shadows for lights that should cast shadows in the lightmap, and set the shading type of specific objects from "Flat" to "Smooth" depending on what looks best to you.  
+Taking the "Black out" level after a few of these tweaks as an example:
+
+![Lightmap recreation](../images/lightmap_recreation.png)
+
+On the right side of the picture you can see "Ray Shadow" has been enabled for the orange light at the back of the room. After importing a level, all lights that don't cast car shadows will have "No Shadow" enabled. You are free to tweak the world lighting however you like before generating the lightmap, as it will only affect the resulting texture.
+
+The lightmap baking algorithm follows the same object ordering than when exporting level instances, which is a game requirement. So make sure the level instances were exported properly before proceeding with the lightmap.
+
+Once the world lighting setup is done, the lightmap editor (Lightmap subpanel of the Main panel) will generate the lightmap files at the click of a button, which will also destructively merge bakeable level instances, so **save your project beforehand**:
+
+* A file named "LevelName.ldl" is written in *Gfx/Lightmaps* of the extracted game data folder.
+* A "LevelName_lgt0000" image is created in Blender, which is then applied to a "Lightmesh" object for a preview of the lightmap.
+
+Materials which emit light in-game like road trackparts won't emit light in the lightmap preview, as this is a post-processing effect not baked into the lightmap.  
+You can click the bake button again after some lighting adjustments until the lightmap looks correct. Then switch the 3D view window to the UV/Image editor and save the lightmap texture as PNG ("Image > Save As Image"). You will need to use an external software to resize the .png texture to 1024*1024 with linear interpolation and export it as .dds (with GIMP the compression type should be set to "BC1/DXT1").
+
+#### Tips and limitations
+
+* Switching to Rendered mode in the 3D view makes it much easier to visualize the world lighting that will be baked to the lightmap texture (like in the picture above).
+
+* The native Blender lightmap algorithm has a limitation where ~10% of the faces (the smallest ones) are missed, resulting in artifacts which need to be fixed by editing the lightmap texture by hand. Some stock models share vertices between faces based on their UV coordinates, which isn't supported by Blender's native unwrap algorithm, meaning these faces lighting can be distorted and spread across the entire lightmap texture. This breaks lightmaps for the levels that use these models and it is impossible to fix by hand.
+
+* The shaders settings chosen by the add-on don't perfectly emulate the game's shaders.
