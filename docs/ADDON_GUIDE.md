@@ -100,3 +100,31 @@ Finally, you need to define the checkpoint order. This is done by renaming the c
 * You will know all trackparts links are correct when nothing moved after clicking the "Recalculate All" editor button, which will also clean up invalid links.
 
 * Duplicating an entire sequence with *Alt+D* is possible. It can be used to stick two wooden roads side-by-side, or stitch two roads together by manually setting the "Next" object field from end of road 1 to beginning of road 2 and clicking "Recalculate All".
+
+### 3) Creating AI paths
+
+AI paths are made of nodes with a position and link(s) to the next node(s). They are used for AI navigation and to define the track boundaries.  
+The AI paths editor (AI Paths subpanel of the Main panel) allows to place AI nodes using the 3D cursor position with automatic linking to the selected node.
+
+![AI props](../images/ai_props.png)
+
+Similarly to the trackparts editor, the AI paths editor uses the "Next" object field of each AI node for the forward links. But this is not enough for branching paths, since a node has multiple next nodes. For this, AI nodes also have a "Root" object field you need to set manually to point to the root node of the branching paths. All links to a root node will be converted to forward links when exporting the paths. This allows to create and edit complex branching paths rather quickly.  
+AI nodes also have various properties to make the track boundary bigger or smaller, regulate the AI opponents speed and path-taking.
+
+The editor also provides a button to draw the "Next" and "Root" links to visualize how the paths will be exported.  
+AI opponents immediately respawn when they are too far from the path, meaning that jumps often have multiple paths to prevent AI cars from respawning mid-air.  
+
+![AI paths](../images/ai_paths.png)
+
+
+#### Tips
+
+* Importing stock levels will help you understand how AI paths were handled in the original game. You will for example see that AI paths don't loop at the start even for lap races.
+
+* Switching to Solid mode in the 3D view makes it much easier to see the AI nodes and links.
+
+* After drawing the paths, hit *Tab* to switch to edit mode, this will highlight the paths and show the direction of the links.
+
+* Level .dam files have a line called "RoadWidth", which is usually set between 25 and 28. This allows to set the base track boundaries. Edit the "Road Width" AI node object property to override the base width at that node, useful when the track surface is wider or smaller than trackparts.
+
+* Don't worry about ".00x" suffixes to AI node names when adding or renaming them, this is accounted for by the exporter. It happens when a node with the same name was previously deleted from the scene.
