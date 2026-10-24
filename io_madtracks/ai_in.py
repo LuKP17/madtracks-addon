@@ -11,7 +11,6 @@ Name:    ai_in
 Purpose: Imports level .gra files.
 
 Description:
-GRA level files contain nodes and edges for AI navigation.
 
 """
 
@@ -44,15 +43,14 @@ def import_file(filepath, scene):
 
 
 def import_ai_paths(ini, scene):
-    # use empty spheres with custom attributes, their name use the convention for IDs and edges:
-    # X-U,V,W,... means node has ID X and links to nodes U, V and W
+    node = None
     for section in ini.sections:
         if section.name.lower() == "node":
             ai.add_node(scene)
             node = scene.objects.active
             for param in section.params:
                 if param.name.lower() == "id":
-                    node.name = str(param.value) + '-'
+                    node.name = node.name + '_' + str(param.value)
                 elif param.name.lower() == "position":
                     node.location = to_blender_axis(param.value)
                 elif param.name.lower() == "motivboost":
@@ -64,7 +62,12 @@ def import_ai_paths(ini, scene):
         elif section.name.lower() == "edge":
             for param in section.params:
                 if param.name.lower() == "in":
-                    bpy.ops.object.select_pattern(pattern="{}-*".format(param.value), extend=False)
+                    node = scene.objects["AInode_{}".format(param.value)]
                 elif param.name.lower() == "out":
-                    node = bpy.context.selected_objects[0]
-                    node.name = node.name + str(param.value) + ','
+                    if not node.madtracks.nextt:
+                        node.madtracks.nextt = scene.objects["AInode_{}".format(param.value)]
+                    else:
+                        # mark branching path with reverse links (can't assign multiple next nodes)
+                        nextt = node.madtracks.nextt
+                        nextt.madtracks.prev = node
+                        scene.objects["AInode_{}".format(param.value)].madtracks.prev = node

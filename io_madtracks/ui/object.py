@@ -35,15 +35,17 @@ class MadTracksObjectPanel(bpy.types.Panel):
         # read-only properties
         box.label("Descriptor: {}".format(objprops.descriptor))
         box.label("LDO: {}".format(objprops.ldo))
+        # special instance properties
         if objprops.is_trackpart:
             box.label("Trackpart Properties", icon="PARTICLE_PATH")
             box.prop(objprops, "nextt")
-        if len(obj.users_group) > 0 and bpy.data.groups.find("Paths") != -1 and obj.users_group[0] == bpy.data.groups['Paths']:
-            box.label("AI node Properties", icon="PARTICLE_POINT")
+        if objprops.is_ainode:
+            box.label("AI Node Properties", icon="PARTICLE_POINT")
             box.prop(objprops, "roadwidth")
             box.prop(objprops, "motivboost")
             box.prop(objprops, "speedexpected")
             box.prop(objprops, "nextt")
+            box.prop(objprops, "prev")
         # all properties for object editing
         col = layout.column()
         col.prop(sceneprops, "edit_props")

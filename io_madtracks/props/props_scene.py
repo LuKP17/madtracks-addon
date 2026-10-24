@@ -125,13 +125,6 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         update = check_ref
     )
 
-    # AI paths editor
-    ai_startnode = PointerProperty(
-        type = bpy.types.Object,
-        name = "Start Node",
-        description = "Start node for level export"
-    )
-
     # Lightmap editor
     lightmap_bitdepth = IntProperty(
         name = "Bit depth",

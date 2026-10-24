@@ -51,6 +51,8 @@ class ImportMad(bpy.types.Operator):
 
         dprint("Importing {}".format(self.filepath))
 
+        bpy.ops.object.select_all(action='DESELECT')
+
         if frmt == FORMAT_INI:
             # INI category determined by scene property
             if props.ini_io_type == "Level":
@@ -411,30 +413,36 @@ AI PATHS EDITOR ----------------------------------------------------------------
 class ButtonAIAddNode(bpy.types.Operator):
     bl_idname = "ai.add_node"
     bl_label = "Add Node"
-    bl_description = "Add an AI node at the 3D cursor and link it to the selected node in the 3D view"
+    bl_description = "Add an AI node at the 3D cursor and link it to the selected node in the 3D view if there is one"
 
     def execute(self, context):
         scene = context.scene
 
+        prev = None
+        if len(context.selected_objects) == 1:
+            prev = context.selected_objects[0]
         # call method shared with level importer
         ai.add_node(scene)
-
         # move node to 3D cursor
         obj = scene.objects.active
         obj.location = bpy.context.scene.cursor_location
+        # link it to selection
+        if prev and prev.madtracks.is_ainode:
+            prev.madtracks.nextt = obj
+        obj.select = True
         return {"FINISHED"}
 
 
-class ButtonAILinkNodes(bpy.types.Operator):
-    bl_idname = "ai.link_nodes"
-    bl_label = "Link Nodes"
-    bl_description = "Rename all AI nodes following edges naming convention for export"
+class ButtonAIRenameNodes(bpy.types.Operator):
+    bl_idname = "ai.rename_nodes"
+    bl_label = "Rename Nodes"
+    bl_description = "Rename all AI nodes with their IDs. Done automatically when exporting"
 
     def execute(self, context):
         scene = context.scene
         props = scene.madtracks
 
-        ai.link_nodes(props.ai_startnode)
+        ai.rename_nodes(scene)
 
         # Gets any encountered errors
         errors = get_errors()
@@ -447,26 +455,26 @@ class ButtonAILinkNodes(bpy.types.Operator):
         return {"FINISHED"}
 
 
-# class ButtonAIDrawPaths(bpy.types.Operator):
-#     bl_idname = "ai.draw_paths"
-#     bl_label = "Draw Paths"
-#     bl_description = "Create curves following the linked nodes for visualization"
+class ButtonAIDrawPaths(bpy.types.Operator):
+    bl_idname = "ai.draw_paths"
+    bl_label = "Draw Paths"
+    bl_description = "Create a path object following links between nodes for edges visualization"
 
-#     def execute(self, context):
-#         scene = context.scene
-#         props = scene.madtracks
+    def execute(self, context):
+        scene = context.scene
+        props = scene.madtracks
 
-#         ai.draw_paths(scene, props.ai_startnode)
+        ai.draw_paths(scene, context)
         
-#         # Gets any encountered errors
-#         errors = get_errors()
-#         if "uccess" not in errors:
-#             msg_box(
-#                 "{}\n".format(errors),
-#                 icon="ERROR"
-#             )
-#         context.window.cursor_set("DEFAULT")
-#         return {"FINISHED"}
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
 
 
 """

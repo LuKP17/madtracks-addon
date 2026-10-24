@@ -43,11 +43,15 @@ def nextt_update_func(self, context):
         obj.madtracks.nextt = None
         msg_box("Can't link an object with itself", icon='ERROR')
         return
-    # TODO add similar check for AI nodes
     if obj.type == 'MESH' and not nextt.madtracks.is_trackpart:
         # trackparts always point to other trackparts
         obj.madtracks.nextt = None
         msg_box("Object isn't a trackpart", icon='ERROR')
+        return
+    if obj.type == 'EMPTY' and not nextt.madtracks.is_ainode:
+        # AI nodes always point to other nodes
+        obj.madtracks.nextt = None
+        msg_box("Object isn't an AI node", icon='ERROR')
         return
     # check for sequence loop
     iterator = nextt
@@ -57,14 +61,15 @@ def nextt_update_func(self, context):
             msg_box("Sequence loops are not allowed", icon='ERROR')
             return
         iterator = iterator.madtracks.nextt
-    # check for multiple links
-    for scene_obj in scene.objects:
-        if scene_obj != obj and scene_obj.madtracks.nextt == nextt:
-            obj.madtracks.nextt = None
-            msg_box("Object is already linked", icon='ERROR')
-            return
-    # update other end of the link
-    nextt.madtracks.prev = obj
+    if obj.madtracks.is_trackpart:
+        # check for multiple links
+        for scene_obj in scene.objects:
+            if scene_obj != obj and scene_obj.madtracks.nextt == nextt:
+                obj.madtracks.nextt = None
+                msg_box("Trackpart is already linked", icon='ERROR')
+                return
+        # update other end of the link
+        nextt.madtracks.prev = obj
 
 
 class MadObjectProperties(bpy.types.PropertyGroup):
@@ -154,6 +159,11 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     )
 
     # AI Nodes
+    is_ainode = BoolProperty(
+        name = "Is AI Node",
+        default = False,
+        description = "Object is an AI node"
+    )
     roadwidth = FloatProperty(
         name = "Road Width",
         default = 0.0,
@@ -179,8 +189,9 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         description = "Next object in the sequence",
         update = nextt_update_func
     )
+    # previous object in the sequence, but adapt name and tooltip for AI nodes since it's hidden otherwise
     prev = PointerProperty(
         type = bpy.types.Object,
-        name = "Prev",
-        description = "Previous object in the sequence"
+        name = "Root",
+        description = "Root node of branching path"
     )
