@@ -146,6 +146,9 @@ def add_user(scene, descriptor):
     elif len(sel) > 1:
         set_error('adding trackpart', "Please select one existing trackpart at most")
         return
+    # enforce import as level instance
+    as_instance_save = props.as_instance
+    props.as_instance = True
     # don't reuse already imported since it could be a custom modified version
     descriptor_in.import_file(filepath, scene)
     obj = bpy.context.active_object
@@ -161,6 +164,8 @@ def add_user(scene, descriptor):
         obj.select = True
     if obj.madtracks.invert:
         invert(scene, obj)
+    # restore scene props
+    props.as_instance = as_instance_save
 
 
 def append(scene, obj, prev, skip_link=False):
