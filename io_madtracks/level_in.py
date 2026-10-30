@@ -147,7 +147,7 @@ def import_descriptor_instance(section, lightmap, scene):
 
     ldo_filename = None
     is_trackpart = False
-    is_control = False
+    respawnable = False
     is_collectible = False
     with open_insensitive(props.madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
         descriptor = INI(file).as_dict()
@@ -156,8 +156,8 @@ def import_descriptor_instance(section, lightmap, scene):
         if "objecttype" in descriptor['object'].keys():
             if descriptor['object']['objecttype'] in trackpart_types:
                 is_trackpart = True
-            elif descriptor['object']['objecttype'] in control_types:
-                is_control = True
+            elif descriptor['object']['objecttype'] in respawn_types:
+                respawnable = True
             elif descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
 
@@ -165,7 +165,7 @@ def import_descriptor_instance(section, lightmap, scene):
     lightmapped = False
     if ldo_filename:
         lightmapped = is_lightmapped(lightmap, ldo_filename, props)
-        if not props.level_import_raceline and (is_trackpart or is_control or is_collectible):
+        if not props.level_import_raceline and (is_trackpart or is_collectible):
             # don't import descriptor
             if lightmapped:
                 lightmap.read_instance()
@@ -207,7 +207,7 @@ def import_descriptor_instance(section, lightmap, scene):
     # edit location and rotation of Blender object
     place_instance_object(section, obj)
 
-    if is_trackpart or is_control:
+    if is_trackpart:
         # level importer could have reused an imported trackpart
         obj.madtracks.nextt = None
         obj.madtracks.prev = None
@@ -216,7 +216,7 @@ def import_descriptor_instance(section, lightmap, scene):
         elif len(section.params) == 1:
             # part of a trackpart sequence
             prev = bpy.context.selected_objects[0]
-            trackpart.append(scene, obj, prev, skip_link=is_control)
+            trackpart.append(scene, obj, prev, skip_link=respawnable)
         if obj.madtracks.invert:
             trackpart.invert(scene, obj)
 

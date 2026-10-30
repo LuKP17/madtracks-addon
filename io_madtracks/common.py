@@ -120,8 +120,8 @@ world_filenames = [
     "Labo.ini"
 ]
 
-trackpart_types = {"trackpart", "looping"}
-control_types = {"start", "startfinish", "checkpoint", "finish"}
+trackpart_types = {"trackpart", "looping", "start", "startfinish", "checkpoint", "finish"}
+respawn_types = {"start", "startfinish", "checkpoint"}
 collectible_types = {"pickupbonus", "defi", "achievement1", "achievement2", "treasure"}
 
 """
