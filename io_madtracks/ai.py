@@ -26,6 +26,29 @@ from . import common
 
 from .common import *
 
+def add_user(context):
+    """
+    Used to handle nodes added by the user.
+    """
+    scene = context.scene
+    prev = None
+    if len(context.selected_objects) == 1:
+        prev = context.selected_objects[0]
+    # call method shared with level importer
+    add_node(scene)
+    # move node to 3D cursor
+    obj = scene.objects.active
+    obj.location = scene.cursor_location
+    # link it to selection
+    if prev and prev.madtracks.is_ainode:
+        prev.madtracks.nextt = obj
+    # draw paths
+    draw_paths(scene, context)
+    # update context
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select = True
+    scene.objects.active = obj
+
 
 def add_node(scene):
     bpy.ops.object.empty_add(type='SPHERE', radius=2)
@@ -51,11 +74,29 @@ def rename_nodes(scene):
             node_id += 1
 
 
+def cleanup_links(scene):
+    for i in range(len(scene.objects)-1, -1, -1):
+        obj = scene.objects[i]
+        if obj.madtracks.is_ainode:
+            if obj.madtracks.prev:
+                if scene.objects.find(obj.madtracks.prev.name) == -1:
+                    # prev object was deleted
+                    obj.madtracks.prev = None
+                    continue
+            if obj.madtracks.nextt:
+                if scene.objects.find(obj.madtracks.nextt.name) == -1:
+                    # next object was deleted
+                    obj.madtracks.nextt = None
+                    continue
+
+
 def draw_paths(scene, context):
     """ Draw edges that will be exported for preview. """
     # clear previous edges
     bpy.ops.object.select_pattern(pattern="AIedges", extend=False)
     bpy.ops.object.delete()
+    cleanup_links(scene)
+    # create curve object
     bpy.ops.curve.primitive_nurbs_path_add(location=(0,0,0))
     edges = scene.objects.active
     edges.name = "AIedges"

@@ -42,8 +42,9 @@ class MadTracksObjectPanel(bpy.types.Panel):
         if objprops.is_ainode:
             box.label("AI Node Properties", icon="PARTICLE_POINT")
             box.prop(objprops, "roadwidth")
-            box.prop(objprops, "motivboost")
             box.prop(objprops, "speedexpected")
+            box.prop(objprops, "motivboost")
+            box.prop(objprops, "randommotiv")
             box.prop(objprops, "nextt")
             box.prop(objprops, "prev")
         # all properties for object editing

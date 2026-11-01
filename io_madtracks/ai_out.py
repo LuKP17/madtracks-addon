@@ -37,6 +37,7 @@ def export_file(filepath, scene):
     Imports AI paths as Blender nodes by reading the level .gra file.
     """
     props = scene.madtracks
+    ai.cleanup_links(scene)
     # ensure node names are correct
     ai.rename_nodes(scene)
     # export level .gra file (underlying format is still the INI dialect)

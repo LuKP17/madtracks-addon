@@ -28,6 +28,4 @@ class MadTracksAIPanel(bpy.types.Panel):
         row = layout.row()
         row.operator("ai.add_node", text="Add Node", icon="ZOOMIN")
         row = layout.row()
-        row.operator("ai.draw_paths", text="Draw Paths", icon="CURVE_PATH")
-        row = layout.row()
-        row.operator("ai.rename_nodes", text="Rename Nodes", icon="COPY_ID")
+        row.operator("ai.draw_paths", text="Redraw Edges", icon="CURVE_PATH")

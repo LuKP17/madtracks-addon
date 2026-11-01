@@ -420,18 +420,16 @@ class ButtonAIAddNode(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
 
-        prev = None
-        if len(context.selected_objects) == 1:
-            prev = context.selected_objects[0]
-        # call method shared with level importer
-        ai.add_node(scene)
-        # move node to 3D cursor
-        obj = scene.objects.active
-        obj.location = bpy.context.scene.cursor_location
-        # link it to selection
-        if prev and prev.madtracks.is_ainode:
-            prev.madtracks.nextt = obj
-        obj.select = True
+        ai.add_user(context)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
         return {"FINISHED"}
 
 

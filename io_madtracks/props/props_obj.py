@@ -182,6 +182,12 @@ class MadObjectProperties(bpy.types.PropertyGroup):
         min = 0.0,
         description = "10 is a good value to encourage AI to slow down"
     )
+    randommotiv = IntProperty(
+        name = "Random Motiv",
+        default = 0,
+        min = 0,
+        description = "Used by branching nodes in path-finding minigames. Needs testing"
+    )
 
     nextt = PointerProperty(
         type = bpy.types.Object,

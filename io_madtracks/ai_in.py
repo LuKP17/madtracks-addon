@@ -55,6 +55,8 @@ def import_ai_paths(ini, scene):
                     node.location = to_blender_axis(param.value)
                 elif param.name.lower() == "motivboost":
                     node.madtracks.motivboost = param.value
+                elif param.name.lower() == "randommotiv":
+                    node.madtracks.randommotiv = param.value
                 elif param.name.lower() == "roadwidth":
                     node.madtracks.roadwidth = param.value
                 elif param.name.lower() == "speedexpected":
