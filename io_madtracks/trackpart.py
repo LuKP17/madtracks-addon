@@ -42,12 +42,12 @@ TRACKPART_CATEGORIES = (
     ("M", "Medium", "", 1),
     ("S", "Small", "", 2),
     ("W", "Wood", "", 3),
-    # ("G", "Golf", "", 4),
-    # ("U", "Custom", "Custom trackparts"),
+    ("G", "Golf", "", 4),
     # ("B", "Bobsleigh", "Bobsleigh trackparts"),
     # ("Q", "Croquet", "Croquet trackparts"),
     # ("V", "Vent", "Vent trackparts"),
     # ("A", "Antartica", "Antartica trackparts"),
+    # ("U", "Custom", "Custom trackparts"),
 )
 TRACKPARTS_CONTROL = (
     ("M_none_start.ini", "Start", ""),
@@ -101,6 +101,30 @@ TRACKPARTS_WOOD = (
     ("W_virage_90_right.ini", "Right Sides 90", ""),
     ("P_amorce_cache_in.ini", "Cache In", ""),
 )
+TRACKPARTS_GOLF = (
+    ("G_vert_begin.ini", "None to Golf", ""),
+    ("G_vert_rail_50.ini", "Straight 50", ""),
+    ("G_vert_rail_jump_50.ini", "Straight 50 Underside", ""),
+    ("G_vert_rail_bank_left_in.ini", "Bank Left In", ""),
+    ("G_vert_rail_bank_right_in.ini", "Bank Right In", ""),
+    ("G_vert_rail_bank_left.ini", "Bank Left", ""),
+    ("G_vert_rail_bank_right.ini", "Bank Right", ""),
+    ("G_vert_rail_bank_left_out.ini", "Bank Left Out", ""),
+    ("G_vert_rail_bank_right_out.ini", "Bank Right Out", ""),
+    ("G_vert_virage_90_left.ini", "Left 90", ""),
+    ("G_vert_virage_90_right.ini", "Right 90", ""),
+    ("G_vert_virage_90_bank_in_left.ini", "Left 90 Bank In", ""),
+    ("G_vert_virage_90_bank_out_rgt.ini", "Right 90 Bank In", ""),
+    ("G_vert_virage_90_bank_out_left.ini", "Left 90 Bank Out", ""),
+    ("G_vert_virage_90_bank_out_rght.ini", "Right 90 Bank Out", ""),
+    ("G_vert_rampe_30_up.ini", "Up 30", ""),
+    ("G_vert_chicane_left.ini", "Chicane Left", ""),
+    ("G_vert_chicane_right.ini", "Chicane Right", ""),
+    ("G_vert_rail_bump.ini", "Bump", ""),
+    ("G_vert_rail_colline.ini", "Hill", ""),
+    ("G_vert_green_curve.ini", "Green", ""),
+    ("G_vert_green_target.ini", "Green Target", ""),
+)
 
 ANGLE_180 = 3.141592654
 
@@ -116,6 +140,8 @@ def from_dropdown(scene):
         return props.trackpart_small
     elif props.trackpart_category == "W":
         return props.trackpart_wood
+    elif props.trackpart_category == "G":
+        return props.trackpart_golf
 
 
 def from_reference(scene):
