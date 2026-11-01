@@ -137,6 +137,10 @@ def to_blender_coord(vec):
     return [-vec[0] * SCALE, vec[2] * SCALE, vec[1] * SCALE]
 
 
+def to_blender_lengths(vec):
+    return [vec[0] / 2 * SCALE, vec[2] / 2 * SCALE, vec[1] / 2 * SCALE]
+
+
 def to_blender_scale(num):
     return num * SCALE
 
@@ -161,6 +165,10 @@ def to_madtracks_axis(vec):
 
 def to_madtracks_coord(vec):
     return [-vec[0] / SCALE, vec[2] / SCALE, vec[1] / SCALE]
+
+
+def to_madtracks_lengths(vec):
+    return [int(vec[0] * 2 / SCALE), int(vec[2] * 2 / SCALE), int(vec[1] * 2 / SCALE)]
 
 
 def to_madtracks_scale(num):

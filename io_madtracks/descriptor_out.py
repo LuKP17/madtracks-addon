@@ -38,12 +38,26 @@ def export_file(filepath, context):
 
     # export INI file taking the descriptor property as the filename
     obj = scene.objects.active
+    object_type = obj.madtracks.object_type
     filename = os.path.basename(filepath)
-    if obj.type != 'LAMP':
-        set_error('exporting INI descriptor', "Only lights descriptors are supported for export")
+    if object_type == 'light':
+        export_light(scene, filepath, obj)
+    elif object_type == 'gamearea':
+        export_game_area(filepath, obj)
+    elif object_type == 'aidetect':
+        export_ai_detect(filepath, obj)
+    else:
+        set_error('exporting INI descriptor', "Object type '{}' not supported for export".format(object_type))
         return
+    dprint("Exported {}".format(filename))
+
+
+def export_light(scene, filepath, obj):
+    if not obj.type == 'LAMP':
+        set_error('exporting light descriptor', "Object isn't a Blender lamp")
+        return
+    filename = os.path.basename(filepath)
     with open(os.path.dirname(filepath) + os.path.sep + filename, 'w') as fini:
-        # write the .ini file
         fini.write("[object]\n")
         fini.write("ObjectType = \"light\"\n")
         # NOTE saving on object custom properties, this prop will need to be changed manually
@@ -69,4 +83,24 @@ def export_file(filepath, context):
             fini.write("RGBColor = {}\n".format(vector_format(to_madtracks_color(obj.data.color))))
         if obj.madtracks.cast_shadows == False:
             fini.write("DontCastShadow = 1\n")
-    dprint("Exported {}".format(filename))
+
+
+def export_game_area(filepath, obj):
+    filename = os.path.basename(filepath)
+    with open(os.path.dirname(filepath) + os.path.sep + filename, 'w') as fini:
+        fini.write("[object]\n")
+        fini.write("ObjectType = \"gamearea\"\n")
+        fini.write("Lengths = {}\n".format(vector_format(to_madtracks_lengths(obj.scale))))
+
+
+def export_ai_detect(filepath, obj):
+    filename = os.path.basename(filepath)
+    with open(os.path.dirname(filepath) + os.path.sep + filename, 'w') as fini:
+        fini.write("[object]\n")
+        fini.write("ObjectType = \"AIDetect\"\n")
+        # NOTE doesn't take capsule primitive into account
+        primitive_type = obj.empty_draw_type
+        if primitive_type == 'CUBE':
+            primitive_type = 'BOX'
+        fini.write("PrimitiveType = \"{}\"\n".format(primitive_type.lower()))
+        fini.write("Lengths = {}\n".format(vector_format(to_madtracks_lengths(obj.scale))))

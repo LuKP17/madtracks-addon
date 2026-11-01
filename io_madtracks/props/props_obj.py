@@ -86,7 +86,7 @@ class MadObjectProperties(bpy.types.PropertyGroup):
     )
     object_type = StringProperty(
         name = "Type",
-        default = "",
+        default = "None",
         description = "Game object type"
     )
     is_collectible = BoolProperty(

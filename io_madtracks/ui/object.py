@@ -52,8 +52,9 @@ class MadTracksObjectPanel(bpy.types.Panel):
         col.prop(sceneprops, "edit_props")
         if sceneprops.edit_props:
             box = layout.box()
+            box.prop(objprops, "object_type")
             box.prop(objprops, "descriptor")
             box.prop(objprops, "ldo")
-            if objprops.descriptor and obj.type == 'LAMP':
+            if objprops.descriptor and obj.madtracks.object_type == 'light':
                 box.label("Light Properties", icon="LAMP_SPOT")
                 box.prop(objprops, "cast_shadows")

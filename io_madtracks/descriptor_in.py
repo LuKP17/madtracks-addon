@@ -128,10 +128,7 @@ def import_misc_params(section, scene, props):
             for mat in obj.data.materials:
                 mat.use_cast_shadows = True if section[param] == 0 else False
         if param == "lengths":
-            lengths = section[param]
-            obj.scale[0] = to_blender_scale(lengths[0]) / 2
-            obj.scale[1] = to_blender_scale(lengths[2]) / 2
-            obj.scale[2] = to_blender_scale(lengths[1]) / 2
+            obj.scale = to_blender_lengths(section[param])
         if param == "validationboxdownpoint":
             box_downpoint = section[param]
         if param == "validationboxuppoint":
