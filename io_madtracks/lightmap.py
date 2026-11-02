@@ -46,7 +46,7 @@ class LightInstance:
             - number of vertices are directly provided by LGT file
             - vertex UVs are indirectly provided by LGT file
         """
-        lgt_filepath = props.madtracks_dir + CACHE_PATH + self.ldo.replace("ldo", "lgt")
+        lgt_filepath = props.work_dir + CACHE_PATH + self.ldo.replace("ldo", "lgt")
         with open(lgt_filepath, 'rb') as flgt:
             # allows to export LDO meshes in the correct order
             ldo_loop_count = struct.unpack("<i", flgt.read(4))[0]
@@ -203,7 +203,7 @@ def setup_scene(scene):
     bpy.ops.object.editmode_toggle()
 
     # write LDL
-    ldl_filepath = props.madtracks_dir + LDL_PATH + "LevelName.ldl"
+    ldl_filepath = props.work_dir + LDL_PATH + "LevelName.ldl"
     with open(ldl_filepath, 'wb') as fldl:
         fldl.write(struct.pack("<4b", bit_depth, 0, 0, 0))
         fldl.write(struct.pack("<i", len(light_instances)))

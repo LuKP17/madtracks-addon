@@ -49,10 +49,10 @@ def check_ref(self, context):
 
 class MadSceneProperties(bpy.types.PropertyGroup):
     # General
-    madtracks_dir = StringProperty(
-        name = "Mad Tracks Directory",
+    work_dir = StringProperty(
+        name = "Work Directory",
         default = "",
-        description = "Extracted Mad Tracks data.zip folder path. Needed for import/export"
+        description = "Extracted Mad Tracks data.zip folder path. Importing/exporting files within this directory is recommended"
     )
 
     # Import/Export

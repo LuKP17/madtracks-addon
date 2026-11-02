@@ -49,7 +49,7 @@ def import_file(filepath, scene, lightmap=None):
     if "filename" in ini_dic['object'].keys() and ".ldo" in ini_dic['object']['filename']:
         # import LDO as the descriptor object
         ldo_filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
-        ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene, lightmap)
+        ldo_in.import_file(props.work_dir + LDO_PATH + ldo_filename, scene, lightmap)
         obj = bpy.context.active_object
         if "objecttype" in ini_dic['object'].keys():
             obj.madtracks.object_type = ini_dic['object']['objecttype']
@@ -67,9 +67,9 @@ def import_file(filepath, scene, lightmap=None):
             # Image Empty
             img_filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
             bpy.ops.object.empty_add(type='IMAGE')
-            imagepath = filepath_insensitive(props.madtracks_dir + HUD_PATH + img_filename)
+            imagepath = filepath_insensitive(props.work_dir + HUD_PATH + img_filename)
             img_filename = imagepath.rsplit(os.path.sep, 1)[-1]
-            bpy.ops.image.open(filepath=imagepath, directory=props.madtracks_dir + HUD_PATH, files=[{"name":img_filename, "name":img_filename}])
+            bpy.ops.image.open(filepath=imagepath, directory=props.work_dir + HUD_PATH, files=[{"name":img_filename, "name":img_filename}])
             obj = bpy.context.active_object
             obj.data = bpy.data.images[img_filename]
         elif object_type == "light":

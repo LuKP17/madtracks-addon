@@ -96,10 +96,10 @@ def import_file(filepath, scene, lightmap=None):
         parent.select = False
 
     # write LDO lightmap metadata in cache for lightmap export
-    lgt_filepath = props.madtracks_dir + CACHE_PATH + filename.replace(".ldo", ".lgt")
+    lgt_filepath = props.work_dir + CACHE_PATH + filename.replace(".ldo", ".lgt")
     if not os.path.exists(lgt_filepath):
-        if not os.path.exists(props.madtracks_dir + CACHE_PATH):
-            os.makedirs(props.madtracks_dir + CACHE_PATH)
+        if not os.path.exists(props.work_dir + CACHE_PATH):
+            os.makedirs(props.work_dir + CACHE_PATH)
         if props.as_instance:
             # write metadata for lightmap operators
             write_lgt_file(lgt_filepath, filename, obj, ldo)
@@ -190,7 +190,7 @@ def bmesh_add_atomic_mesh(bm, atomic, atomic_mesh, scene, vertex_offset=0, light
         # FIXME important but awfully handled
         material = atomic.materials[poly.material_id]
         if (bool(material.flags & MAT_FLAG_DIFFUSE)):
-            image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + material.diffuse_name, reuse=True)
+            image = img_in.import_file(props.work_dir + TEXTURE_PATH + material.diffuse_name, reuse=True)
             face[tex_layer].image = image
 
         # Assigns the UV mapping, prevent UVs from leaving boundaries? (see Bistrot.ldo door)
@@ -248,7 +248,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
                     image = None
                     filename = atomic_mat.diffuse_name
-                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
+                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -265,7 +265,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
                     image = None
                     filename = atomic_mat.envmap_name
-                    image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
+                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -286,7 +286,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new("lightmap", "IMAGE")
                     image_name = os.path.basename(lightmap.file.name)
                     filename = image_name.rsplit(".", 1)[0] + "_lgt0000"
-                    image = img_in.import_file(props.madtracks_dir + LDL_PATH + filename, reuse=False)
+                    image = img_in.import_file(props.work_dir + LDL_PATH + filename, reuse=False)
                     texture.image = image
                 texslot.texture = texture
                 texslot.blend_type = "MULTIPLY"

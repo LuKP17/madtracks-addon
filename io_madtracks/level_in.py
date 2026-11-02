@@ -59,7 +59,7 @@ def import_file(filepath, scene):
         # open lightmap file and read first instance
         filename = os.path.basename(filepath)
         filename = filename.replace(".ini", ".ldl")
-        lightmap_file = open_insensitive(props.madtracks_dir + LDL_PATH + filename, 'rb')
+        lightmap_file = open_insensitive(props.work_dir + LDL_PATH + filename, 'rb')
         lightmap = LDL(lightmap_file)
         success = lightmap.read_header()
         if success:
@@ -125,10 +125,10 @@ def import_LDO_instance(section, lightmap, scene):
     if not obj:
         # import LDO
         if lightmapped:
-            ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene, lightmap)
+            ldo_in.import_file(props.work_dir + LDO_PATH + filename, scene, lightmap)
             lightmap.read_instance()
         else:
-            ldo_in.import_file(props.madtracks_dir + LDO_PATH + filename, scene)
+            ldo_in.import_file(props.work_dir + LDO_PATH + filename, scene)
         obj = bpy.context.active_object
 
     # edit location and rotation of Blender object
@@ -149,7 +149,7 @@ def import_descriptor_instance(section, lightmap, scene):
     is_trackpart = False
     respawnable = False
     is_collectible = False
-    with open_insensitive(props.madtracks_dir + DESCRIPTOR_PATH + filename, 'r') as file:
+    with open_insensitive(props.work_dir + DESCRIPTOR_PATH + filename, 'r') as file:
         descriptor = INI(file).as_dict()
         if "filename" in descriptor['object'].keys() and ".ldo" in descriptor['object']['filename']:
             ldo_filename = descriptor['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
@@ -192,11 +192,11 @@ def import_descriptor_instance(section, lightmap, scene):
     if not obj:
         # import descriptor
         if lightmapped:
-            if not descriptor_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + filename, scene, lightmap):
+            if not descriptor_in.import_file(props.work_dir + DESCRIPTOR_PATH + filename, scene, lightmap):
                 return False
             lightmap.read_instance()
         else:
-            if not descriptor_in.import_file(props.madtracks_dir + DESCRIPTOR_PATH + filename, scene):
+            if not descriptor_in.import_file(props.work_dir + DESCRIPTOR_PATH + filename, scene):
                 return False
         obj = bpy.context.active_object
 
@@ -267,7 +267,7 @@ def is_lightmapped(lightmap, filename, props):
 def import_base_mesh(world_num, lightmap, scene):
     props = scene.madtracks
     filename = world_filenames[world_num]
-    filepath = props.madtracks_dir + WORLD_PATH + filename
+    filepath = props.work_dir + WORLD_PATH + filename
 
     with open_insensitive(filepath, 'r') as file:
         ini = INI(file)
@@ -276,7 +276,7 @@ def import_base_mesh(world_num, lightmap, scene):
     # import the world mesh with lightmap data
     if 'mesh' in ini_dic['base'].keys():
         ldo_filename = ini_dic['base']['mesh'].rsplit("/", 1)[1] # strip partial dirpath
-        ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene, lightmap)
+        ldo_in.import_file(props.work_dir + LDO_PATH + ldo_filename, scene, lightmap)
         lightmap.read_instance()
         obj = bpy.context.active_object
         # world doesn't cast shadows

@@ -183,7 +183,7 @@ class ImportMad(bpy.types.Operator):
             box.label("No options available.")
 
     def invoke(self, context, event):
-        if context.scene.madtracks.madtracks_dir == "":
+        if context.scene.madtracks.work_dir == "":
             msg_box("No data directory specified.", icon="ERROR")
         else:
             self.filepath = context.scene.madtracks.work_dir + os.path.sep
@@ -207,7 +207,7 @@ class ExportMad(bpy.types.Operator):
         
         frmt = get_format(self.filepath)
         
-        if props.madtracks_dir == "":
+        if props.work_dir == "":
             msg_box("No data directory specified.")
             return {'CANCELLED'}
 
@@ -318,7 +318,7 @@ class ExportMad(bpy.types.Operator):
             box.label("No options available.")
     
     def invoke(self, context, event):
-        if context.scene.madtracks.madtracks_dir == "":
+        if context.scene.madtracks.work_dir == "":
             msg_box("No data directory specified.", icon="ERROR")
         else:
             context.window_manager.fileselect_add(self)

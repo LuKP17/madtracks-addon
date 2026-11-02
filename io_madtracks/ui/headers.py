@@ -32,9 +32,9 @@ class MadTracksIOToolPanel(bpy.types.Panel):
         props = context.scene.madtracks
 
         box = self.layout.box()
-        box.label("Mad Tracks Data Path:")
-        box.prop(props, "madtracks_dir", text="")
-        if props.madtracks_dir == "":
+        box.label("Work Directory:")
+        box.prop(props, "work_dir", text="")
+        if props.work_dir == "":
             box.label("No directory specified", icon="ERROR")
 
         row = self.layout.row(align=True)

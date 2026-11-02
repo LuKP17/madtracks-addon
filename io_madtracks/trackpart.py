@@ -162,7 +162,7 @@ def add_user(scene, descriptor):
     if not descriptor:
         set_error('adding trackpart', "No trackpart set")
         return
-    filepath = props.madtracks_dir + DESCRIPTOR_PATH + descriptor
+    filepath = props.work_dir + DESCRIPTOR_PATH + descriptor
 
     # look for a selected trackpart to append to
     prev = None

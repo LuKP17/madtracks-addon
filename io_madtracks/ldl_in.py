@@ -60,7 +60,7 @@ def import_file(filepath, scene):
             if ldoname == "rampe_30.ldo":
                 ldoname = "rampe_30_up.ldo"
             if not lightmap.is_empty:
-                ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldoname, scene, lightmap)
+                ldo_in.import_file(props.work_dir + LDO_PATH + ldoname, scene, lightmap)
             # make lightmap UV layer active
             obj = scene.objects.active
             obj.data.uv_textures.active = obj.data.uv_textures["LightMap"]

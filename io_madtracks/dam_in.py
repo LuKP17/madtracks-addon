@@ -55,7 +55,7 @@ def import_file(filepath, scene):
 def import_world(world_num, scene):
     props = scene.madtracks
     filename = world_filenames[world_num]
-    filepath = props.madtracks_dir + WORLD_PATH + filename
+    filepath = props.work_dir + WORLD_PATH + filename
 
     with open_insensitive(filepath, 'r') as file:
         dprint("Reading world file %s..." % filename)
@@ -92,7 +92,7 @@ def import_world(world_num, scene):
             material = bpy.data.materials.new(texture_name)
             texslot = material.texture_slots.add()
             texture = bpy.data.textures.new(texture_name, "IMAGE")
-            image = img_in.import_file(props.madtracks_dir + TEXTURE_PATH + texture_name, reuse=False)
+            image = img_in.import_file(props.work_dir + TEXTURE_PATH + texture_name, reuse=False)
             texture.image = image
             texslot.texture = texture
             # other convenient material properties
@@ -112,7 +112,7 @@ def import_world(world_num, scene):
     # import the optional world mesh
     if 'mesh' in ini_dic['base'].keys():
         ldo_filename = ini_dic['base']['mesh'].rsplit("/", 1)[1] # strip partial dirpath
-        ldo_in.import_file(props.madtracks_dir + LDO_PATH + ldo_filename, scene)
+        ldo_in.import_file(props.work_dir + LDO_PATH + ldo_filename, scene)
         obj = bpy.context.active_object
         # world doesn't cast shadows
         for mat in obj.data.materials:
