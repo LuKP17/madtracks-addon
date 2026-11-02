@@ -65,13 +65,13 @@ def import_file(filepath, scene, lightmap=None):
         object_type = ini_dic['object']['objecttype']
         if object_type == "minimap":
             # Image Empty
-            filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
+            img_filename = ini_dic['object']['filename'].rsplit("/", 1)[1] # strip partial dirpath
             bpy.ops.object.empty_add(type='IMAGE')
-            imagepath = filepath_insensitive(props.madtracks_dir + HUD_PATH + filename)
-            filename = imagepath.rsplit(os.path.sep, 1)[-1]
-            bpy.ops.image.open(filepath=imagepath, directory=props.madtracks_dir + HUD_PATH, files=[{"name":filename, "name":filename}])
+            imagepath = filepath_insensitive(props.madtracks_dir + HUD_PATH + img_filename)
+            img_filename = imagepath.rsplit(os.path.sep, 1)[-1]
+            bpy.ops.image.open(filepath=imagepath, directory=props.madtracks_dir + HUD_PATH, files=[{"name":img_filename, "name":img_filename}])
             obj = bpy.context.active_object
-            obj.data = bpy.data.images[filename]
+            obj.data = bpy.data.images[img_filename]
         elif object_type == "light":
             # Lamp
             import_light(ini_dic['object'], filename, scene)

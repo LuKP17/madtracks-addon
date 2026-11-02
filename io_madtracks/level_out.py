@@ -57,7 +57,7 @@ def export_file(filepath, scene):
             if obj.madtracks.prev:
                 # skip, is part of a sequence
                 continue
-            export_instance(fini, obj, obj.location, obj.matrix_world)
+            export_instance(fini, obj)
             if obj.madtracks.is_trackpart:
                 # loop thru trackpart sequence, protect from infinite loops in any case
                 head = obj
@@ -67,16 +67,16 @@ def export_file(filepath, scene):
                         set_error('exporting trackpart sequences', "Infinite loop detected")
                         return
                     # object location/rotation calculated by the game engine
-                    export_instance(fini, obj)
+                    export_instance(fini, obj, location=False, rotation=False)
 
         if props.level_use_checkpoint_names:
             # export checkpoints in alphanumerical order
             for name in sorted(checkpoint_names):
                 obj = scene.objects[name]
-                export_instance(fini, obj, obj.location, obj.matrix_world)
+                export_instance(fini, obj)
 
 
-def export_instance(fini, obj, location=None, matrix_world=None):
+def export_instance(fini, obj, location=True, rotation=True):
     """
     Writes a Blender object as a level instance in the level file.
     Handles trackpart sequences, which are Object instances without position/rotation parameters,
@@ -92,7 +92,7 @@ def export_instance(fini, obj, location=None, matrix_world=None):
 
     fini.write("[" + name + "]\n")
     if location:
-        pos = to_madtracks_axis(location)
+        pos = to_madtracks_axis(obj.location)
         if obj.madtracks.invert:
             # undo inverted translation
             obj_pos = np.array(obj.location)
@@ -101,17 +101,17 @@ def export_instance(fini, obj, location=None, matrix_world=None):
             dummy_pos = np.matmul(dummy_pos, np.transpose(obj_rot))
             pos = to_madtracks_axis(np.add(obj_pos, dummy_pos))
         fini.write("Position = " + float_format(pos[0]) + "," + float_format(pos[1]) + "," + float_format(pos[2]) + "\n")
-    if matrix_world:
+    if rotation:
         if obj.type in ['CAMERA', 'LAMP']:
             # temporarily undo additional rotation done during level import
             bpy.ops.object.select_all(action='DESELECT')
             obj.select = True
             bpy.ops.transform.rotate(value=-1.5708, constraint_axis=(True, False, False), constraint_orientation='LOCAL')
-            rot = to_madtracks_matrix(matrix_world)
+            rot = to_madtracks_matrix(obj.rotation_euler.to_matrix())
             bpy.ops.transform.rotate(value=1.5708, constraint_axis=(True, False, False), constraint_orientation='LOCAL')
             obj.select = False
         else:
-            rot = to_madtracks_matrix(matrix_world)
+            rot = to_madtracks_matrix(obj.rotation_euler.to_matrix())
             if obj.madtracks.invert:
                 # temporarily undo inverted rotation
                 dummy_rotmat = mathutils.Matrix([obj.madtracks.dummy_rot1, obj.madtracks.dummy_rot2, obj.madtracks.dummy_rot3, obj.madtracks.dummy_rot4])
