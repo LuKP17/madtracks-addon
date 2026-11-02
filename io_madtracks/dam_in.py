@@ -22,6 +22,7 @@ if "bpy" in locals():
     imp.reload(ldo_in)
     imp.reload(img_in)
     imp.reload(madini)
+    imp.reload(camera)
 
 import bpy
 
@@ -29,13 +30,13 @@ from . import common
 from . import ldo_in
 from . import img_in
 from . import madini
+from . import camera
 
 from .common import *
 from .ldo_in import *
 from .img_in import *
 from .madini import *
-
-from math import radians
+from .camera import *
 
 
 def import_file(filepath, scene):
@@ -121,88 +122,8 @@ def import_world(world_num, scene):
 
 
 def import_cameras(ini_dic, scene):
-    # create camera to be used for the intro/outro
-    bpy.ops.object.camera_add(location=(0, 0, 0), rotation=(0, 0, -1.570))
-    cam_intro = scene.objects.active
-    cam_intro.name = "Camera_Intro"
-    cam_intro.data.lens_unit = 'FOV'
-    cam_intro.data.angle = 0.788889
-    cam_intro.data.clip_start = ini_dic['camera']['nearclip']
-    cam_intro.data.clip_end = ini_dic['camera']['farclip']
-    cam_intro.data.sensor_width = 15
-    cam_intro.data.draw_size = 10
-    cam_intro.data.show_passepartout = False
-    cam_outro = cam_intro.copy()
-    scene.objects.link(cam_outro)
-    cam_outro.name = "Camera_Outro"
-    # setup intro/outro paths
-    setup_spectator_camera(cam_intro, ini_dic['spectator_camera'], scene)
-    setup_spectator_camera(cam_outro, ini_dic['spectator_camera_2'], scene)
-
-
-def setup_spectator_camera(cam, settings, scene):
-    # create anchor objects
-    bpy.ops.object.empty_add(type='PLAIN_AXES')
-    rotcenter_obj = scene.objects.active
-    rotcenter_obj.name = "RotCenter"
-    rotcenter_obj.location = to_blender_axis(settings['rotcenter'])
-    bpy.ops.object.empty_add(type='PLAIN_AXES')
-    lookat_obj = scene.objects.active
-    lookat_obj.name = "LookAt"
-    lookat_obj.location = to_blender_axis(settings['lookat'])
-
-    # add camera constraints using anchor objects
-    scene.objects.active = cam
-    bpy.ops.object.constraint_add(type='PIVOT')
-    cam.constraints["Pivot"].target = rotcenter_obj
-    cam.constraints["Pivot"].rotation_range = 'Y'
-    bpy.ops.object.constraint_add(type='COPY_LOCATION')
-    cam.constraints["Copy Location"].target = rotcenter_obj
-    cam.constraints["Copy Location"].use_offset = True
-    cam.constraints["Copy Location"].owner_space = 'LOCAL'
-    bpy.ops.object.constraint_add(type='TRACK_TO')
-    cam.constraints["Track To"].target = lookat_obj
-    cam.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
-    cam.constraints["Track To"].up_axis = 'UP_Y'
-
-    # place camera
-    bpy.ops.object.select_all(action='DESELECT')
-    cam.select = True
-    cam.location[0] = settings['radius']
-
-    # set timeline
-    bpy.ops.script.python_file_run(filepath="C:\\Program Files\\Blender 2.79b\\2.79\\scripts\\presets\\framerate\\60.py")
-    bpy.context.scene.frame_end = 60 * settings['introlength']
-
-    # create up-down-up height keyframes with cyclic extrapolation
-    # FIXME up-down motion timing isn't 100% accurate
-    if settings['upspeed'] > 0:
-        uprange_frames = 180 / settings['upspeed']
-        scene.frame_current = 90
-        cam.location[2] = settings['heigth'] + (settings['uprange'])
-        bpy.ops.anim.keyframe_insert_menu(type='Location')
-        scene.frame_current += uprange_frames
-        cam.location[2] = settings['heigth'] - (settings['uprange'])
-        bpy.ops.anim.keyframe_insert_menu(type='Location')
-        scene.frame_current += uprange_frames
-        cam.location[2] = settings['heigth'] + (settings['uprange'])
-        bpy.ops.anim.keyframe_insert_menu(type='Location')
-        bpy.context.area.type = 'GRAPH_EDITOR'
-        bpy.ops.graph.extrapolation_type(type='MAKE_CYCLIC')
-        # lock up-down height channel
-        bpy.ops.anim.channels_editable_toggle()
-        bpy.context.area.type = 'VIEW_3D'
-    else:
-        cam.location[2] = settings['heigth']
-
-    # create an initial and a linear rotation keyframe (linear extrapolation means infinite rotation beyond these two keyframes)
-    scene.frame_current = 1
-    bpy.ops.anim.keyframe_insert_menu(type='Rotation')
-    # RotSpeed value is in degrees per second
-    scene.frame_current = 60
-    bpy.ops.transform.rotate(value=radians(settings['rotspeed']), axis=(0, 0, 1))
-    bpy.ops.anim.keyframe_insert_menu(type='Rotation')
-    scene.frame_current = 1
-    bpy.context.area.type = 'GRAPH_EDITOR'
-    bpy.ops.graph.extrapolation_type(type='LINEAR')
-    bpy.context.area.type = 'VIEW_3D'
+    camera.create_spec_cams(scene, ini_dic['camera'])
+    cam = scene.objects['Camera_Intro']
+    camera.setup_spec_cam(cam, ini_dic['spectator_camera'], scene)
+    cam = scene.objects['Camera_Outro']
+    camera.setup_spec_cam(cam, ini_dic['spectator_camera_2'], scene)

@@ -24,6 +24,7 @@ import time
 from . import trackpart
 from . import ai
 from . import lightmap
+from . import camera
 
 from .common import *
 
@@ -511,3 +512,70 @@ class ButtonLightmapBake(bpy.types.Operator):
     def draw(self, context):
         row = self.layout.row()
         row.label("Baking may take a minute.", icon="INFO")
+
+
+"""
+CAMERAS EDITOR ------------------------------------------------------------------------
+"""
+
+class ButtonCamerasCreate(bpy.types.Operator):
+    bl_idname = "camera.create_spec_cams"
+    bl_label = "Create Cameras"
+    bl_description = "Add intro/outro cameras at the 3D view origin. The intro cam will be selected"
+
+    def execute(self, context):
+        scene = context.scene
+        
+        camera.create_user(scene)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+class ButtonCamerasReset(bpy.types.Operator):
+    bl_idname = "camera.reset_spec_cams"
+    bl_label = "Reset Cameras"
+    bl_description = "Delete and re-create intro/outro cameras"
+
+    def execute(self, context):
+        scene = context.scene
+        
+        camera.reset_spec_cams(scene)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}
+
+
+class ButtonCamerasExport(bpy.types.Operator):
+    bl_idname = "camera.export_spec_cams"
+    bl_label = "Export Cameras"
+    bl_description = "Write intro/outro cameras settings to paste in the level .dam file"
+
+    def execute(self, context):
+        scene = context.scene
+        
+        camera.export_spec_cams(scene)
+
+        # Gets any encountered errors
+        errors = get_errors()
+        if "uccess" not in errors:
+            msg_box(
+                "{}\n".format(errors),
+                icon="ERROR"
+            )
+        context.window.cursor_set("DEFAULT")
+        return {"FINISHED"}

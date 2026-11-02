@@ -35,7 +35,8 @@ from . import (
     common,
     operators,
     madini,
-    trackpart
+    trackpart,
+    camera
 )
 
 from .props import (
@@ -49,6 +50,7 @@ from .ui import (
     trackpart_panel,
     ai_panel,
     lightmap_panel,
+    camera_panel,
     object,
     material
 )
@@ -63,10 +65,12 @@ imp.reload(headers)
 imp.reload(trackpart_panel)
 imp.reload(ai_panel)
 imp.reload(lightmap_panel)
+imp.reload(camera_panel)
 imp.reload(object)
 imp.reload(material)
 imp.reload(madini)
 imp.reload(trackpart)
+imp.reload(camera)
 
 # Reloaded here because it's used in a class which is instanced here
 if "img_in" in locals():
@@ -99,6 +103,8 @@ if "ldl_in" in locals():
     imp.reload(ldl_in)
 if "lightmap" in locals():
     imp.reload(lightmap)
+if "camera" in locals():
+    imp.reload(camera)
 
 
 # Makes common variables and classes directly accessible
