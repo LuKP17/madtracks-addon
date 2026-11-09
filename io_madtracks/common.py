@@ -40,6 +40,7 @@ ERRORS = {}  # Dictionary that holds error messages
 # If True, more debug messages will be printed
 DEBUG = True
 
+# NOTE modifying this value will break quite a few things
 SCALE = 1
 
 

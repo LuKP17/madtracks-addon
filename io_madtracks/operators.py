@@ -485,7 +485,7 @@ LIGHTMAP EDITOR ----------------------------------------------------------------
 class ButtonLightmapBake(bpy.types.Operator):
     bl_idname = "lightmap.bake_preview"
     bl_label = "Bake Lightmap"
-    bl_description = "Generate the lightmap image and apply it to the scene for preview"
+    bl_description = "(Destructive) Generate the lightmap image and apply it to a lightmesh for preview"
 
     def execute(self, context):
         scene = context.scene
@@ -510,8 +510,12 @@ class ButtonLightmapBake(bpy.types.Operator):
         return wm.invoke_props_dialog(self)
 
     def draw(self, context):
+        obj_idx = context.scene.objects.find("Lightmesh")
         row = self.layout.row()
         row.label("Baking may take a minute.", icon="INFO")
+        if obj_idx == -1:
+            row = self.layout.row()
+            row.label("Objects will be merged together. Proceed?", icon="QUESTION")
 
 
 """

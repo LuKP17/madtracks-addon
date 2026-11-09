@@ -12,13 +12,18 @@ The goal of this project is to import, edit and export them using Blender.
 
 * Import game models with materials (collision models not supported)
 * Import game objects (movable props, lights, force fields, game areas, ...)
-* Export light objects
+* Export light and area objects
 * Import/export levels with object instances, AI paths, intro/outro cameras, lightmap
 
 Level editor:
 * Edit trackpart sequences
 * Edit AI paths
 * Generate lightmaps (experimental)
+
+Game modes supported:
+* Race (laps, A-B, elimination rules, time trial rules)
+
+All other modes may be supported, they will be added to the list when successfully tested.
 
 ## Setting up
 

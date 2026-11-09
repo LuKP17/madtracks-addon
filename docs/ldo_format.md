@@ -184,7 +184,7 @@ It represents a 3D model made of meshes and materials.
 | `~visibility3` |                                                    |
 | `~visibility4` | Seem like visibility related. Needs testing        |
 |                |                                                    |
-| `<unknown3>`   | A mysterious index: "_Index < m_CurrentSize"       |
+| `<unknown3>`   | Triggers out-of-bounds array traversals easily     |
 |                |                                                    |
 | `~vacnt`       | Behaves like a vertex attribute count.             |
 |                | Indicates the number of the following bytes.       |
