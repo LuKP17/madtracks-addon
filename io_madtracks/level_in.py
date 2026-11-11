@@ -156,9 +156,9 @@ def import_descriptor_instance(section, lightmap, scene):
         if "objecttype" in descriptor['object'].keys():
             if descriptor['object']['objecttype'] in trackpart_types:
                 is_trackpart = True
-            elif descriptor['object']['objecttype'] in respawn_types:
+            if descriptor['object']['objecttype'] in respawn_types:
                 respawnable = True
-            elif descriptor['object']['objecttype'] in collectible_types:
+            if descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
 
     obj = None

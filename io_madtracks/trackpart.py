@@ -220,6 +220,8 @@ def append(scene, obj, prev, skip_link=False):
         dummy_pos = np.matmul(dummy_pos, np.transpose(prev_rot))
         obj.location = np.add(prev_pos, dummy_pos)
 
+    if skip_link:
+        obj.select = False
     if not skip_link:
         obj.select = True
         prev.select = False
