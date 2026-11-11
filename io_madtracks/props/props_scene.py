@@ -91,6 +91,11 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         default = True,
         description = "Checkpoints order is based on their names in alphanumerical order instead of creation date"
     )
+    reverse_ai_paths = BoolProperty(
+        name = "Reverse Paths",
+        default = False,
+        description = "AI paths are reversed when exporting"
+    )
 
     # Trackpart editor
     trackpart_category = EnumProperty(

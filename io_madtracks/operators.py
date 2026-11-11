@@ -286,6 +286,9 @@ class ExportMad(bpy.types.Operator):
         if frmt == FORMAT_LEVEL_INI:
             box.prop(props, "level_use_checkpoint_names")
         
+        elif frmt == FORMAT_GRA:
+            box.prop(props, "reverse_ai_paths")
+        
         else:
             box.label("No options available.")
     

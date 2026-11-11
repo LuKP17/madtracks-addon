@@ -55,11 +55,17 @@ def export_file(filepath, scene):
             if obj.madtracks.is_ainode:
                 if obj.madtracks.prev:
                     # reverse link for branching paths (transform to forward link)
-                    export_ai_edge(fgra, obj.madtracks.prev, obj)
+                    if props.reverse_ai_paths:
+                        export_ai_edge(fgra, obj, obj.madtracks.prev)
+                    else:
+                        export_ai_edge(fgra, obj.madtracks.prev, obj)
                 if obj.madtracks.nextt:
                     # forward link, export if no reverse link
                     if not obj.madtracks.nextt.madtracks.prev == obj:
-                        export_ai_edge(fgra, obj, obj.madtracks.nextt)
+                        if props.reverse_ai_paths:
+                            export_ai_edge(fgra, obj.madtracks.nextt, obj)
+                        else:
+                            export_ai_edge(fgra, obj, obj.madtracks.nextt)
 
 
 def export_ai_node(fgra, node):
