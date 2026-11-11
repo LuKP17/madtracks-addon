@@ -184,7 +184,8 @@ class ImportMad(bpy.types.Operator):
         if context.scene.madtracks.work_dir == "":
             msg_box("No data directory specified.", icon="ERROR")
         else:
-            self.filepath = context.scene.madtracks.work_dir + os.path.sep
+            if os.path.basename(self.filepath) == "":
+                self.filepath = context.scene.madtracks.work_dir + os.path.sep
             context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
