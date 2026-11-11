@@ -303,7 +303,8 @@ class Mesh:
         file.seek(16, 1)  # skip unknown data
         file.seek(4, 1)  # skip unknown data
         self.va_cnt = file.read(1)[0]
-        self.va += (file.read(1)[0], file.read(1)[0], file.read(1)[0], file.read(1)[0],)
+        for _ in range(self.va_cnt):
+            self.va += (file.read(1)[0],)
 
         # Vertices
         for _ in range(self.vertex_cnt):
