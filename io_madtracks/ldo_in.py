@@ -117,9 +117,6 @@ def ldo_to_meshes(ldo, meshname, scene, props, lightmap=None):
     for atomic in ldo.atomics:
         # atomic Blender mesh
         mesh = bpy.data.meshes.new(meshname)
-        
-        if ldo.atomic_cnt > 1:
-            meshname = atomic.name
 
         bm = bmesh.new()
         bm.loops.layers.uv.new("UVMap")

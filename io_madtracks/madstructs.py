@@ -98,7 +98,6 @@ class Atomic:
         self.meshes = []
         self.materials = []
         self.dummies = []
-        self.name = ""  # used for LDO with multiple atomics
 
     def __repr__(self):
         return "Atomic"
@@ -136,7 +135,7 @@ class Atomic:
         name_len = file.read(1)[0]
         self.dummy_cnt = file.read(1)[0]
         file.seek(8, 1)  # skip usual 8 bytes
-        self.name = struct.unpack("<%ds" % name_len, file.read(name_len))[0].decode("utf-8")
+        file.seek(name_len, 1)  # skip name
         for _ in range(self.dummy_cnt):
             dummy = Dummy()
             dummy.read(file, debug)
