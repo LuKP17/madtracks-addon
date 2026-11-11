@@ -234,15 +234,8 @@ class ExportMad(bpy.types.Operator):
 
             if bpy.ops.object.mode_set.poll():
                 bpy.ops.object.mode_set(mode="OBJECT")
-
-            if frmt == FORMAT_LDO:
-                from . import ldo_out
-                ldo_out.export_file(self.filepath, scene)
-
-                # Disable debug info if user then exports a level for instance.
-                props.ldo_debug_info = False
             
-            elif frmt == FORMAT_DESCRIPTOR:
+            if frmt == FORMAT_DESCRIPTOR:
                 from . import descriptor_out
                 descriptor_out.export_file(self.filepath, context)
 
@@ -304,10 +297,6 @@ class ExportMad(bpy.types.Operator):
                 else:
                     frmt = FORMAT_DESCRIPTOR
             layout.label("Export {}:".format(FORMATS[frmt]))
-            
-        if frmt == FORMAT_LDO:
-            box = layout.box()
-            box.prop(props, "ldo_debug_info")
         
         if frmt == FORMAT_LEVEL_INI:
             box = layout.box()

@@ -77,8 +77,6 @@ if "img_in" in locals():
     imp.reload(img_in)
 if "ldo_in" in locals():
     imp.reload(ldo_in)
-if "ldo_out" in locals():
-    imp.reload(ldo_out)
 if "descriptor_in" in locals():
     imp.reload(descriptor_in)
 if "descriptor_out" in locals():
