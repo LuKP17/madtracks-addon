@@ -55,18 +55,18 @@ class ImportMad(bpy.types.Operator):
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        if frmt == FORMAT_INI:
-            # INI category determined by scene property
-            if props.ini_io_type == "Level":
-                frmt = FORMAT_LEVEL_INI
-            else:
-                frmt = FORMAT_DESCRIPTOR
-
         if frmt == FORMAT_UNK:
             msg_box("Unknown format.")
             return {'CANCELLED'}
         
-        elif frmt == FORMAT_LDO:
+        if frmt == FORMAT_INI:
+            # INI category determined by scene property
+            if props.ini_io_type == "Level":
+                frmt = FORMAT_LEVEL_INI
+            elif props.ini_io_type == "Descriptor":
+                frmt = FORMAT_DESCRIPTOR
+        
+        if frmt == FORMAT_LDO:
             from . import ldo_in
             ldo_in.import_file(self.filepath, scene)
             # for convenience
@@ -148,38 +148,36 @@ class ImportMad(bpy.types.Operator):
         # Gets the format from the file path
         frmt = get_format(space.params.directory + space.params.filename)
 
-        if frmt == -1 and not space.params.filename == "":
-            layout.label("Format not supported", icon="ERROR")
+        if frmt == FORMAT_UNK:
+            layout.label("Unknown format", icon="ERROR")
             return
-        elif frmt != -1:
-            if frmt == FORMAT_INI:
-                # INI category determined by scene property
-                box = layout.box()
-                box.prop(props, "ini_io_type")
-                if props.ini_io_type == "Level":
-                    frmt = FORMAT_LEVEL_INI
-                else:
-                    frmt = FORMAT_DESCRIPTOR
-            layout.label("Import {}:".format(FORMATS[frmt]))
+
+        if frmt == FORMAT_INI:
+            # INI category determined by scene property
+            box = layout.box()
+            box.prop(props, "ini_io_type")
+            if props.ini_io_type == "Level":
+                frmt = FORMAT_LEVEL_INI
+            else:
+                frmt = FORMAT_DESCRIPTOR
+
+        layout.label("Import {}:".format(FORMATS[frmt]))
+        box = layout.box()
 
         if frmt == FORMAT_LDO:
-            box = layout.box()
             box.prop(props, "as_instance")
             box.prop(props, "reuse_data")
             box.prop(props, "ldo_debug_info")
         
         elif frmt == FORMAT_DESCRIPTOR:
-            box = layout.box()
             box.prop(props, "as_instance")
             box.prop(props, "reuse_data")
         
         elif frmt == FORMAT_LEVEL_INI:
-            box = layout.box()
             box.prop(props, "level_import_raceline")
             box.prop(props, "level_import_lightmap")
         
         else:
-            box = layout.box()
             box.label("No options available.")
 
     def invoke(self, context, event):
@@ -206,53 +204,38 @@ class ExportMad(bpy.types.Operator):
         props = scene.madtracks
         
         frmt = get_format(self.filepath)
-        
-        if props.work_dir == "":
-            msg_box("No data directory specified.")
-            return {'CANCELLED'}
 
         start_time = time.time()
         context.window.cursor_set("WAIT")
 
         dprint("Exporting {}".format(self.filepath))
         
+        if frmt == FORMAT_UNK:
+            msg_box("Unknown format.")
+            return {'CANCELLED'}
+
         if frmt == FORMAT_INI:
             # INI category determined by scene property
             if props.ini_io_type == "Level":
                 frmt = FORMAT_LEVEL_INI
-            else:
+            elif props.ini_io_type == "Descriptor":
                 frmt = FORMAT_DESCRIPTOR
 
-        if frmt == FORMAT_UNK:
-            msg_box("Unknown format.")
-            return {'CANCELLED'}
+        if frmt == FORMAT_DESCRIPTOR:
+            from . import descriptor_out
+            descriptor_out.export_file(self.filepath, context)
+
+        elif frmt == FORMAT_LEVEL_INI:
+            from . import level_out
+            level_out.export_file(self.filepath, scene)
+        
+        elif frmt == FORMAT_GRA:
+            from . import ai_out
+            ai_out.export_file(self.filepath, scene)
         
         else:
-            # Turns off undo for better performance
-            use_global_undo = bpy.context.user_preferences.edit.use_global_undo
-            bpy.context.user_preferences.edit.use_global_undo = False
-
-            if bpy.ops.object.mode_set.poll():
-                bpy.ops.object.mode_set(mode="OBJECT")
-            
-            if frmt == FORMAT_DESCRIPTOR:
-                from . import descriptor_out
-                descriptor_out.export_file(self.filepath, context)
-
-            elif frmt == FORMAT_LEVEL_INI:
-                from . import level_out
-                level_out.export_file(self.filepath, scene)
-            
-            elif frmt == FORMAT_GRA:
-                from . import ai_out
-                ai_out.export_file(self.filepath, scene)
-            
-            else:
-                msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
-                return {'CANCELLED'}
-
-            # Re-enables undo
-            bpy.context.user_preferences.edit.use_global_undo = use_global_undo
+            msg_box("Format not yet supported: {}".format(FORMATS[frmt]))
+            return {'CANCELLED'}
 
         end_time = time.time() - start_time
 
@@ -284,26 +267,26 @@ class ExportMad(bpy.types.Operator):
         # Gets the format from the file path
         frmt = get_format(space.params.filename)
 
-        if frmt == -1 and not space.params.filename == "":
-            layout.label("Format not supported", icon="ERROR")
+        if frmt == FORMAT_UNK:
+            layout.label("Unknown format", icon="ERROR")
             return
-        elif frmt != -1:
-            if frmt == FORMAT_INI:
-                # INI category determined by scene property
-                box = layout.box()
-                box.prop(props, "ini_io_type")
-                if props.ini_io_type == "Level":
-                    frmt = FORMAT_LEVEL_INI
-                else:
-                    frmt = FORMAT_DESCRIPTOR
-            layout.label("Export {}:".format(FORMATS[frmt]))
+
+        if frmt == FORMAT_INI:
+            # INI category determined by scene property
+            box = layout.box()
+            box.prop(props, "ini_io_type")
+            if props.ini_io_type == "Level":
+                frmt = FORMAT_LEVEL_INI
+            else:
+                frmt = FORMAT_DESCRIPTOR
+
+        layout.label("Export {}:".format(FORMATS[frmt]))
+        box = layout.box()
         
         if frmt == FORMAT_LEVEL_INI:
-            box = layout.box()
             box.prop(props, "level_use_checkpoint_names")
         
         else:
-            box = layout.box()
             box.label("No options available.")
     
     def invoke(self, context, event):

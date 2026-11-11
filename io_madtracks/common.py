@@ -51,7 +51,7 @@ def dprint(*str):
 
 
 """
-Supported File Formats
+File Formats
 """
 FORMAT_UNK = -1
 FORMAT_LDO = 0
@@ -64,7 +64,6 @@ FORMAT_LDL = 7
 
 FORMATS = {
     FORMAT_LDO: "LDO (.ldo)",
-    FORMAT_INI: "Unsupported (.ini)",
     FORMAT_DESCRIPTOR: "Descriptor (.ini)",
     FORMAT_LEVEL_INI: "Level instances (.ini)",
     FORMAT_DAM: "Level settings (.dam)",

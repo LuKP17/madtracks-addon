@@ -36,7 +36,7 @@ from ..trackpart import *
 # needed to allow exporting files outside of the extracted game folder
 INI_CATEGORIES = (
     ("Level", "Level instances", "", 0),
-    ("Desciptor", "Object descriptor", "", 1),
+    ("Descriptor", "Object descriptor", "", 1),
 )
 
 def check_ref(self, context):
