@@ -236,7 +236,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
             if atomic_mat.diffuse_name_len:
                 texslot = material.texture_slots.add()
                 texture = None
-                if props.reuse_data:
+                if props.as_instance:
                     tex_index = bpy.data.textures.find(atomic_mat.diffuse_name)
                     if tex_index >= 0:
                         texture = bpy.data.textures[tex_index]
@@ -245,7 +245,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.diffuse_name, "IMAGE")
                     image = None
                     filename = atomic_mat.diffuse_name
-                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
+                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.as_instance)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"
@@ -253,7 +253,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
             if atomic_mat.envmap_name_len:
                 texslot = material.texture_slots.add()
                 texture = None
-                if props.reuse_data:
+                if props.as_instance:
                     tex_index = bpy.data.textures.find(atomic_mat.envmap_name)
                     if tex_index >= 0:
                         texture = bpy.data.textures[tex_index]
@@ -262,7 +262,7 @@ def mesh_assign_materials(atomic, mesh, props, lightmap=None):
                     texture = bpy.data.textures.new(atomic_mat.envmap_name, "IMAGE")
                     image = None
                     filename = atomic_mat.envmap_name
-                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.reuse_data)
+                    image = img_in.import_file(props.work_dir + TEXTURE_PATH + filename, reuse=props.as_instance)
                     texture.image = image
                 texslot.texture = texture
                 texslot.uv_layer = "UVMap"

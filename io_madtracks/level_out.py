@@ -130,4 +130,4 @@ def export_instance(fini, obj, location=True, rotation=True):
         fini.write("DirectionUp = " + float_format(rot[1][0]) + "," + float_format(rot[1][1]) + "," + float_format(rot[1][2]) + "\n")
     fini.write("Filename = \"" + name + "\"\n\n")
 
-    print("Exported {}".format(obj.name))
+    dprint("Exported {}".format(obj.name))

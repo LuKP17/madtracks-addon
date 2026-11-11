@@ -166,12 +166,10 @@ class ImportMad(bpy.types.Operator):
 
         if frmt == FORMAT_LDO:
             box.prop(props, "as_instance")
-            box.prop(props, "reuse_data")
             box.prop(props, "ldo_debug_info")
         
         elif frmt == FORMAT_DESCRIPTOR:
             box.prop(props, "as_instance")
-            box.prop(props, "reuse_data")
         
         elif frmt == FORMAT_LEVEL_INI:
             box.prop(props, "level_import_raceline")

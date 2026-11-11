@@ -42,7 +42,6 @@ def import_file(filepath, scene):
     props = scene.madtracks
 
     props.as_instance = True
-    props.reuse_data = True
 
     # open lightmap file and read instances
     filename = os.path.basename(filepath)

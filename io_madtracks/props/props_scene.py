@@ -63,13 +63,8 @@ class MadSceneProperties(bpy.types.PropertyGroup):
     )
     as_instance = BoolProperty(
         name = "As Level Instance",
-        default = False,
+        default = True,
         description = "Import objects in a lightmappable way, reusable by level importer and convenient for level editing"
-    )
-    reuse_data = BoolProperty(
-        name = "Reuse Blender data",
-        default = False,
-        description = "Reuse already imported data to save on resources and improve performance"
     )
     ldo_debug_info = BoolProperty(
         name = "LDO Debug Info",

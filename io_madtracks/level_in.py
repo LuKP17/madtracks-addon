@@ -52,7 +52,6 @@ def import_file(filepath, scene):
     props = scene.madtracks
 
     props.as_instance = True
-    props.reuse_data = True
 
     lightmap = None
     if props.level_import_lightmap:
