@@ -265,7 +265,7 @@ def recalculate(scene):
     bpy.ops.object.select_all(action='DESELECT')
     # first pass to fix trackpart links
     for obj in scene.objects:
-        if obj.madtracks.prev:
+        if obj.madtracks.is_trackpart and obj.madtracks.prev:
             # check prev link
             prev = obj.madtracks.prev
             if scene.objects.find(prev.name) == -1:
@@ -274,14 +274,14 @@ def recalculate(scene):
             elif prev.madtracks.nextt != obj:
                 # prev object points to another trackpart
                 obj.madtracks.prev = None
-        if obj.madtracks.nextt:
+        if obj.madtracks.is_trackpart and obj.madtracks.nextt:
             if scene.objects.find(obj.madtracks.nextt.name) == -1:
                 # next object doesn't exist
                 obj.madtracks.nextt = None
     # second pass to recalculate trackparts position
     for obj in scene.objects:
-        if not obj.madtracks.prev:
-            while obj.madtracks.nextt:
+        if obj.madtracks.is_trackpart and not obj.madtracks.prev:
+            while obj.madtracks.is_trackpart and obj.madtracks.nextt:
                 # move the next trackpart after this one
                 append(scene, obj.madtracks.nextt, obj, skip_link=True)
                 obj = obj.madtracks.nextt
