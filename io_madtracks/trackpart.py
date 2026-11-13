@@ -181,7 +181,7 @@ def add_user(scene, descriptor):
     if prev:
         skip_link = False
         # allow appending a respawnable trackparts for convenience, but no link
-        if obj.madtracks.object_type in respawn_types:
+        if prev.madtracks.object_type in respawn_types or obj.madtracks.object_type in respawn_types:
             skip_link = True
         append(scene, obj, prev, skip_link)
     else:

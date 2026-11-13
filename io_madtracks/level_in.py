@@ -146,7 +146,6 @@ def import_descriptor_instance(section, lightmap, scene):
 
     ldo_filename = None
     is_trackpart = False
-    respawnable = False
     is_collectible = False
     with open_insensitive(props.work_dir + DESCRIPTOR_PATH + filename, 'r') as file:
         descriptor = INI(file).as_dict()
@@ -155,8 +154,6 @@ def import_descriptor_instance(section, lightmap, scene):
         if "objecttype" in descriptor['object'].keys():
             if descriptor['object']['objecttype'] in trackpart_types:
                 is_trackpart = True
-            if descriptor['object']['objecttype'] in respawn_types:
-                respawnable = True
             if descriptor['object']['objecttype'] in collectible_types:
                 is_collectible = True
 
@@ -215,7 +212,10 @@ def import_descriptor_instance(section, lightmap, scene):
         elif len(section.params) == 1:
             # part of a trackpart sequence
             prev = bpy.context.selected_objects[0]
-            trackpart.append(scene, obj, prev, skip_link=respawnable)
+            if prev.madtracks.object_type in respawn_types or obj.madtracks.object_type in respawn_types:
+                trackpart.append(scene, obj, prev, skip_link=True)
+            else:
+                trackpart.append(scene, obj, prev, skip_link=False)
         if obj.madtracks.invert:
             trackpart.invert(scene, obj)
 
