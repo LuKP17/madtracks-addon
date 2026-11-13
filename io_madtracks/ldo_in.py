@@ -68,9 +68,6 @@ def import_file(filepath, scene, lightmap=None):
         parent.name = meshname
 
     for i in range(len(meshes)):
-        if i >= 1 and props.as_instance:
-            # only import the first atomic for lightmapping
-            break
         obj = bpy.data.objects.new(meshes[i].name, meshes[i])
         scene.objects.link(obj)
         if parent:
@@ -114,7 +111,12 @@ def ldo_to_meshes(ldo, meshname, scene, props, lightmap=None):
     """
     meshes = []
     
-    for atomic in ldo.atomics:
+    for i in range(len(ldo.atomics)):
+        if i >= 1 and props.as_instance:
+            # only import the first atomic for lightmapping
+            break
+
+        atomic = ldo.atomics[i]
         # atomic Blender mesh
         mesh = bpy.data.meshes.new(meshname)
 
