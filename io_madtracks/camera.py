@@ -108,8 +108,8 @@ def setup_spec_cam(cam, settings, scene):
     # create up-down-up height keyframes with cyclic extrapolation
     # FIXME up-down motion timing isn't 100% accurate
     if settings['upspeed'] > 0:
-        uprange_frames = 180 / settings['upspeed']
-        scene.frame_current = 90
+        uprange_frames = 72 / settings['upspeed']
+        scene.frame_current = 36
         cam.location[2] = settings['heigth'] + (settings['uprange'])
         bpy.ops.anim.keyframe_insert_menu(type='Location')
         scene.frame_current += uprange_frames
