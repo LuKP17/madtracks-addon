@@ -38,27 +38,33 @@ import numpy as np
 import mathutils
 
 TRACKPART_CATEGORIES = (
-    ("C", "Control", "", 0),
-    ("M", "Medium", "", 1),
-    ("S", "Small", "", 2),
-    ("W", "Wood", "", 3),
-    ("G", "Golf", "", 4),
-    # ("B", "Bobsleigh", "Bobsleigh trackparts"),
-    # ("Q", "Croquet", "Croquet trackparts"),
-    # ("V", "Vent", "Vent trackparts"),
-    # ("A", "Antartica", "Antartica trackparts"),
-    # ("U", "Custom", "Custom trackparts"),
+    ("C", "Control", ""),
+    ("M", "Medium", ""),
+    ("S", "Small", ""),
+    ("W", "Wood", ""),
+    ("G", "Golf", ""),
+    ("V", "Vent", ""),
+    ("B", "Bobsleigh", ""),
+    ("A", "Antartica", ""),
+    ("Q", "Croquet", "")
 )
 TRACKPARTS_CONTROL = (
     ("M_none_start.ini", "Start", ""),
+    ("B_none_start.ini", "Bobsleigh Start", ""),
+    ("ANTBob_none_start.ini", "Ice Start", ""),
     ("M_none_startfinish.ini", "Start/Finish", ""),
-    ("M_none_checkpoint.ini", "Checkpoint", ""),
-    ("M_none_finish_50.ini", "Finish", ""),
     ("S_none_startfinish.ini", "Small Start/Finish", ""),
+    ("G_none_startfinish.ini", "Large Start/Finish", ""),
+    ("M_none_checkpoint.ini", "Checkpoint", ""),
     ("S_none_checkpoint.ini", "Small Checkpoint", ""),
     ("G_none_checkpoint.ini", "Large Checkpoint", ""),
+    ("Aeration_none_checkpoint.ini", "Vent Checkpoint", ""),
+    ("B_none_checkpoint.ini", "Bobsleigh Checkpoint", ""),
+    ("ANTBob_none_checkpoint.ini", "Ice Checkpoint", ""),
+    ("M_none_finish_50.ini", "Finish", ""),
     ("G_none_finish.ini", "Large Finish", ""),
-    ("G_none_startfinish.ini", "Golf Start/Finish", ""),
+    ("B_none_finish.ini", "Bobsleigh Finish", ""),
+    ("ANTBob_none_finish.ini", "Ice Finish", ""),
 )
 TRACKPARTS_MEDIUM = (
     ("M_gris_amorce_15_in.ini", "None to Medium 15", ""),
@@ -125,6 +131,49 @@ TRACKPARTS_GOLF = (
     ("G_vert_green_curve.ini", "Green", ""),
     ("G_vert_green_target.ini", "Green Target", ""),
 )
+TRACKPARTS_ANTARTICA = (
+    ("Amorce.ini", "None to Snow", ""),
+    ("Amorce_Fin.ini", "Snow to None", ""),
+    ("Rail.ini", "Straight", ""),
+    ("Left.ini", "Left", ""),
+    ("Right.ini", "Right", ""),
+    ("Bump.ini", "Bump", ""),
+    ("Small_Semidown_Amorce_03.ini", "Ice to None", ""),
+    ("Large_Semidown_Amorce.ini", "None to Large Ice", ""),
+    ("Small_Semidown_Amorce.ini", "Large Ice to Ice", ""),
+    ("Small_Semidown.ini", "Down", ""),
+    ("Large_Semidown_01.ini", "Large Down", ""),
+    ("Small_Semidown_Left.ini", "Down Left", ""),
+    ("Small_Semidown_Right.ini", "Down Right", ""),
+    ("Small_Down.ini", "Down Steep", ""),
+    ("Small_Jump.ini", "Ice Jump", ""),
+)
+TRACKPARTS_BOBSLEIGH = (
+    ("B_rail_50.ini", "Straight", ""),
+    ("B_rail_50_semidown.ini", "Semi Down", ""),
+    ("B_rampe_down.ini", "Down", ""),
+    ("B_rail_50_down.ini", "Down Steep", ""),
+    ("B_virage_45_semidown_left.ini", "Down Left", ""),
+    ("B_virage_45_semidown_right.ini", "Down Right", ""),
+    ("B_virage_45_down_left.ini", "Down Steep Left", ""),
+    ("B_virage_45_down_right.ini", "Down Steep Right", ""),
+)
+TRACKPARTS_VENT = (
+    ("T_Aeration_Raccord.ini", "None to Vent", ""),
+    ("T_Aeration_Rail.ini", "Straight", ""),
+    ("T_Aeration_Virage_90_Left.ini", "Left", ""),
+    ("T_Aeration_Virage_90_Right.ini", "Right", ""),
+    ("T_Aeration_Rampe_UP.ini", "Up", ""),
+    ("T_Aeration_Rampe_Down.ini", "Down", ""),
+)
+TRACKPARTS_CROQUET = (
+    ("C_large_start.ini", "Croquet Start", ""),
+    ("C_large_startfinish.ini", "Croquet Start/Finish", ""),
+    ("C_medium_checkpoint.ini", "Croquet Checkpoint", ""),
+    ("C_small_checkpoint.ini", "Croquet Small Checkpoint", ""),
+    ("C_large_checkpoint.ini", "Croquet Large Checkpoint", ""),
+    ("C_finish.ini", "Croquet Finish", ""),
+)
 
 ANGLE_180 = 3.141592654
 
@@ -142,6 +191,14 @@ def from_dropdown(scene):
         return props.trackpart_wood
     elif props.trackpart_category == "G":
         return props.trackpart_golf
+    elif props.trackpart_category == "A":
+        return props.trackpart_antartica
+    elif props.trackpart_category == "B":
+        return props.trackpart_bobsleigh
+    elif props.trackpart_category == "V":
+        return props.trackpart_vent
+    elif props.trackpart_category == "Q":
+        return props.trackpart_croquet
 
 
 def from_reference(scene):

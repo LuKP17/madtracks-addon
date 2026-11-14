@@ -45,6 +45,14 @@ class MadTracksTrackpartPanel(bpy.types.Panel):
             row.prop(props, "trackpart_wood", text="")
         elif props.trackpart_category == "G":
             row.prop(props, "trackpart_golf", text="")
+        elif props.trackpart_category == "A":
+            row.prop(props, "trackpart_antartica", text="")
+        elif props.trackpart_category == "B":
+            row.prop(props, "trackpart_bobsleigh", text="")
+        elif props.trackpart_category == "V":
+            row.prop(props, "trackpart_vent", text="")
+        elif props.trackpart_category == "Q":
+            row.prop(props, "trackpart_croquet", text="")
         row.operator("trackpart.add_dropdown", text="", icon='ZOOMIN')
         layout.label("Copy existing:")
         row = layout.row(align=True)

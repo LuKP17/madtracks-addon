@@ -123,6 +123,26 @@ class MadSceneProperties(bpy.types.PropertyGroup):
         description = "Choose a trackpart",
         items = TRACKPARTS_GOLF
     )
+    trackpart_antartica = EnumProperty(
+        name = "Antartica",
+        description = "Choose a trackpart",
+        items = TRACKPARTS_ANTARTICA
+    )
+    trackpart_bobsleigh = EnumProperty(
+        name = "Bobsleigh",
+        description = "Choose a trackpart",
+        items = TRACKPARTS_BOBSLEIGH
+    )
+    trackpart_vent = EnumProperty(
+        name = "Vent",
+        description = "Choose a trackpart",
+        items = TRACKPARTS_VENT
+    )
+    trackpart_croquet = EnumProperty(
+        name = "Croquet",
+        description = "Choose a trackpart",
+        items = TRACKPARTS_CROQUET
+    )
     trackpart_ref = PointerProperty(
         type = bpy.types.Object,
         name = "Trackpart Reference",
