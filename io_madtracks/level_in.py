@@ -108,7 +108,7 @@ def import_LDO_instance(section, lightmap, scene):
     lightmapped = is_lightmapped(lightmap, filename, props)
 
     obj = None
-    if not lightmapped or lightmap.is_empty:
+    if not lightmapped:
         # reuse already imported instances that don't have lightmap UVs
         obj_index = find_reusable_ldo(filename)
         if obj_index >= 0:
@@ -118,9 +118,6 @@ def import_LDO_instance(section, lightmap, scene):
             scene.objects.link(obj)
             scene.objects.active = obj
             obj.select = False
-            if lightmapped:
-                # skip empty lightmap instance
-                lightmap.read_instance()
     if not obj:
         # import LDO
         if lightmapped:
@@ -166,7 +163,7 @@ def import_descriptor_instance(section, lightmap, scene):
             if lightmapped:
                 lightmap.read_instance()
             return True  
-        if not lightmapped or lightmap.is_empty:
+        if not lightmapped:
             # reuse already imported instances that don't have lightmap UVs
             obj_index = find_reusable_descriptor(filename)
             if obj_index >= 0:
@@ -252,9 +249,15 @@ def place_instance_object(section, obj):
 
 def is_lightmapped(lightmap, filename, props):
     """
-    Return True if the LDO to import is present in the LDL file, although it can have no UV data to import
+    Return True if the LDO to import is present in the LDL file with UV data to import
     """
     if not props.level_import_lightmap or not lightmap:
+        return False
+
+    if lightmap.is_empty:
+        dprint("LDL instance named {} is empty.".format(lightmap.current_name))
+        # skip empty lightmap instance
+        lightmap.read_instance()
         return False
 
     # add universal prefix for lightmaps

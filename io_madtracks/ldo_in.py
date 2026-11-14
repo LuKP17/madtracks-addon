@@ -116,11 +116,12 @@ def ldo_to_meshes(ldo, meshname, scene, props, lightmap=None):
             if i >= 1:
                 # only import the first atomic for lightmapping
                 break
-            # reuse meshes when possible
-            for data_mesh in bpy.data.meshes:
-                if data_mesh.name.split('.')[0] == meshname and not "LightMap" in data_mesh.uv_layers.keys():
-                    meshes.append(data_mesh)
-                    return meshes
+            # reuse meshes if not lightmapped
+            if not lightmap:
+                for data_mesh in bpy.data.meshes:
+                    if data_mesh.name.split('.')[0] == meshname and not "LightMap" in data_mesh.uv_layers.keys():
+                        meshes.append(data_mesh)
+                        return meshes
 
         atomic = ldo.atomics[i]
         # atomic Blender mesh
